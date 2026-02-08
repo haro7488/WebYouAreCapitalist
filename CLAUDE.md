@@ -35,6 +35,11 @@ src/
 - 게임 엔진 public API는 `src/game/index.ts` barrel export로 노출
 - 한국어 주석 사용
 
+## Git Commit Rules
+
+- 커밋 메시지는 한국어로 작성
+- Co-Authored-By 트레일러 사용 금지
+
 ## Game Engine (src/game/)
 
 - **engine.ts** — 턴 처리: planning → event → resolution → result
