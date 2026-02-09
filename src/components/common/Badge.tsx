@@ -1,4 +1,4 @@
-type BadgeVariant = 'boom' | 'stable' | 'recession' | 'low' | 'medium' | 'high'
+type BadgeVariant = 'boom' | 'stable' | 'recession' | 'low' | 'medium' | 'high' | 'info'
 
 interface BadgeProps {
   variant: BadgeVariant
@@ -13,6 +13,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   low: 'bg-money-900 text-money-300',
   medium: 'bg-amber-900 text-amber-300',
   high: 'bg-danger-900 text-danger-300',
+  info: 'bg-slate-700 text-slate-300',
 }
 
 // 상태 표시용 배지 (시장 상태, 위험도 등)

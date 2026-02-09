@@ -1,26 +1,33 @@
 import type { MetaState, MetaEffect } from './types'
 import { META_UPGRADES } from './constants'
 
+/** MetaEffect 기본값 */
+const DEFAULT_META_EFFECT: MetaEffect = {
+  startingMoneyBonus: 0,
+  extraTurns: 0,
+  incomeMultiplier: 1,
+  purchaseCostDiscount: 0,
+  eventRerollChance: 0,
+  extraActionPoints: 0,
+  startingInfluence: 0,
+}
+
 /** 모든 메타 업그레이드 효과를 합산 */
 export function getMetaEffects(meta: MetaState): MetaEffect {
-  const combined: MetaEffect = {
-    startingMoneyBonus: 0,
-    extraTurns: 0,
-    revenueMultiplier: 1,
-    investmentCostDiscount: 0,
-    eventRerollChance: 0,
-  }
+  const combined: MetaEffect = { ...DEFAULT_META_EFFECT }
 
   for (const upgrade of META_UPGRADES) {
     const level = meta.upgrades[upgrade.id] ?? 0
     if (level === 0) continue
 
     const effect = upgrade.effect(level)
-    combined.startingMoneyBonus! += effect.startingMoneyBonus ?? 0
-    combined.extraTurns! += effect.extraTurns ?? 0
-    combined.revenueMultiplier! *= effect.revenueMultiplier ?? 1
-    combined.investmentCostDiscount! += effect.investmentCostDiscount ?? 0
-    combined.eventRerollChance! += effect.eventRerollChance ?? 0
+    combined.startingMoneyBonus += effect.startingMoneyBonus
+    combined.extraTurns += effect.extraTurns
+    combined.incomeMultiplier *= effect.incomeMultiplier // 배율은 곱셈
+    combined.purchaseCostDiscount += effect.purchaseCostDiscount
+    combined.eventRerollChance += effect.eventRerollChance
+    combined.extraActionPoints += effect.extraActionPoints
+    combined.startingInfluence += effect.startingInfluence
   }
 
   return combined

@@ -1,7 +1,7 @@
 import { useGameStore } from '@stores/gameStore'
 import { Card, StatRow, MoneyDisplay, Button } from '@components/common'
 import { MarketIndicator } from './MarketIndicator'
-import { ArrowUpRight, ArrowDownRight, Wallet } from 'lucide-react'
+import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react'
 
 /** 턴 결과 요약 카드 */
 export function TurnResult() {
@@ -11,15 +11,17 @@ export function TurnResult() {
 
   if (!gameState) return null
 
-  const { turn, revenue, expenses, money, market, isGameOver } = gameState
+  const { turn, revenue, expenses, money, influence, ownedAssets, market, isGameOver } = gameState
   const netIncome = revenue - expenses
+  const assetValue = ownedAssets.reduce((sum, a) => sum + a.currentValue, 0)
+  const netWorth = money + assetValue
 
   return (
     <Card header={`턴 ${turn} 결과`}>
       {/* 수익/지출 통계 */}
       <div className="space-y-2 mb-4">
         <StatRow
-          label="기본 수익"
+          label="자산 수익"
           value={<MoneyDisplay amount={revenue} size="sm" showSign />}
           icon={ArrowUpRight}
         />
@@ -39,6 +41,17 @@ export function TurnResult() {
           value={<MoneyDisplay amount={money} size="sm" />}
           icon={Wallet}
         />
+        <StatRow
+          label="순자산"
+          value={<MoneyDisplay amount={netWorth} size="sm" />}
+          icon={TrendingUp}
+        />
+      </div>
+
+      {/* 영향력 */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-slate-400">영향력</span>
+        <span className="text-sm font-medium text-slate-200">{Math.floor(influence)}</span>
       </div>
 
       {/* 시장 상태 */}

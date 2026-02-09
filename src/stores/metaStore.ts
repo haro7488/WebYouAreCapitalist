@@ -55,7 +55,7 @@ export const useMetaStore = create<MetaStore>()(
     }),
     {
       name: 'capitalist-meta',
-      version: 1,
+      version: 2, // v2: MetaEffect 필드 확장 (extraActionPoints, startingInfluence 추가)
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ metaState: state.metaState }),
     },

@@ -1,28 +1,54 @@
 import { useGameStore } from '@stores/gameStore'
-import { Card, Button, MoneyDisplay } from '@components/common'
+import { Card, Button, Badge, MoneyDisplay } from '@components/common'
+import { calculateDominance } from '@game/index'
+
+// 섹터 한국어 매핑
+const SECTOR_LABEL: Record<string, string> = {
+  food: '외식',
+  tech: '기술',
+  realEstate: '부동산',
+  retail: '유통',
+  finance: '금융',
+}
 
 /** 이벤트 선택지 효과 미리보기 */
-function EffectPreview({ effect }: { effect: { money?: number; reputation?: number } }) {
+function EffectPreview({ effect }: { effect: { money?: number; influence?: number } }) {
   return (
     <div className="flex gap-3 text-xs text-slate-400 mt-1">
       {effect.money != null && effect.money !== 0 && (
         <MoneyDisplay amount={effect.money} size="sm" showSign />
       )}
-      {effect.reputation != null && effect.reputation !== 0 && (
-        <span className={effect.reputation > 0 ? 'text-money-400' : 'text-danger-400'}>
-          평판 {effect.reputation > 0 ? '+' : ''}{effect.reputation}
+      {effect.influence != null && effect.influence !== 0 && (
+        <span className={effect.influence > 0 ? 'text-money-400' : 'text-danger-400'}>
+          영향력 {effect.influence > 0 ? '+' : ''}{effect.influence}
         </span>
       )}
     </div>
   )
 }
 
-/** 게임 이벤트 카드: 제목, 설명, 2개 선택지 표시 */
+/** 게임 이벤트 카드: 제목, 설명, 선택지 표시 (지배자 제3선택지 포함) */
 export function EventCard() {
-  const currentEvent = useGameStore((s) => s.gameState?.currentEvent ?? null)
+  const gameState = useGameStore((s) => s.gameState)
   const submitEventChoice = useGameStore((s) => s.submitEventChoice)
 
-  if (!currentEvent) return null
+  if (!gameState?.currentEvent) return null
+
+  const { currentEvent, ownedAssets } = gameState
+
+  // 기본 선택지
+  const allChoices = [...currentEvent.choices]
+
+  // 지배자 제3선택지: 해당 섹터에서 dominant 등급일 때만 표시
+  let dominanceSector: string | null = null
+  if (currentEvent.dominanceChoice) {
+    const dc = currentEvent.dominanceChoice
+    const dominance = calculateDominance(ownedAssets)
+    if (dominance[dc.sector].level === 'dominant') {
+      allChoices.push(dc.choice)
+      dominanceSector = dc.sector
+    }
+  }
 
   return (
     <Card header={`\u26A1 ${currentEvent.title}`}>
@@ -31,19 +57,27 @@ export function EventCard() {
 
       {/* 선택지 */}
       <div className="flex flex-col gap-3">
-        {currentEvent.choices.map((choice) => (
-          <Button
-            key={choice.id}
-            variant="secondary"
-            fullWidth
-            onClick={() => submitEventChoice(choice.id)}
-          >
-            <div className="text-left w-full">
-              <span className="text-sm">{choice.text}</span>
-              <EffectPreview effect={choice.effect} />
-            </div>
-          </Button>
-        ))}
+        {allChoices.map((choice, idx) => {
+          const isDominanceChoice = dominanceSector && idx === allChoices.length - 1
+          return (
+            <Button
+              key={choice.id}
+              variant={isDominanceChoice ? 'primary' : 'secondary'}
+              fullWidth
+              onClick={() => submitEventChoice(choice.id)}
+            >
+              <div className="text-left w-full">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{choice.text}</span>
+                  {isDominanceChoice && (
+                    <Badge variant="info" label={`${SECTOR_LABEL[dominanceSector!]} 지배`} />
+                  )}
+                </div>
+                <EffectPreview effect={choice.effect} />
+              </div>
+            </Button>
+          )
+        })}
       </div>
     </Card>
   )

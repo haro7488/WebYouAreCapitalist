@@ -2,13 +2,13 @@ import { useGameStore } from '@stores/gameStore'
 import { MoneyDisplay, ProgressBar } from '@components/common'
 import { MarketIndicator } from './MarketIndicator'
 
-/** 게임 상단 헤더: 턴, 자금, 평판, 시장 상태 표시 */
+/** 게임 상단 헤더: 턴, 자금, 영향력, AP, 시장 상태 표시 */
 export function GameHeader() {
   const gameState = useGameStore((s) => s.gameState)
 
   if (!gameState) return null
 
-  const { turn, maxTurns, money, reputation, market } = gameState
+  const { turn, maxTurns, money, influence, actionPoints, maxActionPoints, market } = gameState
 
   return (
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700 p-3">
@@ -24,10 +24,15 @@ export function GameHeader() {
           <MoneyDisplay amount={money} />
         </div>
 
-        {/* 평판 게이지 */}
+        {/* 영향력 게이지 */}
         <div className="min-w-[120px]">
-          <ProgressBar value={reputation} max={100} showLabel />
+          <ProgressBar value={influence} max={100} showLabel />
         </div>
+
+        {/* AP 표시 */}
+        <span className="text-sm text-slate-300">
+          AP {actionPoints}/{maxActionPoints}
+        </span>
 
         {/* 시장 상태 */}
         <div className="flex justify-end md:justify-start">

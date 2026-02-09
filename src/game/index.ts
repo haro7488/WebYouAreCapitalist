@@ -4,9 +4,16 @@ export type {
   TurnPhase,
   MarketCondition,
   MarketState,
+  Sector,
+  AssetTier,
+  SectorTrend,
+  SectorState,
+  DominanceLevel,
+  DominanceInfo,
   RiskLevel,
-  Investment,
-  OwnedInvestment,
+  Asset,
+  OwnedAsset,
+  ResearchResult,
   EventEffect,
   EventChoice,
   GameEvent,
@@ -21,10 +28,29 @@ export type {
 export {
   STARTING_MONEY,
   MAX_TURNS,
-  BASE_REVENUE,
   BASE_EXPENSES,
-  INVESTMENTS,
+  STARTING_INFLUENCE,
+  BASE_ACTION_POINTS,
+  ASSETS,
   META_UPGRADES,
+  MARKET_TRANSITION,
+  SECTOR_TREND_MULTIPLIER,
+  SECTOR_TREND_TRANSITION,
+  DOMINANCE_THRESHOLDS,
+  INFLUENCE_TIERS,
+  INFLUENCE_DECAY_PER_TURN,
+  INFLUENCE_PER_PURCHASE,
+  INFLUENCE_DOMINANCE_BONUS,
+  ASSET_UPGRADE_COST_RATIO,
+  ASSET_UPGRADE_INCOME_MULTIPLIER,
+  ASSET_MAX_UPGRADE_LEVEL,
+  SELL_BASE_RATIO,
+  SELL_MARKET_RATIO,
+  SCORE_NETWORTH_WEIGHT,
+  SCORE_INFLUENCE_WEIGHT,
+  SCORE_TURN_BONUS,
+  SCORE_DOMINANCE_BONUS,
+  META_CURRENCY_RATE,
 } from './constants'
 
 // Utils
@@ -35,10 +61,19 @@ export type { Rng } from './utils'
 export { submitAction, submitEventChoice, resolvePhase, advanceTurn, processFullTurn } from './engine'
 
 // Economy
-export { calculateNetIncome, calculateInvestmentIncome, calculateScore } from './economy'
+export {
+  calculateNetIncome,
+  calculateAssetIncome,
+  calculateTotalAssetIncome,
+  calculateAssetValue,
+  calculateNetWorth,
+  calculateDominance,
+  calculateScore,
+  getInfluenceTier,
+} from './economy'
 
 // Market
-export { createInitialMarket, updateMarket } from './market'
+export { createInitialMarket, updateMarket, createInitialSectorStates, updateSectorTrends } from './market'
 
 // Events
 export { EVENT_REGISTRY, rollForEvent } from './events'
