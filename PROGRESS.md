@@ -20,13 +20,17 @@
 - [x] UI 컴포넌트 (common/, game/)
   - common/ 7개: Button, Card, Badge, ProgressBar, MoneyDisplay, StatRow, Modal
   - game/ 9개: MarketIndicator, GameHeader, AssetCard, AssetMarket, OwnedInvestmentRow, Portfolio, EventCard, TurnResult, ActionBar
+- [x] 화면 구현 (MainMenu, GameScreen, RunResult, MetaShop)
+  - MainMenu: 새 게임/메타 상점 진입 + 누적 통계 표시
+  - GameScreen: 페이즈별 분기 (planning/event/resolution/result), AP 자동 턴종료
+  - RunResult: 최종 성적/포트폴리오 표시, 다시 하기/메인 이동
+  - MetaShop: 7개 영구 업그레이드 카드, 구매 가능/부족/최대레벨 상태
+- [x] 게임 루프 통합 (App.tsx 화면 라우팅 + GameScreen 페이즈 자동 전환)
 
 ### 진행 중
 (없음)
 
 ### 대기
-- [ ] 화면 구현 (MainMenu, Game, RunResult, MetaShop)
-- [ ] 게임 루프 통합
 - [ ] 반응형 레이아웃
 
 ## 변경 이력
@@ -36,3 +40,4 @@
 | 2026-02-09 | Zustand 스토어 구현 (gameStore, metaStore, uiStore) |
 | 2026-02-09 | UI 컴포넌트 구현 (common/ 7개, game/ 9개) |
 | 2026-02-09 | 자본가 컨셉 리디자인: 게임 엔진 전면 재작성 + GDD + 스토어/컴포넌트 업데이트 |
+| 2026-02-09 | 화면 구현 (MainMenu, GameScreen, RunResult, MetaShop) + 게임 루프 통합 |
