@@ -57,7 +57,7 @@ src/
 
 턴 처리: planning → event → resolution → result
 핵심 모듈: types, constants, utils, economy, engine, events, market, meta, run
-→ 상세: `src/game/index.ts`의 barrel export 참조
+→ 게임 기획: [docs/GDD.md](./docs/GDD.md) · 화면 설계: [docs/SCREENS.md](./docs/SCREENS.md)
 
 ## Current Status
 
