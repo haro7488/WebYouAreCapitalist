@@ -76,7 +76,7 @@ export {
 export { createInitialMarket, updateMarket, createInitialSectorStates, updateSectorTrends } from './market'
 
 // Events
-export { EVENT_REGISTRY, rollForEvent } from './events'
+export { EVENT_REGISTRY, rollForEvent, findEventById } from './events'
 
 // Run
 export { startNewRun, endRun } from './run'

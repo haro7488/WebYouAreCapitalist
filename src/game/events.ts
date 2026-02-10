@@ -196,3 +196,8 @@ export function rollForEvent(state: GameState, rng: Rng): GameEvent | null {
 
   return eligible[eligible.length - 1]
 }
+
+/** ID로 이벤트 레지스트리에서 이벤트 조회 */
+export function findEventById(id: string): GameEvent | null {
+  return EVENT_REGISTRY.find((e) => e.id === id) ?? null
+}

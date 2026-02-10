@@ -6,8 +6,15 @@ import { useUIStore } from '@stores/uiStore'
 // 메인 메뉴 화면
 export function MainMenuScreen() {
   const startRun = useGameStore((s) => s.startRun)
+  const isRunActive = useGameStore((s) => s.isRunActive)
+  const gameState = useGameStore((s) => s.gameState)
   const { currency, totalRunsPlayed, bestScore } = useMetaStore((s) => s.metaState)
   const navigateTo = useUIStore((s) => s.navigateTo)
+
+  // 진행 중인 런 이어하기
+  const handleResume = () => {
+    navigateTo('game')
+  }
 
   const handleNewGame = () => {
     startRun()
@@ -32,7 +39,13 @@ export function MainMenuScreen() {
         )}
 
         <div className="w-full flex flex-col gap-3">
-          <Button variant="primary" size="lg" fullWidth onClick={handleNewGame}>
+          {/* 진행 중인 런이 있으면 이어하기 버튼 표시 */}
+          {isRunActive && gameState && (
+            <Button variant="primary" size="lg" fullWidth onClick={handleResume}>
+              이어하기 (턴 {gameState.turn}/{gameState.maxTurns})
+            </Button>
+          )}
+          <Button variant={isRunActive ? 'secondary' : 'primary'} size="lg" fullWidth onClick={handleNewGame}>
             새 게임 시작
           </Button>
           <Button variant="secondary" size="lg" fullWidth onClick={() => navigateTo('metaShop')}>

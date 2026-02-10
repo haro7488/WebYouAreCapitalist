@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { GameState, TurnAction, RunResult } from '@game/types'
 import {
   startNewRun,
@@ -7,8 +8,13 @@ import {
   submitEventChoice as engineSubmitEventChoice,
   resolvePhase as engineResolvePhase,
   advanceTurn as engineAdvanceTurn,
+  findEventById,
 } from '@game/index'
 import { useMetaStore } from './metaStore'
+
+// === persist 키 ===
+
+const PERSIST_KEY = 'capitalist-run-save'
 
 // === 스토어 타입 ===
 
@@ -50,58 +56,89 @@ const initialState: GameStoreState = {
 
 // === 스토어 생성 ===
 
-export const useGameStore = create<GameStore>()((set, get) => ({
-  ...initialState,
+export const useGameStore = create<GameStore>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
-  startRun: () => {
-    const meta = useMetaStore.getState().metaState
-    const gameState = startNewRun(meta)
-    set({ gameState, isRunActive: true, lastRunResult: null })
-  },
+      startRun: () => {
+        const meta = useMetaStore.getState().metaState
+        const gameState = startNewRun(meta)
+        set({ gameState, isRunActive: true, lastRunResult: null })
+      },
 
-  endCurrentRun: () => {
-    const { gameState } = get()
-    if (!gameState) return null
+      endCurrentRun: () => {
+        const { gameState } = get()
+        if (!gameState) return null
 
-    const metaStore = useMetaStore.getState()
-    const { result, updatedMeta } = endRun(gameState, metaStore.metaState)
+        const metaStore = useMetaStore.getState()
+        const { result, updatedMeta } = endRun(gameState, metaStore.metaState)
 
-    // 메타 스토어 업데이트
-    metaStore.applyRunResult(updatedMeta)
+        // 메타 스토어 업데이트
+        metaStore.applyRunResult(updatedMeta)
 
-    set({ gameState: null, isRunActive: false, lastRunResult: result })
-    return result
-  },
+        set({ gameState: null, isRunActive: false, lastRunResult: result })
 
-  submitAction: (action: TurnAction) => {
-    const { gameState } = get()
-    if (!gameState) return
-    set({ gameState: engineSubmitAction(gameState, action) })
-  },
+        // persist 저장 데이터 삭제 (런 종료 시 세이브 불필요)
+        localStorage.removeItem(PERSIST_KEY)
 
-  submitEventChoice: (choiceId: string) => {
-    const { gameState } = get()
-    if (!gameState) return
-    set({ gameState: engineSubmitEventChoice(gameState, choiceId) })
-  },
+        return result
+      },
 
-  resolvePhase: () => {
-    const { gameState } = get()
-    if (!gameState) return
-    set({ gameState: engineResolvePhase(gameState) })
-  },
+      submitAction: (action: TurnAction) => {
+        const { gameState } = get()
+        if (!gameState) return
+        set({ gameState: engineSubmitAction(gameState, action) })
+      },
 
-  advanceTurn: () => {
-    const { gameState } = get()
-    if (!gameState) return
-    const newState = engineAdvanceTurn(gameState)
-    set({ gameState: newState })
+      submitEventChoice: (choiceId: string) => {
+        const { gameState } = get()
+        if (!gameState) return
+        set({ gameState: engineSubmitEventChoice(gameState, choiceId) })
+      },
 
-    // 게임 오버 시 자동으로 런 종료
-    if (newState.isGameOver) {
-      get().endCurrentRun()
-    }
-  },
+      resolvePhase: () => {
+        const { gameState } = get()
+        if (!gameState) return
+        set({ gameState: engineResolvePhase(gameState) })
+      },
 
-  reset: () => set(initialState),
-}))
+      advanceTurn: () => {
+        const { gameState } = get()
+        if (!gameState) return
+        const newState = engineAdvanceTurn(gameState)
+        set({ gameState: newState })
+
+        // 게임 오버 시 자동으로 런 종료
+        if (newState.isGameOver) {
+          get().endCurrentRun()
+        }
+      },
+
+      reset: () => {
+        set(initialState)
+        localStorage.removeItem(PERSIST_KEY)
+      },
+    }),
+    {
+      name: PERSIST_KEY,
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      // gameState와 isRunActive만 저장 (lastRunResult 제외)
+      partialize: (state) => ({
+        gameState: state.gameState,
+        isRunActive: state.isRunActive,
+      }),
+      // 복원 후 currentEvent를 EVENT_REGISTRY에서 재구성
+      // (GameEvent.condition 함수는 JSON 직렬화 불가 → id로 레지스트리 재조회)
+      onRehydrateStorage: () => (state) => {
+        if (!state?.gameState) return
+        const eventId = state.gameState.currentEvent?.id ?? null
+        state.gameState = {
+          ...state.gameState,
+          currentEvent: eventId ? findEventById(eventId) : null,
+        }
+      },
+    },
+  ),
+)
