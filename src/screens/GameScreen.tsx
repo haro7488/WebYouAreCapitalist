@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
-import { GameHeader, AssetMarket, Portfolio, EventCard, TurnResult, ActionBar } from '@components/game'
-import { calculateDominance } from '@game/index'
+import { GameHeader, AssetMarket, Portfolio, EventCard, TurnResult, ActionBar, ResearchPanel } from '@components/game'
+import { calculateDominance, getInfluenceTier } from '@game/index'
 import type { Sector, DominanceLevel } from '@game/index'
 
 // 섹터 한국어 이름
@@ -34,6 +34,7 @@ type PlanningView = 'summary' | 'market' | 'portfolio'
 /** 메인 게임 화면 — 페이즈에 따라 다른 콘텐츠 렌더링 */
 export function GameScreen() {
   const [planningView, setPlanningView] = useState<PlanningView>('summary')
+  const [showResearchPanel, setShowResearchPanel] = useState(false)
 
   // 개별 셀렉터로 성능 최적화
   const gameState = useGameStore((s) => s.gameState)
@@ -58,20 +59,22 @@ export function GameScreen() {
     }
   }, [isRunActive, lastRunResult, navigateTo])
 
-  // 페이즈 변경 시 planningView 초기화
+  // 페이즈 변경 시 planningView, researchPanel 초기화
   useEffect(() => {
     if (gameState?.phase !== 'planning') {
       setPlanningView('summary')
+      setShowResearchPanel(false)
     }
   }, [gameState?.phase])
 
   if (!gameState) return null
 
-  const { phase, ownedAssets, money, activeEffects, actionPoints } = gameState
+  const { phase, ownedAssets, money, activeEffects, actionPoints, influence } = gameState
 
   // planning 페이즈: 요약 대시보드용 계산
   const totalAssetValue = ownedAssets.reduce((sum, a) => sum + a.currentValue, 0)
   const dominanceMap = calculateDominance(ownedAssets)
+  const isFreeResearch = getInfluenceTier(influence).freeResearch
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-900">
@@ -154,14 +157,27 @@ export function GameScreen() {
 
       {/* Planning 페이즈에서만 액션바 표시 */}
       {phase === 'planning' && (
-        <ActionBar
-          onMarket={() => setPlanningView('market')}
-          onPortfolio={() => setPlanningView('portfolio')}
-          onSummary={() => setPlanningView('summary')}
-          onResearch={() => submitAction({ type: 'research', target: 'market' })}
-          onEndTurn={() => submitAction({ type: 'endTurn' })}
-          actionPoints={actionPoints}
-        />
+        <>
+          <ActionBar
+            onMarket={() => setPlanningView('market')}
+            onPortfolio={() => setPlanningView('portfolio')}
+            onSummary={() => setPlanningView('summary')}
+            onResearch={() => setShowResearchPanel(true)}
+            onEndTurn={() => submitAction({ type: 'endTurn' })}
+            actionPoints={actionPoints}
+            isFreeResearch={isFreeResearch}
+          />
+
+          {showResearchPanel && (
+            <ResearchPanel
+              researchResult={gameState.researchResult}
+              onResearch={(target, sector) => submitAction({ type: 'research', target, sector })}
+              onClose={() => setShowResearchPanel(false)}
+              actionPoints={actionPoints}
+              isFreeResearch={isFreeResearch}
+            />
+          )}
+        </>
       )}
     </div>
   )

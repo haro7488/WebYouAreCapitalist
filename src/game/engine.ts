@@ -113,6 +113,8 @@ function applyUpgrade(state: GameState, ownedIndex: number): GameState {
 /** 시장 조사 */
 function applyResearch(state: GameState, target: 'market' | 'sector' | 'event', sector?: Sector): GameState {
   const rng = createRng(state.rngState)
+  const influenceTier = getInfluenceTier(state.influence)
+  const apCost = influenceTier.freeResearch ? 0 : 1
 
   let result: ResearchResult
   switch (target) {
@@ -151,7 +153,7 @@ function applyResearch(state: GameState, target: 'market' | 'sector' | 'event', 
   return {
     ...state,
     researchResult: result,
-    actionPoints: state.actionPoints - 1,
+    actionPoints: state.actionPoints - apCost,
     actionsThisTurn: [...state.actionsThisTurn, { type: 'research', target, sector }],
     rngState: rng.getState(),
   }
@@ -261,7 +263,6 @@ function resolveEconomy(state: GameState): GameState {
     sectorStates: newSectorStates,
     ownedAssets: updatedAssets,
     activeEffects: [], // 턴 효과 초기화
-    researchResult: null, // 조사 결과 초기화
     rngState: rng.getState(),
   }
 }
@@ -287,7 +288,13 @@ export function submitAction(state: GameState, action: TurnAction): GameState {
   if (state.phase !== 'planning' || state.isGameOver) return state
 
   // endTurn이 아닌 액션은 AP 필요
-  if (action.type !== 'endTurn' && state.actionPoints <= 0) return state
+  if (action.type !== 'endTurn' && state.actionPoints <= 0) {
+    if (action.type === 'research' && getInfluenceTier(state.influence).freeResearch) {
+      // 무료 조사 허용
+    } else {
+      return state
+    }
+  }
 
   const newState = applyAction(state, action)
 

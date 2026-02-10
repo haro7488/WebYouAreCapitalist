@@ -47,7 +47,7 @@ export const DOMINANCE_THRESHOLDS = {
 export const INFLUENCE_TIERS = [
   { minInfluence: 0, title: '무명 투자자', purchaseDiscount: 0, eventBonus: 0, freeResearch: false },
   { minInfluence: 20, title: '주목받는 투자자', purchaseDiscount: 0, eventBonus: 0.05, freeResearch: false },
-  { minInfluence: 40, title: '영향력 있는 투자자', purchaseDiscount: 0.05, eventBonus: 0.10, freeResearch: false },
+  { minInfluence: 40, title: '영향력 있는 투자자', purchaseDiscount: 0.05, eventBonus: 0.10, freeResearch: true },
   { minInfluence: 60, title: '시장의 큰 손', purchaseDiscount: 0.10, eventBonus: 0.15, freeResearch: true },
   { minInfluence: 80, title: '자본가', purchaseDiscount: 0.15, eventBonus: 0.20, freeResearch: true },
 ]
