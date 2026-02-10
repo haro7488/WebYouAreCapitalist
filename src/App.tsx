@@ -1,10 +1,18 @@
+import { useUIStore } from '@stores/uiStore'
+import { Modal } from '@components/common'
+import { MainMenuScreen, GameScreen, RunResultScreen, MetaShopScreen } from '@screens/index'
+
 function App() {
+  const currentScreen = useUIStore((s) => s.currentScreen)
+
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <h1 className="text-3xl font-bold text-money-400">
-        You Are Capitalist
-      </h1>
-    </div>
+    <>
+      {currentScreen === 'mainMenu' && <MainMenuScreen />}
+      {currentScreen === 'game' && <GameScreen />}
+      {currentScreen === 'runResult' && <RunResultScreen />}
+      {currentScreen === 'metaShop' && <MetaShopScreen />}
+      <Modal />
+    </>
   )
 }
 
