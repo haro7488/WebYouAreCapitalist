@@ -30,6 +30,17 @@
 - [x] 게임 루프 통합
   - GameScreen useEffect: resolution 자동 전환, 게임 오버 감지, phase별 뷰 초기화
 
+- [x] 프로젝트 문서화 (README.md, docs/API.md)
+  - README.md: 개발자 온보딩 + 프로젝트 개요 + 아키텍처 + 개발 가이드
+  - docs/API.md: 게임 엔진 공개 API 레퍼런스 (타입/상수/함수 전체)
+- [x] 게임 요소 상세 기획 (GDD 수정 + docs/design/ 5개 문서)
+  - GDD.md: 코드 기준 10개 불일치 수정 (영향력 티어, 업그레이드 배율, 이벤트 효과, 메타 수치 등)
+  - docs/design/assets.md: 자산 시스템 상세 (섹터 정체성, 15개 자산 프로필, ROI, 업그레이드/매각)
+  - docs/design/market.md: 시장 시스템 상세 (이중 변동, 글로벌 사이클, 섹터 트렌드)
+  - docs/design/events.md: 이벤트 시스템 상세 (12개 이벤트 카드, 발생 메커니즘, 전략)
+  - docs/design/progression.md: 진행 시스템 상세 (영향력, 지배력, 점수, 메타)
+  - docs/design/balance.md: 밸런스 분석 (ROI 비교, 손익분기, 궤적 시뮬레이션, 5개 이슈)
+
 ### 진행 중
 (없음)
 
@@ -44,3 +55,5 @@
 | 2026-02-09 | UI 컴포넌트 구현 (common/ 7개, game/ 9개) |
 | 2026-02-09 | 자본가 컨셉 리디자인: 게임 엔진 전면 재작성 + GDD + 스토어/컴포넌트 업데이트 |
 | 2026-02-10 | 화면 구현 (4개 스크린 + App.tsx 라우팅 + 게임 루프 통합) |
+| 2026-02-11 | 프로젝트 문서화 보완 (README.md + docs/API.md) |
+| 2026-02-11 | 게임 요소 상세 기획: GDD 코드 기준 수정 + docs/design/ 5개 문서 작성 |
