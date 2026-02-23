@@ -146,6 +146,9 @@ export interface GameState {
   currentEvent: GameEvent | null
   eventHistory: string[] // 발생한 이벤트 ID 목록
 
+  // AI 경쟁사 전략 매핑 (companyId → strategyId)
+  aiStrategies: Record<string, string>
+
   // RNG 상태
   rngState: number
 

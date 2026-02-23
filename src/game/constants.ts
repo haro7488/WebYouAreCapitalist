@@ -18,6 +18,7 @@ export const BASE_ACTION_POINTS = 2
 export const INITIAL_MARKET_POOL = 20_000 // 시장 풀 초기 화폐량
 export const PLAYER_COMPANY_ID = 'player' // 플레이어 기업 ID
 export const DEFAULT_COMPANY_NAME = '내 기업' // 플레이어 기업 기본 이름
+export const DEFAULT_COMPETITOR_COUNT = 3 // 기본 AI 경쟁사 수
 
 // 섹터별 유입률 (매 턴 marketPool에서 해당 섹터로 유입되는 비율)
 export const SECTOR_FLOW_RATE: Record<Sector, number> = {

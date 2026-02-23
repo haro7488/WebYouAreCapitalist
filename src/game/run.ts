@@ -58,6 +58,8 @@ export function startNewRun(meta: MetaState): GameState {
     currentEvent: null,
     eventHistory: [],
 
+    aiStrategies: {},
+
     rngState: rng.getState(),
 
     isGameOver: false,
