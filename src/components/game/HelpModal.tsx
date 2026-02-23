@@ -26,7 +26,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-slate-800 rounded-lg w-full max-w-lg max-h-[80vh] flex flex-col"
+        className="bg-slate-800 rounded-lg w-[calc(100vw-2rem)] max-w-3xl h-[calc(100vh-4rem)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
