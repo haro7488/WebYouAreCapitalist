@@ -1,7 +1,9 @@
 import { Button, Card, StatRow, MoneyDisplay } from '@components/common'
+import { DevPanel } from '@components/game'
 import { useGameStore } from '@stores/gameStore'
 import { useMetaStore } from '@stores/metaStore'
 import { useUIStore } from '@stores/uiStore'
+import type { GameConfig } from '@game/types'
 
 // 메인 메뉴 화면
 export function MainMenuScreen() {
@@ -18,6 +20,11 @@ export function MainMenuScreen() {
 
   const handleNewGame = () => {
     startRun()
+    navigateTo('game')
+  }
+
+  const handleDevStart = (config: Partial<GameConfig>) => {
+    startRun(config)
     navigateTo('game')
   }
 
@@ -52,6 +59,8 @@ export function MainMenuScreen() {
             메타 상점
           </Button>
         </div>
+
+        <DevPanel onStart={handleDevStart} />
       </div>
     </div>
   )

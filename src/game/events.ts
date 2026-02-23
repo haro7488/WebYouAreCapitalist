@@ -1,6 +1,6 @@
 import type { GameEvent, GameState } from './types'
 import type { Rng } from './utils'
-import { EVENT_BASE_PROBABILITY, VOLATILITY_EVENT_BONUS } from './constants'
+import { VOLATILITY_EVENT_BONUS } from './constants'
 
 /** 이벤트 레지스트리 (12개: 경제 4, 섹터 3, 개인 3, 기회 2) */
 export const EVENT_REGISTRY: GameEvent[] = [
@@ -171,7 +171,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
 
 /** 이벤트 발생 여부 판정 + 이벤트 선택 */
 export function rollForEvent(state: GameState, rng: Rng): GameEvent | null {
-  const probability = EVENT_BASE_PROBABILITY + state.market.volatility * VOLATILITY_EVENT_BONUS
+  const probability = state.config.eventProbability + state.market.volatility * VOLATILITY_EVENT_BONUS
   if (rng.random() > probability) return null
 
   // 조건을 충족하는 이벤트만 필터

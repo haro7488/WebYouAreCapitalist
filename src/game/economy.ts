@@ -1,7 +1,6 @@
 import type { GameState, Company, EventEffect, Sector, DominanceInfo, OwnedAsset } from './types'
 import {
   ASSETS,
-  BASE_EXPENSES,
   SECTOR_TREND_MULTIPLIER,
   DOMINANCE_THRESHOLDS,
   ASSET_UPGRADE_INCOME_MULTIPLIER,
@@ -195,7 +194,7 @@ export function calculateSectorFlow(
   marketPool: number,
   state: GameState,
 ): number {
-  const flowRate = SECTOR_FLOW_RATE[sector]
+  const flowRate = SECTOR_FLOW_RATE[sector] * state.config.sectorFlowRate
   const marketMult = SECTOR_MARKET_MULTIPLIER[sector][state.market.condition]
   const trendMult = SECTOR_TREND_MULTIPLIER[state.sectorStates[sector].trend]
   return marketPool * flowRate * marketMult * trendMult
@@ -287,7 +286,7 @@ export function calculateCompanyNetIncome(
   const totalIncome = calculateCompanyTotalIncome(company, state)
 
   const revenue = Math.floor(totalIncome * effects.revenueMultiplier!)
-  const expenses = Math.floor(BASE_EXPENSES * effects.expenseMultiplier!)
+  const expenses = Math.floor(state.config.baseExpenses * effects.expenseMultiplier!)
   const directMoney = effects.money ?? 0
 
   return {

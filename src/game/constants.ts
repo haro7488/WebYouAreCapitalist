@@ -1,6 +1,7 @@
 import type {
   Asset,
   AssetTier,
+  GameConfig,
   MarketCondition,
   MetaUpgrade,
   Sector,
@@ -438,3 +439,15 @@ export const META_UPGRADES: MetaUpgrade[] = [
     }),
   },
 ]
+
+// === 기본 게임 설정 ===
+export const DEFAULT_GAME_CONFIG: GameConfig = {
+  startingMoney: STARTING_MONEY,
+  marketPool: INITIAL_MARKET_POOL,
+  competitorCount: DEFAULT_COMPETITOR_COUNT,
+  maxTurns: MAX_TURNS,
+  baseAP: BASE_ACTION_POINTS,
+  baseExpenses: BASE_EXPENSES,
+  sectorFlowRate: 1.0, // 배율 (1.0 = 기본값)
+  eventProbability: EVENT_BASE_PROBABILITY,
+}
