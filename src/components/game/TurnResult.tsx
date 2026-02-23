@@ -11,7 +11,9 @@ export function TurnResult() {
 
   if (!gameState) return null
 
-  const { turn, revenue, expenses, money, influence, ownedAssets, market, isGameOver } = gameState
+  const player = gameState.companies[0]
+  const { turn, market, isGameOver } = gameState
+  const { revenue, expenses, cash: money, influence, assets: ownedAssets } = player
   const netIncome = revenue - expenses
   const assetValue = ownedAssets.reduce((sum, a) => sum + a.currentValue, 0)
   const netWorth = money + assetValue

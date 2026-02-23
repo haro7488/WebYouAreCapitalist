@@ -34,7 +34,8 @@ export function EventCard() {
 
   if (!gameState?.currentEvent) return null
 
-  const { currentEvent, ownedAssets } = gameState
+  const { currentEvent } = gameState
+  const ownedAssets = gameState.companies[0].assets
 
   // 기본 선택지
   const allChoices = [...currentEvent.choices]

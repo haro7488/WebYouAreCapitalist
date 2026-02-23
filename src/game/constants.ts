@@ -3,6 +3,7 @@ import type {
   AssetTier,
   MarketCondition,
   MetaUpgrade,
+  Sector,
   SectorTrend,
 } from './types'
 
@@ -12,6 +13,29 @@ export const MAX_TURNS = 30
 export const BASE_EXPENSES = 15 // 기본 턴당 지출 (유지비)
 export const STARTING_INFLUENCE = 0
 export const BASE_ACTION_POINTS = 2
+
+// === 시장 풀 상수 ===
+export const INITIAL_MARKET_POOL = 20_000 // 시장 풀 초기 화폐량
+export const PLAYER_COMPANY_ID = 'player' // 플레이어 기업 ID
+export const DEFAULT_COMPANY_NAME = '내 기업' // 플레이어 기업 기본 이름
+
+// 섹터별 유입률 (매 턴 marketPool에서 해당 섹터로 유입되는 비율)
+export const SECTOR_FLOW_RATE: Record<Sector, number> = {
+  food: 0.002,
+  tech: 0.0025,
+  realEstate: 0.002,
+  retail: 0.002,
+  finance: 0.0025,
+}
+
+// 섹터별 시장 상태 민감도 (글로벌 시장 조건에 따른 섹터 유입량 배율)
+export const SECTOR_MARKET_MULTIPLIER: Record<Sector, Record<MarketCondition, number>> = {
+  food: { boom: 1.3, stable: 1.0, recession: 0.8 },
+  tech: { boom: 1.7, stable: 0.9, recession: 0.4 },
+  realEstate: { boom: 1.2, stable: 1.05, recession: 0.9 },
+  retail: { boom: 1.4, stable: 1.0, recession: 0.6 },
+  finance: { boom: 1.8, stable: 0.9, recession: 0.2 },
+}
 
 // === 시장 상수 ===
 export const MARKET_CHANGE_MIN_TURNS = 4

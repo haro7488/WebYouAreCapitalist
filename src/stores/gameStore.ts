@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { GameState, TurnAction, RunResult } from '@game/types'
+import type { GameState, Company, TurnAction, RunResult } from '@game/types'
 import {
   startNewRun,
   endRun,
@@ -45,6 +45,11 @@ interface GameStoreActions {
 }
 
 export type GameStore = GameStoreState & GameStoreActions
+
+/** 내 기업(companies[0]) 반환 헬퍼 */
+export function getMyCompany(state: GameState): Company {
+  return state.companies[0]
+}
 
 // === 초기 상태 ===
 

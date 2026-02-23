@@ -4,8 +4,8 @@ import { AssetCard } from './AssetCard'
 
 /** 구매 가능한 자산 목록 그리드 */
 export function AssetMarket() {
-  const money = useGameStore((s) => s.gameState?.money ?? 0)
-  const actionPoints = useGameStore((s) => s.gameState?.actionPoints ?? 0)
+  const money = useGameStore((s) => s.gameState?.companies[0].cash ?? 0)
+  const actionPoints = useGameStore((s) => s.gameState?.companies[0].ap ?? 0)
   const submitAction = useGameStore((s) => s.submitAction)
 
   return (

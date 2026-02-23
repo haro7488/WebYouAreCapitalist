@@ -1,10 +1,13 @@
-import type { GameState, MetaState, RunResult, Sector, DominanceInfo } from './types'
+import type { GameState, Company, MetaState, RunResult, Sector, DominanceInfo } from './types'
 import {
   STARTING_MONEY,
   MAX_TURNS,
   STARTING_INFLUENCE,
   BASE_ACTION_POINTS,
   META_CURRENCY_RATE,
+  INITIAL_MARKET_POOL,
+  PLAYER_COMPANY_ID,
+  DEFAULT_COMPANY_NAME,
 } from './constants'
 import { createRng, generateRunId, generateSeed } from './utils'
 import { createInitialMarket, createInitialSectorStates } from './market'
@@ -17,7 +20,25 @@ export function startNewRun(meta: MetaState): GameState {
   const rng = createRng(seed)
   const metaEffects = getMetaEffects(meta)
 
-  const maxActionPoints = BASE_ACTION_POINTS + metaEffects.extraActionPoints
+  const maxAp = BASE_ACTION_POINTS + metaEffects.extraActionPoints
+  const startingCash = STARTING_MONEY + metaEffects.startingMoneyBonus
+
+  const playerCompany: Company = {
+    id: PLAYER_COMPANY_ID,
+    name: DEFAULT_COMPANY_NAME,
+    cash: startingCash,
+    assets: [],
+    influence: STARTING_INFLUENCE + metaEffects.startingInfluence,
+    ap: maxAp,
+    maxAp,
+    revenue: 0,
+    expenses: 0,
+    actionsThisTurn: [],
+    researchResult: null,
+    activeEffects: [],
+    netWorth: startingCash,
+    dominatedSectors: [],
+  }
 
   return {
     runId: generateRunId(),
@@ -26,21 +47,14 @@ export function startNewRun(meta: MetaState): GameState {
     maxTurns: MAX_TURNS + metaEffects.extraTurns,
     phase: 'planning',
 
-    money: STARTING_MONEY + metaEffects.startingMoneyBonus,
-    revenue: 0,
-    expenses: 0,
-    influence: STARTING_INFLUENCE + metaEffects.startingInfluence,
+    companies: [playerCompany],
+
+    marketPool: INITIAL_MARKET_POOL,
+    totalMoney: INITIAL_MARKET_POOL + startingCash,
 
     market: createInitialMarket(rng),
     sectorStates: createInitialSectorStates(rng),
-    ownedAssets: [],
 
-    actionPoints: maxActionPoints,
-    maxActionPoints,
-    actionsThisTurn: [],
-    researchResult: null,
-
-    activeEffects: [],
     currentEvent: null,
     eventHistory: [],
 
@@ -53,25 +67,26 @@ export function startNewRun(meta: MetaState): GameState {
 
 /** 런 종료 처리 */
 export function endRun(finalState: GameState, meta: MetaState): { result: RunResult; updatedMeta: MetaState } {
+  const player = finalState.companies[0]
   const score = calculateScore(finalState)
   const netWorth = calculateNetWorth(finalState)
   const metaCurrencyEarned = Math.max(1, Math.floor(score * META_CURRENCY_RATE))
 
   // 지배 섹터 계산
-  const dominance = calculateDominance(finalState.ownedAssets)
+  const dominance = calculateDominance(player.assets)
   const dominatedSectors = (Object.entries(dominance) as [Sector, DominanceInfo][])
     .filter(([, info]) => info.level === 'dominant')
     .map(([sector]) => sector)
 
   const result: RunResult = {
-    finalMoney: finalState.money,
+    finalMoney: player.cash,
     netWorth,
     totalTurns: finalState.turn,
     score,
     metaCurrencyEarned,
-    ownedAssets: finalState.ownedAssets,
+    ownedAssets: player.assets,
     dominatedSectors,
-    maxInfluence: finalState.influence,
+    maxInfluence: player.influence,
   }
 
   const updatedMeta: MetaState = {

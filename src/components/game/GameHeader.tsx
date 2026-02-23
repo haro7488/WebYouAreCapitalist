@@ -13,7 +13,9 @@ export function GameHeader({ onHome }: GameHeaderProps) {
 
   if (!gameState) return null
 
-  const { turn, maxTurns, money, influence, actionPoints, maxActionPoints, market } = gameState
+  const player = gameState.companies[0]
+  const { turn, maxTurns, market } = gameState
+  const { cash: money, influence, ap: actionPoints, maxAp: maxActionPoints } = player
 
   return (
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700 p-3">

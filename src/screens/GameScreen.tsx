@@ -69,7 +69,9 @@ export function GameScreen() {
 
   if (!gameState) return null
 
-  const { phase, ownedAssets, money, activeEffects, actionPoints, influence } = gameState
+  const { phase } = gameState
+  const player = gameState.companies[0]
+  const { assets: ownedAssets, cash: money, activeEffects, ap: actionPoints, influence } = player
 
   // planning 페이즈: 요약 대시보드용 계산
   const totalAssetValue = ownedAssets.reduce((sum, a) => sum + a.currentValue, 0)
@@ -170,7 +172,7 @@ export function GameScreen() {
 
           {showResearchPanel && (
             <ResearchPanel
-              researchResult={gameState.researchResult}
+              researchResult={player.researchResult}
               onResearch={(target, sector) => submitAction({ type: 'research', target, sector })}
               onClose={() => setShowResearchPanel(false)}
               actionPoints={actionPoints}

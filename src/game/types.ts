@@ -100,6 +100,30 @@ export type TurnAction =
   | { type: 'research'; target: 'market' | 'sector' | 'event'; sector?: Sector }
   | { type: 'endTurn' }
 
+// === 기업 엔티티 (플레이어/AI 공통) ===
+export interface Company {
+  id: string
+  name: string
+  cash: number // 보유 현금
+  assets: OwnedAsset[] // 보유 자산
+  influence: number // 0-100, 영향력
+  ap: number // 이번 턴 남은 AP
+  maxAp: number // 이번 턴 최대 AP
+
+  // 턴별 계산 결과
+  revenue: number // 이번 턴 수익
+  expenses: number // 이번 턴 지출
+
+  // 턴별 추적
+  actionsThisTurn: TurnAction[]
+  researchResult: ResearchResult | null
+  activeEffects: EventEffect[]
+
+  // 매 턴 resolution에서 갱신
+  netWorth: number // cash + Σ(asset value)
+  dominatedSectors: Sector[] // 지배 중인 섹터 목록
+}
+
 // === 핵심 게임 상태 ===
 export interface GameState {
   runId: string
@@ -108,22 +132,15 @@ export interface GameState {
   maxTurns: number
   phase: TurnPhase
 
-  money: number
-  revenue: number // 이번 턴 수익
-  expenses: number // 이번 턴 지출
-  influence: number // 0-100, 영향력
+  // 기업 배열 (동일 엔티티 원칙: human/ai 구분 없음)
+  companies: Company[]
+
+  // 시장 풀 경제 모델
+  marketPool: number // 시장에 남아있는 총 화폐
+  totalMoney: number // 초기 총 화폐량 (불변, 보존 검증용)
 
   market: MarketState
   sectorStates: Record<Sector, SectorState> // 섹터별 트렌드 상태
-  ownedAssets: OwnedAsset[] // 보유 자산
-
-  actionPoints: number // 이번 턴 남은 AP
-  maxActionPoints: number // 이번 턴 최대 AP
-  actionsThisTurn: TurnAction[] // 이번 턴 수행한 액션 기록
-  researchResult: ResearchResult | null // 시장 조사 결과
-
-  // 턴 임시 효과
-  activeEffects: EventEffect[]
 
   // 이벤트
   currentEvent: GameEvent | null

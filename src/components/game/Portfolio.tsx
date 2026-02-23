@@ -20,8 +20,10 @@ export function Portfolio() {
 
   if (!gameState) return null
 
-  const { ownedAssets, market, actionPoints } = gameState
-  const hasAP = actionPoints > 0
+  const player = gameState.companies[0]
+  const { assets: ownedAssets } = player
+  const { market } = gameState
+  const hasAP = player.ap > 0
 
   // 자산 ID → 정의 매핑
   const assetMap = new Map(ASSETS.map((a) => [a.id, a]))

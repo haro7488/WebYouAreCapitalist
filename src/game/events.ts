@@ -149,7 +149,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '경쟁사를 인수할 수 있는 기회가 왔습니다!',
     minTurn: 12,
     weight: 4,
-    condition: (state) => state.ownedAssets.length >= 3,
+    condition: (state) => state.companies[0].assets.length >= 3,
     choices: [
       { id: 'acquire', text: '인수를 진행한다 (-$300)', effect: { money: -300, freeAsset: 'restaurant', influence: 15 } },
       { id: 'pass', text: '이번 기회는 넘긴다', effect: { influence: -2 } },
@@ -161,7 +161,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '유망 기업의 IPO에 참여할 기회입니다!',
     minTurn: 10,
     weight: 4,
-    condition: (state) => state.influence >= 40,
+    condition: (state) => state.companies[0].influence >= 40,
     choices: [
       { id: 'invest-ipo', text: 'IPO에 투자한다 (-$400)', effect: { money: -400, freeAsset: 'app-startup', influence: 20 } },
       { id: 'skip-ipo', text: '이번 IPO는 건너뛴다', effect: { influence: -5 } },
