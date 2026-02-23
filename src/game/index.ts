@@ -90,3 +90,5 @@ export { getMetaEffects, purchaseUpgrade, createInitialMeta } from './meta'
 // Glossary
 export { GLOSSARY, GLOSSARY_CATEGORIES } from './glossary'
 export type { GlossaryCategory, GlossaryEntry } from './glossary'
+export { TRAIT_REGISTRY, findTrait } from './traits'
+export type { Trait, TraitType } from './traits'

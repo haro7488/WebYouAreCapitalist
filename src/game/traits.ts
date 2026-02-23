@@ -1,0 +1,32 @@
+// 특성(Trait) 시스템 — 샘플 데이터 (시스템 연동은 이후 구현)
+
+export type TraitType = 'positive' | 'negative'
+
+export interface Trait {
+  id: string
+  name: string
+  type: TraitType
+  icon: string  // emoji 아이콘 (이후 이미지로 교체 가능)
+  description: string
+}
+
+/** 샘플 특성 레지스트리 */
+export const TRAIT_REGISTRY: Trait[] = [
+  // === 좋은 특성 ===
+  { id: 'sharp-eye', name: '투자 안목', type: 'positive', icon: '👁️', description: '자산 매입 시 10% 할인' },
+  { id: 'networker', name: '인맥왕', type: 'positive', icon: '🤝', description: '영향력 획득량 +20%' },
+  { id: 'efficient', name: '효율 경영', type: 'positive', icon: '⚙️', description: '기본 지출 -30%' },
+  { id: 'lucky', name: '행운아', type: 'positive', icon: '🍀', description: '긍정적 이벤트 확률 증가' },
+  { id: 'visionary', name: '선구안', type: 'positive', icon: '🔮', description: '섹터 트렌드 1턴 먼저 확인' },
+
+  // === 나쁜 특성 ===
+  { id: 'reckless', name: '무모함', type: 'negative', icon: '💥', description: '매각 시 가치 -15%' },
+  { id: 'notorious', name: '악명', type: 'negative', icon: '📰', description: '부정적 이벤트 확률 증가' },
+  { id: 'wasteful', name: '낭비벽', type: 'negative', icon: '💸', description: '기본 지출 +25%' },
+  { id: 'paranoid', name: '의심병', type: 'negative', icon: '😰', description: '조사 비용 AP +1' },
+  { id: 'slow', name: '우유부단', type: 'negative', icon: '🐢', description: '이벤트 선택지 하나 잠금' },
+]
+
+export function findTrait(id: string): Trait | undefined {
+  return TRAIT_REGISTRY.find((t) => t.id === id)
+}
