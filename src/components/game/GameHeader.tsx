@@ -1,15 +1,18 @@
+import { useState } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { MoneyDisplay, ProgressBar } from '@components/common'
 import { MarketIndicator } from './MarketIndicator'
-import { Home } from 'lucide-react'
+import { HelpModal } from './HelpModal'
+import { Home, HelpCircle } from 'lucide-react'
 
 interface GameHeaderProps {
   onHome?: () => void
 }
 
-/** 게임 상단 헤더: 홈, 턴, 자금, 영향력, AP, 시장 상태 표시 */
+/** 게임 상단 헤더: 홈, 도움말, 턴, 자금, 영향력, AP, 시장 상태 표시 */
 export function GameHeader({ onHome }: GameHeaderProps) {
   const gameState = useGameStore((s) => s.gameState)
+  const [showHelp, setShowHelp] = useState(false)
 
   if (!gameState) return null
 
@@ -18,19 +21,29 @@ export function GameHeader({ onHome }: GameHeaderProps) {
   const { cash: money, influence, ap: actionPoints, maxAp: maxActionPoints } = player
 
   return (
+    <>
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700 p-3">
       {/* 모바일: 2행 그리드 / 데스크톱: 1행 flex */}
       <div className="grid grid-cols-2 gap-2 md:flex md:items-center md:justify-between">
-        {/* 홈 버튼 */}
-        {onHome && (
+        {/* 홈 + 도움말 버튼 */}
+        <div className="flex items-center gap-1">
+          {onHome && (
+            <button
+              onClick={onHome}
+              className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+              aria-label="메인 메뉴"
+            >
+              <Home size={18} />
+            </button>
+          )}
           <button
-            onClick={onHome}
+            onClick={() => setShowHelp(true)}
             className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-            aria-label="메인 메뉴"
+            aria-label="도움말"
           >
-            <Home size={18} />
+            <HelpCircle size={18} />
           </button>
-        )}
+        </div>
 
         {/* 턴 표시 */}
         <span className="text-sm font-medium text-slate-300">
@@ -58,5 +71,7 @@ export function GameHeader({ onHome }: GameHeaderProps) {
         </div>
       </div>
     </header>
+    {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+    </>
   )
 }

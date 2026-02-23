@@ -86,3 +86,7 @@ export { startNewRun, endRun } from './run'
 
 // Meta
 export { getMetaEffects, purchaseUpgrade, createInitialMeta } from './meta'
+
+// Glossary
+export { GLOSSARY, GLOSSARY_CATEGORIES } from './glossary'
+export type { GlossaryCategory, GlossaryEntry } from './glossary'
