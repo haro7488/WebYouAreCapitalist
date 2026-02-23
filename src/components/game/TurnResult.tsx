@@ -2,6 +2,7 @@ import { useGameStore } from '@stores/gameStore'
 import { Card, StatRow, MoneyDisplay, Button } from '@components/common'
 import { MarketIndicator } from './MarketIndicator'
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react'
+import { ASSETS } from '@game/index'
 
 /** 턴 결과 요약 카드 */
 export function TurnResult() {
@@ -61,6 +62,37 @@ export function TurnResult() {
         <span className="text-sm text-slate-400">시장 상태</span>
         <MarketIndicator condition={market.condition} />
       </div>
+
+      {/* 경쟁사 주요 행동 */}
+      {(() => {
+        const competitors = gameState.companies.slice(1)
+        const assetMap = new Map(ASSETS.map((a) => [a.id, a]))
+        const actions = competitors.flatMap((c) =>
+          c.actionsThisTurn
+            .filter((a): a is { type: 'buy'; assetId: string } => a.type === 'buy')
+            .map((a) => {
+              const asset = assetMap.get(a.assetId)
+              const sectorLabels: Record<string, string> = {
+                food: '식품', tech: '기술', realEstate: '부동산', retail: '유통', finance: '금융',
+              }
+              return asset
+                ? `${c.name}이(가) ${sectorLabels[asset.sector] ?? asset.sector} 섹터에 투자했습니다`
+                : null
+            })
+            .filter(Boolean),
+        )
+        if (actions.length === 0) return null
+        return (
+          <div className="mb-4 space-y-1">
+            <span className="text-xs font-medium text-slate-400">경쟁사 동향</span>
+            {actions.map((msg, i) => (
+              <div key={i} className="text-xs text-slate-300 bg-slate-700/50 rounded px-2 py-1">
+                {msg}
+              </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* 다음 턴 또는 결과 보기 */}
       <Button

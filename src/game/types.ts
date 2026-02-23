@@ -188,6 +188,13 @@ export interface MetaState {
 }
 
 // === 런 결과 ===
+export interface RunResultRanking {
+  name: string
+  netWorth: number
+  dominatedSectors: Sector[]
+  isPlayer: boolean
+}
+
 export interface RunResult {
   finalMoney: number
   netWorth: number // 현금 + 자산 가치
@@ -197,4 +204,5 @@ export interface RunResult {
   ownedAssets: OwnedAsset[]
   dominatedSectors: Sector[]
   maxInfluence: number
+  rankings: RunResultRanking[] // 순자산 내림차순 정렬된 전체 기업 순위
 }

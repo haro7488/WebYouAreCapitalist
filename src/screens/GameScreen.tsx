@@ -162,7 +162,16 @@ export function GameScreen() {
         )}
 
         {/* Result 페이즈 */}
-        {phase === 'result' && <TurnResult />}
+        {phase === 'result' && (
+          <div className="flex gap-4 flex-col lg:flex-row">
+            <div className="w-full lg:w-72 shrink-0">
+              <Leaderboard />
+            </div>
+            <div className="flex-1 min-w-0">
+              <TurnResult />
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Planning 페이즈에서만 액션바 표시 */}
