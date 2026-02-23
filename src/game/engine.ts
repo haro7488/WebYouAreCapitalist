@@ -587,7 +587,8 @@ export function submitAction(state: GameState, action: TurnAction): GameState {
   const newPlayer = getPlayerCompany(newState)
 
   // endTurn이거나 AP 소진 → AI 턴 처리 → 이벤트 체크 → 다음 페이즈
-  if (action.type === 'endTurn' || newPlayer.ap <= 0) {
+  // 단, 조사 결과가 있으면 플레이어가 확인할 수 있도록 planning 유지
+  if (action.type === 'endTurn' || (newPlayer.ap <= 0 && !newPlayer.researchResult)) {
     // AI 경쟁사 행동 처리
     let afterAI = processAICompanies(newState)
 
