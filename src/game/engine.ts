@@ -1,4 +1,4 @@
-import type { GameState, Company, TurnAction, EventChoice, OwnedAsset, Sector, ResearchResult, MarketCondition } from './types'
+import type { GameState, Company, TurnAction, EventChoice, GameEvent, OwnedAsset, Sector, ResearchResult, MarketCondition } from './types'
 import {
   ASSETS,
   ASSET_UPGRADE_COST_RATIO,
@@ -23,6 +23,7 @@ import {
 } from './economy'
 import { updateMarket, updateSectorTrends } from './market'
 import { rollForEvent } from './events'
+import { getAIActions, getAIEventChoice } from './competitor/ai'
 
 // === 편의 함수 ===
 
@@ -31,105 +32,107 @@ function withPlayer(state: GameState, updated: Company): GameState {
   return { ...state, companies: updateCompany(state, 0, updated) }
 }
 
-// === 액션 처리 ===
+/** 특정 인덱스의 기업 상태를 교체한 새 GameState 반환 */
+function withCompany(state: GameState, index: number, updated: Company): GameState {
+  return { ...state, companies: updateCompany(state, index, updated) }
+}
 
-/** 자산 매입 */
-function applyBuy(state: GameState, assetId: string): GameState {
+// === 액션 처리 (Company 인덱스 기반 — 플레이어/AI 공통) ===
+
+/** 특정 기업의 자산 매입 */
+function applyBuyFor(state: GameState, companyIndex: number, assetId: string): GameState {
   const asset = ASSETS.find((a) => a.id === assetId)
   if (!asset) return state
 
-  const player = getPlayerCompany(state)
+  const company = state.companies[companyIndex]
+  if (!company) return state
 
   // 할인 적용: 영향력 티어 할인 + 이벤트 nextPurchaseDiscount
-  const influenceTier = getInfluenceTier(player.influence)
-  const nextDiscount = player.activeEffects.reduce(
+  const influenceTier = getInfluenceTier(company.influence)
+  const nextDiscount = company.activeEffects.reduce(
     (acc, e) => acc + (e.nextPurchaseDiscount ?? 0), 0,
   )
   const totalDiscount = influenceTier.purchaseDiscount + nextDiscount
   const cost = Math.floor(asset.cost * (1 - totalDiscount))
-  if (player.cash < cost) return state
+  if (company.cash < cost) return state
 
   const newOwned: OwnedAsset = {
     assetId: asset.id,
     purchaseTurn: state.turn,
     purchasePrice: cost,
     upgradeLevel: 0,
-    currentValue: asset.cost, // 현재 가치는 원가 기준
+    currentValue: asset.cost,
   }
 
   const influenceGain = INFLUENCE_PER_PURCHASE[asset.tier] ?? 0
 
-  // nextPurchaseDiscount 소모: 사용된 효과에서 제거
   const updatedEffects = nextDiscount > 0
-    ? player.activeEffects.map((e) => e.nextPurchaseDiscount ? { ...e, nextPurchaseDiscount: 0 } : e)
-    : player.activeEffects
+    ? company.activeEffects.map((e) => e.nextPurchaseDiscount ? { ...e, nextPurchaseDiscount: 0 } : e)
+    : company.activeEffects
 
-  const updatedPlayer: Company = {
-    ...player,
-    cash: player.cash - cost,
-    assets: [...player.assets, newOwned],
-    influence: clamp(player.influence + influenceGain, 0, 100),
-    ap: player.ap - 1,
-    actionsThisTurn: [...player.actionsThisTurn, { type: 'buy', assetId }],
+  const updated: Company = {
+    ...company,
+    cash: company.cash - cost,
+    assets: [...company.assets, newOwned],
+    influence: clamp(company.influence + influenceGain, 0, 100),
+    ap: company.ap - 1,
+    actionsThisTurn: [...company.actionsThisTurn, { type: 'buy', assetId }],
     activeEffects: updatedEffects,
   }
 
-  // 매입 비용은 시장 풀로 이동
   return {
-    ...withPlayer(state, updatedPlayer),
+    ...withCompany(state, companyIndex, updated),
     marketPool: state.marketPool + cost,
   }
 }
 
-/** 자산 매각 */
-function applySell(state: GameState, ownedIndex: number): GameState {
-  const player = getPlayerCompany(state)
-  const owned = player.assets[ownedIndex]
+/** 특정 기업의 자산 매각 */
+function applySellFor(state: GameState, companyIndex: number, ownedIndex: number): GameState {
+  const company = state.companies[companyIndex]
+  if (!company) return state
+  const owned = company.assets[ownedIndex]
   if (!owned) return state
 
   const asset = ASSETS.find((a) => a.id === owned.assetId)
   if (!asset) return state
 
-  // 매각가 = 현재가치 x (기본비율 + 시장비율 x 시장배율)
   const marketMult = asset.marketMultiplier[state.market.condition]
   const sellValue = Math.floor(owned.currentValue * (SELL_BASE_RATIO + SELL_MARKET_RATIO * marketMult))
 
-  const newAssets = [...player.assets]
+  const newAssets = [...company.assets]
   newAssets.splice(ownedIndex, 1)
 
-  const updatedPlayer: Company = {
-    ...player,
-    cash: player.cash + sellValue,
+  const updated: Company = {
+    ...company,
+    cash: company.cash + sellValue,
     assets: newAssets,
-    ap: player.ap - 1,
-    actionsThisTurn: [...player.actionsThisTurn, { type: 'sell', ownedIndex }],
+    ap: company.ap - 1,
+    actionsThisTurn: [...company.actionsThisTurn, { type: 'sell', ownedIndex }],
   }
 
-  // 매각: 자산 가치가 시장 풀로 반환, 매각 대금은 기업으로
-  // 풀 변화 = (자산 가치 - 매각 대금) = 차액이 풀로
   const poolChange = owned.currentValue - sellValue
 
   return {
-    ...withPlayer(state, updatedPlayer),
+    ...withCompany(state, companyIndex, updated),
     marketPool: state.marketPool + poolChange,
   }
 }
 
-/** 자산 업그레이드 */
-function applyUpgrade(state: GameState, ownedIndex: number): GameState {
-  const player = getPlayerCompany(state)
-  const owned = player.assets[ownedIndex]
+/** 특정 기업의 자산 업그레이드 */
+function applyUpgradeFor(state: GameState, companyIndex: number, ownedIndex: number): GameState {
+  const company = state.companies[companyIndex]
+  if (!company) return state
+  const owned = company.assets[ownedIndex]
   if (!owned) return state
   if (owned.upgradeLevel >= ASSET_MAX_UPGRADE_LEVEL) return state
 
   const asset = ASSETS.find((a) => a.id === owned.assetId)
   if (!asset) return state
 
-  // 업그레이드 비용 = 원가 x 비율 x (현재레벨+1)
   const upgradeCost = Math.floor(asset.cost * ASSET_UPGRADE_COST_RATIO * (owned.upgradeLevel + 1))
-  if (player.cash < upgradeCost) return state
+  if (company.cash < upgradeCost) return state
 
-  const newAssets = [...player.assets]
+  const newAssets = [...company.assets]
   const newValue = owned.currentValue * ASSET_UPGRADE_INCOME_MULTIPLIER
   newAssets[ownedIndex] = {
     ...owned,
@@ -137,22 +140,35 @@ function applyUpgrade(state: GameState, ownedIndex: number): GameState {
     currentValue: newValue,
   }
 
-  const updatedPlayer: Company = {
-    ...player,
-    cash: player.cash - upgradeCost,
+  const updated: Company = {
+    ...company,
+    cash: company.cash - upgradeCost,
     assets: newAssets,
-    ap: player.ap - 1,
-    actionsThisTurn: [...player.actionsThisTurn, { type: 'upgrade', ownedIndex }],
+    ap: company.ap - 1,
+    actionsThisTurn: [...company.actionsThisTurn, { type: 'upgrade', ownedIndex }],
   }
 
-  // 업그레이드 비용은 풀로. 가치 증가분은 풀에서 차감.
   const valueIncrease = newValue - owned.currentValue
   const poolChange = upgradeCost - valueIncrease
 
   return {
-    ...withPlayer(state, updatedPlayer),
+    ...withCompany(state, companyIndex, updated),
     marketPool: state.marketPool + poolChange,
   }
+}
+
+// === 하위 호환 래퍼 (플레이어 = companies[0]) ===
+
+function applyBuy(state: GameState, assetId: string): GameState {
+  return applyBuyFor(state, 0, assetId)
+}
+
+function applySell(state: GameState, ownedIndex: number): GameState {
+  return applySellFor(state, 0, ownedIndex)
+}
+
+function applyUpgrade(state: GameState, ownedIndex: number): GameState {
+  return applyUpgradeFor(state, 0, ownedIndex)
 }
 
 /** 시장 조사 */
@@ -228,6 +244,85 @@ function applyAction(state: GameState, action: TurnAction): GameState {
       })
     }
   }
+}
+
+// === AI 경쟁사 턴 처리 ===
+
+/** 모든 AI 경쟁사의 Planning 행동을 처리 */
+function processAICompanies(state: GameState): GameState {
+  let current = state
+
+  // companies[1+]이 AI
+  for (let i = 1; i < current.companies.length; i++) {
+    const company = current.companies[i]
+    const actions = getAIActions(current, company)
+
+    for (const action of actions) {
+      if (action.type === 'endTurn') break
+      switch (action.type) {
+        case 'buy':
+          current = applyBuyFor(current, i, action.assetId)
+          break
+        case 'sell':
+          current = applySellFor(current, i, action.ownedIndex)
+          break
+        case 'upgrade':
+          current = applyUpgradeFor(current, i, action.ownedIndex)
+          break
+        default:
+          break
+      }
+    }
+  }
+
+  return current
+}
+
+/** AI 경쟁사의 이벤트 선택 적용 */
+function processAIEventChoices(state: GameState, event: GameEvent): GameState {
+  let current = state
+
+  for (let i = 1; i < current.companies.length; i++) {
+    const company = current.companies[i]
+    const choiceId = getAIEventChoice(current, company, event)
+    const choice = event.choices.find((c) => c.id === choiceId)
+    if (!choice) continue
+
+    const effect = choice.effect
+    const updated: Company = {
+      ...company,
+      cash: company.cash + (effect.money ?? 0),
+      influence: clamp(company.influence + (effect.influence ?? 0), 0, 100),
+      activeEffects: [...company.activeEffects, effect],
+    }
+
+    // 무료 자산 획득
+    if (effect.freeAsset) {
+      const asset = ASSETS.find((a) => a.id === effect.freeAsset)
+      if (asset) {
+        updated.assets = [...updated.assets, {
+          assetId: asset.id,
+          purchaseTurn: current.turn,
+          purchasePrice: 0,
+          upgradeLevel: 0,
+          currentValue: asset.cost,
+        }]
+      }
+    }
+
+    // 화폐 이동
+    const moneyEffect = effect.money ?? 0
+    const freeAssetValue = effect.freeAsset
+      ? (ASSETS.find((a) => a.id === effect.freeAsset)?.cost ?? 0)
+      : 0
+
+    current = {
+      ...withCompany(current, i, updated),
+      marketPool: current.marketPool - moneyEffect - freeAssetValue,
+    }
+  }
+
+  return current
 }
 
 // === 이벤트 처리 ===
@@ -403,22 +498,29 @@ export function submitAction(state: GameState, action: TurnAction): GameState {
   const newState = applyAction(state, action)
   const newPlayer = getPlayerCompany(newState)
 
-  // endTurn이거나 AP 소진 → 이벤트 체크 후 다음 페이즈로
+  // endTurn이거나 AP 소진 → AI 턴 처리 → 이벤트 체크 → 다음 페이즈
   if (action.type === 'endTurn' || newPlayer.ap <= 0) {
-    const rng = createRng(newState.rngState)
-    const event = rollForEvent(newState, rng)
+    // AI 경쟁사 행동 처리
+    let afterAI = processAICompanies(newState)
+
+    const rng = createRng(afterAI.rngState)
+    const event = rollForEvent(afterAI, rng)
 
     if (event) {
+      // AI도 이벤트에 대응
+      const afterAIEvent = processAIEventChoices(
+        { ...afterAI, currentEvent: event, rngState: rng.getState() },
+        event,
+      )
       return {
-        ...newState,
+        ...afterAIEvent,
         phase: 'event',
         currentEvent: event,
-        rngState: rng.getState(),
       }
     }
 
     return {
-      ...newState,
+      ...afterAI,
       phase: 'resolution',
       rngState: rng.getState(),
     }
