@@ -88,10 +88,12 @@ export function GameScreen() {
         {/* Planning 페이즈 */}
         {phase === 'planning' && (
           <div className="flex gap-4 flex-col lg:flex-row">
-            {/* 좌측: 기업 순위 현황판 */}
-            <div className="w-full lg:w-72 shrink-0">
-              <Leaderboard />
-            </div>
+            {/* 좌측: 기업 순위 현황판 (현황 탭에서만) */}
+            {planningView === 'summary' && (
+              <div className="w-full lg:w-72 shrink-0">
+                <Leaderboard />
+              </div>
+            )}
 
             {/* 우측: 기존 콘텐츠 */}
             <div className="flex-1 min-w-0">

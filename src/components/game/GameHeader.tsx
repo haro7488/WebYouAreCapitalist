@@ -4,6 +4,8 @@ import { useUIStore } from '@stores/uiStore'
 import { MarketIndicator } from './MarketIndicator'
 import { Home, HelpCircle } from 'lucide-react'
 import { TRAIT_REGISTRY, type Trait } from '@game/traits'
+import { calculateCompanyNetWorth, calculateCompanyTotalIncome } from '@game/economy'
+import { formatMoney } from '@game/utils'
 
 interface GameHeaderProps {
   onHome?: () => void
@@ -77,14 +79,16 @@ export function GameHeader({ onHome }: GameHeaderProps) {
 
   const player = gameState.companies[0]
   const { turn, maxTurns, market } = gameState
-  const { ap: actionPoints, maxAp: maxActionPoints } = player
+  const { ap: actionPoints, maxAp: maxActionPoints, influence } = player
+  const netWorth = calculateCompanyNetWorth(player)
+  const expectedIncome = calculateCompanyTotalIncome(player, gameState)
 
   // TODO: gameState에서 traits 가져오기 (현재 샘플)
   const activeTraits = SAMPLE_TRAITS
 
   return (
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700">
-      {/* Row 1: 홈+도움말 | | 턴 */}
+      {/* Row 1: 홈+도움말 | 영향력·자산·수익 | 턴 */}
       <div className="flex items-center justify-between px-3 pt-2 pb-1">
         <div className="flex items-center gap-1">
           {onHome && (
@@ -103,6 +107,19 @@ export function GameHeader({ onHome }: GameHeaderProps) {
           >
             <HelpCircle size={18} />
           </button>
+        </div>
+
+        {/* 중앙: 핵심 지표 */}
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-purple-400" title="영향력">
+            ⭐ {influence}
+          </span>
+          <span className="text-yellow-400" title="순자산">
+            💰 {formatMoney(netWorth)}
+          </span>
+          <span className={`${expectedIncome >= 0 ? 'text-emerald-400' : 'text-red-400'}`} title="예상 수익">
+            📈 {expectedIncome >= 0 ? '+' : ''}{formatMoney(Math.floor(expectedIncome))}/턴
+          </span>
         </div>
 
         <span className="text-sm font-bold text-slate-200">
