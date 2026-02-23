@@ -1,6 +1,7 @@
 // Types
 export type {
   GameState,
+  GameConfig,
   TurnPhase,
   MarketCondition,
   MarketState,
@@ -26,6 +27,7 @@ export type {
 
 // Constants
 export {
+  DEFAULT_GAME_CONFIG,
   STARTING_MONEY,
   MAX_TURNS,
   BASE_EXPENSES,

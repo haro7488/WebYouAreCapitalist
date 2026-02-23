@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { GameState, Company, TurnAction, RunResult } from '@game/types'
+import type { GameState, GameConfig, Company, TurnAction, RunResult } from '@game/types'
 import {
   startNewRun,
   endRun,
@@ -29,7 +29,7 @@ interface GameStoreState {
 
 interface GameStoreActions {
   /** 새 런 시작 — MetaStore에서 메타 상태를 읽어 엔진에 전달 */
-  startRun: () => void
+  startRun: (config?: Partial<GameConfig>) => void
   /** 런 종료 — 결과 계산 후 MetaStore 업데이트 */
   endCurrentRun: () => RunResult | null
   /** Planning Phase: 플레이어 액션 제출 */
@@ -66,9 +66,9 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       ...initialState,
 
-      startRun: () => {
+      startRun: (config?: Partial<GameConfig>) => {
         const meta = useMetaStore.getState().metaState
-        const gameState = startNewRun(meta)
+        const gameState = startNewRun(meta, config)
         set({ gameState, isRunActive: true, lastRunResult: null })
       },
 

@@ -155,6 +155,9 @@ export interface GameState {
   // RNG 상태
   rngState: number
 
+  // 게임 설정 (테스트 파라미터 오버라이드)
+  config: GameConfig
+
   // 게임 종료
   isGameOver: boolean
   gameOverReason: 'bankrupt' | 'completed' | null
@@ -185,6 +188,18 @@ export interface MetaState {
   totalRunsPlayed: number
   bestScore: number
   upgrades: Record<string, number> // upgradeId -> level
+}
+
+// === 게임 설정 (테스트 파라미터) ===
+export interface GameConfig {
+  startingMoney: number
+  marketPool: number
+  competitorCount: number
+  maxTurns: number
+  baseAP: number
+  baseExpenses: number
+  sectorFlowRate: number // 섹터 유입률 배율 (1.0 = 기본)
+  eventProbability: number // 이벤트 기본 발생 확률
 }
 
 // === 런 결과 ===

@@ -1,14 +1,10 @@
-import type { GameState, Company, MetaState, RunResult, RunResultRanking, Sector, DominanceInfo } from './types'
+import type { GameState, GameConfig, Company, MetaState, RunResult, RunResultRanking, Sector, DominanceInfo } from './types'
 import {
-  STARTING_MONEY,
-  MAX_TURNS,
   STARTING_INFLUENCE,
-  BASE_ACTION_POINTS,
   META_CURRENCY_RATE,
-  INITIAL_MARKET_POOL,
   PLAYER_COMPANY_ID,
   DEFAULT_COMPANY_NAME,
-  DEFAULT_COMPETITOR_COUNT,
+  DEFAULT_GAME_CONFIG,
 } from './constants'
 import { createRng, generateRunId, generateSeed } from './utils'
 import { assignCompanyNames } from './competitor/names'
@@ -18,13 +14,14 @@ import { getMetaEffects } from './meta'
 import { calculateScore, calculateNetWorth, calculateDominance } from './economy'
 
 /** 새 런 시작 */
-export function startNewRun(meta: MetaState): GameState {
+export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): GameState {
+  const cfg: GameConfig = { ...DEFAULT_GAME_CONFIG, ...config }
   const seed = generateSeed()
   const rng = createRng(seed)
   const metaEffects = getMetaEffects(meta)
 
-  const maxAp = BASE_ACTION_POINTS + metaEffects.extraActionPoints
-  const startingCash = STARTING_MONEY + metaEffects.startingMoneyBonus
+  const maxAp = cfg.baseAP + metaEffects.extraActionPoints
+  const startingCash = cfg.startingMoney + metaEffects.startingMoneyBonus
 
   const playerCompany: Company = {
     id: PLAYER_COMPANY_ID,
@@ -44,7 +41,7 @@ export function startNewRun(meta: MetaState): GameState {
   }
 
   // 경쟁사 생성
-  const competitorNames = assignCompanyNames(DEFAULT_COMPETITOR_COUNT, rng.random)
+  const competitorNames = assignCompanyNames(cfg.competitorCount, rng.random)
   const strategyKeys = Object.keys(STRATEGIES)
   const aiStrategies: Record<string, string> = {}
   const competitors: Company[] = competitorNames.map((name, i) => {
@@ -56,8 +53,8 @@ export function startNewRun(meta: MetaState): GameState {
       cash: startingCash,
       assets: [],
       influence: STARTING_INFLUENCE,
-      ap: BASE_ACTION_POINTS,
-      maxAp: BASE_ACTION_POINTS,
+      ap: cfg.baseAP,
+      maxAp: cfg.baseAP,
       revenue: 0,
       expenses: 0,
       actionsThisTurn: [],
@@ -68,19 +65,19 @@ export function startNewRun(meta: MetaState): GameState {
     }
   })
 
-  const competitorTotalCash = startingCash * DEFAULT_COMPETITOR_COUNT
+  const competitorTotalCash = startingCash * cfg.competitorCount
 
   return {
     runId: generateRunId(),
     seed,
     turn: 1,
-    maxTurns: MAX_TURNS + metaEffects.extraTurns,
+    maxTurns: cfg.maxTurns + metaEffects.extraTurns,
     phase: 'planning',
 
     companies: [playerCompany, ...competitors],
 
-    marketPool: INITIAL_MARKET_POOL + competitorTotalCash,
-    totalMoney: INITIAL_MARKET_POOL + startingCash + competitorTotalCash,
+    marketPool: cfg.marketPool + competitorTotalCash,
+    totalMoney: cfg.marketPool + startingCash + competitorTotalCash,
 
     market: createInitialMarket(rng),
     sectorStates: createInitialSectorStates(rng),
@@ -89,6 +86,7 @@ export function startNewRun(meta: MetaState): GameState {
     eventHistory: [],
 
     aiStrategies,
+    config: cfg,
 
     rngState: rng.getState(),
 
