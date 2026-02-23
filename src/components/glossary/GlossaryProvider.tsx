@@ -56,17 +56,18 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
     close()
   }, [onOpenHelp, close])
 
-  // 다른 곳 클릭 시 닫기
+  // 다른 곳 클릭 시 닫기 (mousedown + capture로 확실하게)
   useEffect(() => {
     if (!termId) return
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      if (target.closest('[data-glossary-popover]') || target.closest('[data-glossary-term]')) return
+      if (target.closest('[data-glossary-popover]')) return
+      // 다른 GlossaryTerm 클릭은 openTerm에서 처리하므로 여기서 닫기
+      if (target.closest('[data-glossary-term]')) return
       close()
     }
-    // 다음 틱에 등록 (현재 클릭 이벤트 무시)
-    const timer = setTimeout(() => document.addEventListener('click', handler), 0)
-    return () => { clearTimeout(timer); document.removeEventListener('click', handler) }
+    document.addEventListener('mousedown', handler, true)
+    return () => document.removeEventListener('mousedown', handler, true)
   }, [termId, close])
 
   return (
