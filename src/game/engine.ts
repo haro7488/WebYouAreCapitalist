@@ -13,6 +13,7 @@ import {
 import { createRng, clamp } from './utils'
 import {
   calculateCompanyNetIncome,
+  calculatePoolScaledIncomes,
   calculateAssetValue,
   calculateDominance,
   calculateGlobalDominance,
@@ -474,9 +475,11 @@ function applyEventChoice(state: GameState, choice: EventChoice): GameState {
 function resolveEconomy(state: GameState): GameState {
   const rng = createRng(state.rngState)
 
-  // 1단계: 소득/지출 + 자산 가치 갱신
-  let updatedCompanies = state.companies.map((company) => {
-    const income = calculateCompanyNetIncome(company, state)
+  // 1단계: 시장 풀 비례 축소 적용한 소득 계산
+  const { scaledIncomes } = calculatePoolScaledIncomes(state)
+
+  let updatedCompanies = state.companies.map((company, idx) => {
+    const income = calculateCompanyNetIncome(company, state, scaledIncomes[idx])
 
     // 보유 자산 현재 가치 갱신
     const updatedAssets = company.assets.map((owned) => ({

@@ -9,8 +9,6 @@ import {
   SCORE_TURN_BONUS,
   SCORE_DOMINANCE_BONUS,
   INFLUENCE_TIERS,
-  SECTOR_FLOW_RATE,
-  SECTOR_MARKET_MULTIPLIER,
   SECTOR_DEMAND_PREMIUM,
 } from './constants'
 
@@ -188,45 +186,29 @@ function calculateCompanySectorValue(company: Company, sector: Sector): number {
   return total
 }
 
-/** 섹터별 유입량 계산 */
-export function calculateSectorFlow(
-  sector: Sector,
-  marketPool: number,
-  state: GameState,
-): number {
-  const flowRate = SECTOR_FLOW_RATE[sector] * state.config.sectorFlowRate
-  const marketMult = SECTOR_MARKET_MULTIPLIER[sector][state.market.condition]
-  const trendMult = SECTOR_TREND_MULTIPLIER[state.sectorStates[sector].trend]
-  return marketPool * flowRate * marketMult * trendMult
-}
-
-/** 특정 기업의 섹터별 소득 계산 (시장 풀 기반, 글로벌 지배력 적용) */
+/** 특정 기업의 섹터별 소득 계산 (baseIncome 기반, 글로벌 지배력 적용) */
 export function calculateCompanySectorIncome(
   company: Company,
   sector: Sector,
   state: GameState,
 ): number {
-  const sectorFlow = calculateSectorFlow(sector, state.marketPool, state)
-  const totalSectorValue = calculateSectorAssetValue(state.companies, sector)
-  if (totalSectorValue === 0) return 0
-
-  const companyValue = calculateCompanySectorValue(company, sector)
-  if (companyValue === 0) return 0
-
-  const share = companyValue / totalSectorValue
-  // 글로벌 지배력: 섹터당 지배자 1명만
   const dominance = calculateGlobalDominance(company, state.companies)
-  const dominanceMult = dominance[sector].incomeBonus
-
-  return sectorFlow * share * dominanceMult
+  let total = 0
+  for (const owned of company.assets) {
+    const asset = findAsset(owned.assetId)
+    if (asset && asset.sector === sector) {
+      total += calculateAssetIncome(owned, state, dominance)
+    }
+  }
+  return total
 }
 
-/** 기업의 총 소득 계산 (모든 섹터 합산) */
+/** 기업의 총 소득 계산 (baseIncome 기반 전 자산 합산) */
 export function calculateCompanyTotalIncome(company: Company, state: GameState): number {
-  const sectors: Sector[] = ['food', 'tech', 'realEstate', 'retail', 'finance']
+  const dominance = calculateGlobalDominance(company, state.companies)
   let total = 0
-  for (const sector of sectors) {
-    total += calculateCompanySectorIncome(company, sector, state)
+  for (const owned of company.assets) {
+    total += calculateAssetIncome(owned, state, dominance)
   }
   return total
 }
@@ -273,17 +255,17 @@ function mergeEffects(effects: EventEffect[]): EventEffect {
 }
 
 /**
- * 기업의 턴 수익 계산 (시장 풀 기반)
- * 자산 소득 = 섹터별 점유율 × 섹터 유입량
+ * 기업의 턴 수익 계산 (baseIncome 기반)
+ * precomputedIncome: 풀 비례 축소가 적용된 소득 (resolveEconomy에서 전달)
  */
 export function calculateCompanyNetIncome(
   company: Company,
   state: GameState,
+  precomputedIncome?: number,
 ): { revenue: number; expenses: number; net: number } {
   const effects = mergeEffects(company.activeEffects)
 
-  // 시장 풀 기반 소득 합산
-  const totalIncome = calculateCompanyTotalIncome(company, state)
+  const totalIncome = precomputedIncome ?? calculateCompanyTotalIncome(company, state)
 
   const revenue = Math.floor(totalIncome * effects.revenueMultiplier!)
   const expenses = Math.floor(state.config.baseExpenses * effects.expenseMultiplier!)
@@ -301,7 +283,7 @@ export function calculateNetIncome(state: GameState): { revenue: number; expense
   return calculateCompanyNetIncome(getPlayerCompany(state), state)
 }
 
-/** 개별 자산의 턴 소득 계산 (UI 표시용, 시장 풀 기반 추정) */
+/** 개별 자산의 턴 소득 계산 (baseIncome × 업그레이드 × 시장 × 트렌드 × 지배력) */
 export function calculateAssetIncome(
   owned: OwnedAsset,
   state: GameState,
@@ -310,22 +292,33 @@ export function calculateAssetIncome(
   const asset = findAsset(owned.assetId)
   if (!asset) return 0
 
-  // 이 자산의 섹터 유입량
-  const sectorFlow = calculateSectorFlow(asset.sector, state.marketPool, state)
-  const totalSectorValue = calculateSectorAssetValue(state.companies, asset.sector)
-  if (totalSectorValue === 0) return 0
-
-  // 이 자산의 점유율
-  const share = owned.currentValue / totalSectorValue
-  const dominanceMult = dominance[asset.sector].incomeBonus
   const upgradeMult = Math.pow(ASSET_UPGRADE_INCOME_MULTIPLIER, owned.upgradeLevel)
+  const marketMult = asset.marketMultiplier[state.market.condition]
+  const trendMult = SECTOR_TREND_MULTIPLIER[state.sectorStates[asset.sector].trend]
+  const dominanceMult = dominance[asset.sector].incomeBonus
 
-  return sectorFlow * share * dominanceMult * upgradeMult
+  return asset.baseIncome * upgradeMult * marketMult * trendMult * dominanceMult
 }
 
 /** 모든 보유 자산의 턴당 소득 합산 (하위 호환) */
 export function calculateTotalAssetIncome(state: GameState): number {
   return calculateCompanyTotalIncome(getPlayerCompany(state), state)
+}
+
+// === 시장 풀 비례 축소 ===
+
+/** 모든 기업의 소득을 계산하고 marketPool 부족 시 비례 축소 적용 */
+export function calculatePoolScaledIncomes(state: GameState): { scaledIncomes: number[]; scaleFactor: number } {
+  const rawIncomes = state.companies.map((company) => calculateCompanyTotalIncome(company, state))
+  const totalDemand = rawIncomes.reduce((sum, inc) => sum + inc, 0)
+
+  if (totalDemand <= 0) return { scaledIncomes: rawIncomes, scaleFactor: 1 }
+
+  // marketPool이 부족하면 모든 기업 동일 비율로 축소
+  const scaleFactor = Math.min(1, state.marketPool / totalDemand)
+  const scaledIncomes = rawIncomes.map((inc) => inc * scaleFactor)
+
+  return { scaledIncomes, scaleFactor }
 }
 
 // === 화폐 보존 검증 ===
