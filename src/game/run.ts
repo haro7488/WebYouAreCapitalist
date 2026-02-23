@@ -8,8 +8,11 @@ import {
   INITIAL_MARKET_POOL,
   PLAYER_COMPANY_ID,
   DEFAULT_COMPANY_NAME,
+  DEFAULT_COMPETITOR_COUNT,
 } from './constants'
 import { createRng, generateRunId, generateSeed } from './utils'
+import { assignCompanyNames } from './competitor/names'
+import { STRATEGIES } from './competitor/strategies'
 import { createInitialMarket, createInitialSectorStates } from './market'
 import { getMetaEffects } from './meta'
 import { calculateScore, calculateNetWorth, calculateDominance } from './economy'
@@ -40,6 +43,33 @@ export function startNewRun(meta: MetaState): GameState {
     dominatedSectors: [],
   }
 
+  // 경쟁사 생성
+  const competitorNames = assignCompanyNames(DEFAULT_COMPETITOR_COUNT, rng.random)
+  const strategyKeys = Object.keys(STRATEGIES)
+  const aiStrategies: Record<string, string> = {}
+  const competitors: Company[] = competitorNames.map((name, i) => {
+    const id = `competitor-${i}`
+    aiStrategies[id] = rng.pick(strategyKeys)
+    return {
+      id,
+      name,
+      cash: startingCash,
+      assets: [],
+      influence: STARTING_INFLUENCE,
+      ap: BASE_ACTION_POINTS,
+      maxAp: BASE_ACTION_POINTS,
+      revenue: 0,
+      expenses: 0,
+      actionsThisTurn: [],
+      researchResult: null,
+      activeEffects: [],
+      netWorth: startingCash,
+      dominatedSectors: [],
+    }
+  })
+
+  const competitorTotalCash = startingCash * DEFAULT_COMPETITOR_COUNT
+
   return {
     runId: generateRunId(),
     seed,
@@ -47,10 +77,10 @@ export function startNewRun(meta: MetaState): GameState {
     maxTurns: MAX_TURNS + metaEffects.extraTurns,
     phase: 'planning',
 
-    companies: [playerCompany],
+    companies: [playerCompany, ...competitors],
 
-    marketPool: INITIAL_MARKET_POOL,
-    totalMoney: INITIAL_MARKET_POOL + startingCash,
+    marketPool: INITIAL_MARKET_POOL + competitorTotalCash,
+    totalMoney: INITIAL_MARKET_POOL + startingCash + competitorTotalCash,
 
     market: createInitialMarket(rng),
     sectorStates: createInitialSectorStates(rng),
@@ -58,7 +88,7 @@ export function startNewRun(meta: MetaState): GameState {
     currentEvent: null,
     eventHistory: [],
 
-    aiStrategies: {},
+    aiStrategies,
 
     rngState: rng.getState(),
 
