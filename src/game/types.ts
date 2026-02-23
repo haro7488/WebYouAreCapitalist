@@ -152,6 +152,9 @@ export interface GameState {
   // AI 경쟁사 전략 매핑 (companyId → strategyId)
   aiStrategies: Record<string, string>
 
+  // 턴별 순위 기록 (각 원소 = 기업별 순위 배열)
+  rankingHistory: number[][]
+
   // RNG 상태
   rngState: number
 

@@ -67,6 +67,11 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
 
   const competitorTotalCash = startingCash * cfg.competitorCount
 
+  const allCompanies = [playerCompany, ...competitors]
+
+  // 초기 순위: 모두 동일 순자산이므로 인덱스 순서대로 1~N
+  const initialRanks = allCompanies.map((_, i) => i + 1)
+
   return {
     runId: generateRunId(),
     seed,
@@ -74,7 +79,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     maxTurns: cfg.maxTurns + metaEffects.extraTurns,
     phase: 'planning',
 
-    companies: [playerCompany, ...competitors],
+    companies: allCompanies,
 
     marketPool: cfg.marketPool + competitorTotalCash,
     totalMoney: cfg.marketPool + startingCash + competitorTotalCash,
@@ -87,6 +92,8 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
 
     aiStrategies,
     config: cfg,
+
+    rankingHistory: [initialRanks],
 
     rngState: rng.getState(),
 

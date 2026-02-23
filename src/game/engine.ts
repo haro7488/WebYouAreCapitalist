@@ -19,6 +19,7 @@ import {
   calculateGlobalDominance,
   calculateSectorDemandPremium,
   calculateRankings,
+  getCompanyRank,
   calculateSectorShares,
   getInfluenceTier,
   getPlayerCompany,
@@ -673,6 +674,10 @@ export function advanceTurn(state: GameState): GameState {
   const checked = checkGameOver(state)
   if (checked.isGameOver) return checked
 
+  // 순위 기록 추가
+  const currentRanks = checked.companies.map((_, i) => getCompanyRank(checked.companies, i))
+  const newRankingHistory = [...checked.rankingHistory, currentRanks]
+
   // 모든 기업의 AP 리셋 + 턴 상태 초기화
   const resetCompanies = checked.companies.map((company) => ({
     ...company,
@@ -686,6 +691,7 @@ export function advanceTurn(state: GameState): GameState {
     turn: checked.turn + 1,
     phase: 'planning',
     companies: resetCompanies,
+    rankingHistory: newRankingHistory,
   }
 }
 
