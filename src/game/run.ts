@@ -1,4 +1,4 @@
-import type { GameState, Company, MetaState, RunResult, Sector, DominanceInfo } from './types'
+import type { GameState, Company, MetaState, RunResult, RunResultRanking, Sector, DominanceInfo } from './types'
 import {
   STARTING_MONEY,
   MAX_TURNS,
@@ -110,6 +110,22 @@ export function endRun(finalState: GameState, meta: MetaState): { result: RunRes
     .filter(([, info]) => info.level === 'dominant')
     .map(([sector]) => sector)
 
+  // 전체 기업 순위 (순자산 내림차순)
+  const rankings: RunResultRanking[] = finalState.companies
+    .map((c, i) => {
+      const dom = calculateDominance(c.assets)
+      const domSectors = (Object.entries(dom) as [Sector, DominanceInfo][])
+        .filter(([, info]) => info.level === 'dominant')
+        .map(([s]) => s)
+      return {
+        name: c.name,
+        netWorth: c.netWorth,
+        dominatedSectors: domSectors,
+        isPlayer: i === 0,
+      }
+    })
+    .sort((a, b) => b.netWorth - a.netWorth)
+
   const result: RunResult = {
     finalMoney: player.cash,
     netWorth,
@@ -119,6 +135,7 @@ export function endRun(finalState: GameState, meta: MetaState): { result: RunRes
     ownedAssets: player.assets,
     dominatedSectors,
     maxInfluence: player.influence,
+    rankings,
   }
 
   const updatedMeta: MetaState = {

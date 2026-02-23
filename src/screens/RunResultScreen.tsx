@@ -30,6 +30,7 @@ export function RunResultScreen() {
     metaCurrencyEarned,
     ownedAssets,
     dominatedSectors,
+    rankings,
   } = lastRunResult
 
   // 보유 자산을 섹터별로 그룹핑
@@ -71,6 +72,40 @@ export function RunResultScreen() {
               ))}
             </div>
           )}
+        </Card>
+
+        {/* 최종 순위 카드 */}
+        <Card header="최종 순위">
+          <div className="space-y-1">
+            {rankings.map((entry, idx) => {
+              const rank = idx + 1
+              const isPlayer = entry.isPlayer
+              return (
+                <div
+                  key={entry.name}
+                  className={`flex items-center gap-2 py-2 px-2 rounded ${
+                    isPlayer ? 'bg-money-400/10 ring-1 ring-money-400/30' : ''
+                  }`}
+                >
+                  <span className="text-slate-500 text-sm w-5 text-right shrink-0">{rank}.</span>
+                  <span className="w-5 text-center shrink-0">{isPlayer ? '⭐' : '🏢'}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className={`text-sm truncate ${isPlayer ? 'text-money-300 font-semibold' : 'text-slate-200'}`}>
+                        {entry.name}
+                      </span>
+                      {entry.dominatedSectors.length > 0 && (
+                        <span className="text-xs shrink-0">
+                          {entry.dominatedSectors.map((s) => SECTOR_LABELS[s]).join(', ')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <MoneyDisplay amount={entry.netWorth} size="sm" />
+                </div>
+              )
+            })}
+          </div>
         </Card>
 
         {/* 최종 포트폴리오 카드 */}
