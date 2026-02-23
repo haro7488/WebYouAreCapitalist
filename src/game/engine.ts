@@ -8,12 +8,17 @@ import {
   SELL_MARKET_RATIO,
   INFLUENCE_DECAY_PER_TURN,
   INFLUENCE_PER_PURCHASE,
+  RANK_FIRST_INFLUENCE_BONUS,
 } from './constants'
 import { createRng, clamp } from './utils'
 import {
   calculateCompanyNetIncome,
   calculateAssetValue,
   calculateDominance,
+  calculateGlobalDominance,
+  calculateSectorDemandPremium,
+  calculateRankings,
+  calculateSectorShares,
   getInfluenceTier,
   getPlayerCompany,
   updateCompany,
@@ -47,13 +52,16 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
   const company = state.companies[companyIndex]
   if (!company) return state
 
+  // 수요 프리미엄: 경쟁사 투자 집중 섹터 → 매입 비용 상승
+  const demandPremium = calculateSectorDemandPremium(state.companies, companyIndex, asset.sector)
+
   // 할인 적용: 영향력 티어 할인 + 이벤트 nextPurchaseDiscount
   const influenceTier = getInfluenceTier(company.influence)
   const nextDiscount = company.activeEffects.reduce(
     (acc, e) => acc + (e.nextPurchaseDiscount ?? 0), 0,
   )
   const totalDiscount = influenceTier.purchaseDiscount + nextDiscount
-  const cost = Math.floor(asset.cost * (1 - totalDiscount))
+  const cost = Math.floor(asset.cost * demandPremium * (1 - totalDiscount))
   if (company.cash < cost) return state
 
   const newOwned: OwnedAsset = {
@@ -171,8 +179,13 @@ function applyUpgrade(state: GameState, ownedIndex: number): GameState {
   return applyUpgradeFor(state, 0, ownedIndex)
 }
 
-/** 시장 조사 */
-function applyResearch(state: GameState, target: 'market' | 'sector' | 'event', sector?: Sector): GameState {
+/** 시장 조사 (기존 market/sector/event + 신규 competitor/strategy/share) */
+function applyResearch(
+  state: GameState,
+  target: 'market' | 'sector' | 'event' | 'competitor' | 'strategy' | 'share',
+  sector?: Sector,
+  targetCompanyId?: string,
+): GameState {
   const rng = createRng(state.rngState)
   const player = getPlayerCompany(state)
   const influenceTier = getInfluenceTier(player.influence)
@@ -210,6 +223,47 @@ function applyResearch(state: GameState, target: 'market' | 'sector' | 'event', 
       result = { type: 'event', hint: rng.pick(hints) }
       break
     }
+    case 'competitor': {
+      // 특정 경쟁사 포트폴리오 공개
+      const aiCompanies = state.companies.filter((_, i) => i > 0)
+      const targetCompany = targetCompanyId
+        ? state.companies.find((c) => c.id === targetCompanyId)
+        : rng.pick(aiCompanies)
+      if (!targetCompany) return state
+      result = {
+        type: 'competitor',
+        companyId: targetCompany.id,
+        companyName: targetCompany.name,
+        assets: [...targetCompany.assets],
+      }
+      break
+    }
+    case 'strategy': {
+      // 경쟁사 전략 타입 공개
+      const aiCompanies2 = state.companies.filter((_, i) => i > 0)
+      const targetCompany2 = targetCompanyId
+        ? state.companies.find((c) => c.id === targetCompanyId)
+        : rng.pick(aiCompanies2)
+      if (!targetCompany2) return state
+      const strategyId = state.aiStrategies[targetCompany2.id] ?? 'unknown'
+      result = {
+        type: 'strategy',
+        companyId: targetCompany2.id,
+        companyName: targetCompany2.name,
+        strategyId,
+      }
+      break
+    }
+    case 'share': {
+      // 섹터 내 점유율 공개
+      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'retail', 'finance'] as Sector[])
+      result = {
+        type: 'share',
+        sector: targetSector,
+        shares: calculateSectorShares(state.companies, targetSector),
+      }
+      break
+    }
   }
 
   const updatedPlayer: Company = {
@@ -235,7 +289,7 @@ function applyAction(state: GameState, action: TurnAction): GameState {
     case 'upgrade':
       return applyUpgrade(state, action.ownedIndex)
     case 'research':
-      return applyResearch(state, action.target, action.sector)
+      return applyResearch(state, action.target, action.sector, action.targetCompanyId)
     case 'endTurn': {
       const player = getPlayerCompany(state)
       return withPlayer(state, {
@@ -320,6 +374,24 @@ function processAIEventChoices(state: GameState, event: GameEvent): GameState {
       ...withCompany(current, i, updated),
       marketPool: current.marketPool - moneyEffect - freeAssetValue,
     }
+
+    // 이벤트 파급: 경쟁사 선택이 시장/섹터에 영향
+    if (effect.marketShift) {
+      current = {
+        ...current,
+        market: { ...current.market, condition: effect.marketShift },
+      }
+    }
+    if (effect.sectorShift) {
+      const { sector, trend } = effect.sectorShift
+      current = {
+        ...current,
+        sectorStates: {
+          ...current.sectorStates,
+          [sector]: { ...current.sectorStates[sector], trend },
+        },
+      }
+    }
   }
 
   return current
@@ -402,8 +474,8 @@ function applyEventChoice(state: GameState, choice: EventChoice): GameState {
 function resolveEconomy(state: GameState): GameState {
   const rng = createRng(state.rngState)
 
-  // 모든 기업의 소득/지출 계산 + 자산 가치 갱신
-  const updatedCompanies = state.companies.map((company) => {
+  // 1단계: 소득/지출 + 자산 가치 갱신
+  let updatedCompanies = state.companies.map((company) => {
     const income = calculateCompanyNetIncome(company, state)
 
     // 보유 자산 현재 가치 갱신
@@ -415,12 +487,6 @@ function resolveEconomy(state: GameState): GameState {
     // 영향력 자연 감소
     const newInfluence = clamp(company.influence - INFLUENCE_DECAY_PER_TURN, 0, 100)
 
-    // 지배 섹터 계산
-    const dominance = calculateDominance(updatedAssets)
-    const dominatedSectors = (Object.entries(dominance) as [Sector, { level: string }][])
-      .filter(([, info]) => info.level === 'dominant')
-      .map(([sector]) => sector)
-
     const updatedCompany: Company = {
       ...company,
       cash: company.cash + income.net,
@@ -430,13 +496,35 @@ function resolveEconomy(state: GameState): GameState {
       assets: updatedAssets,
       activeEffects: [], // 턴 효과 초기화
       netWorth: 0, // 아래에서 재계산
-      dominatedSectors,
+      dominatedSectors: [],
     }
 
     return {
       ...updatedCompany,
       netWorth: calculateCompanyNetWorth(updatedCompany),
     }
+  })
+
+  // 2단계: 글로벌 지배력 — 섹터당 지배자 1명만
+  updatedCompanies = updatedCompanies.map((company) => {
+    const dominance = calculateGlobalDominance(company, updatedCompanies)
+    const dominatedSectors = (Object.entries(dominance) as [Sector, { level: string }][])
+      .filter(([, info]) => info.level === 'dominant')
+      .map(([sector]) => sector)
+    return { ...company, dominatedSectors }
+  })
+
+  // 3단계: 순위 효과 — 1위 영향력 보너스
+  const rankings = calculateRankings(updatedCompanies)
+  const firstPlaceIdx = rankings[0]
+  updatedCompanies = updatedCompanies.map((company, i) => {
+    if (i === firstPlaceIdx) {
+      return {
+        ...company,
+        influence: clamp(company.influence + RANK_FIRST_INFLUENCE_BONUS, 0, 100),
+      }
+    }
+    return company
   })
 
   // 시장 + 섹터 트렌드 업데이트

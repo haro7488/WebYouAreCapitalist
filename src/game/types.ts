@@ -59,6 +59,9 @@ export type ResearchResult =
   | { type: 'market'; turnsToChange: number; likelyNext: MarketCondition }
   | { type: 'sector'; sector: Sector; nextTrend: SectorTrend }
   | { type: 'event'; hint: string }
+  | { type: 'competitor'; companyId: string; companyName: string; assets: OwnedAsset[] }
+  | { type: 'strategy'; companyId: string; companyName: string; strategyId: string }
+  | { type: 'share'; sector: Sector; shares: { companyId: string; companyName: string; share: number }[] }
 
 // === 이벤트 ===
 export interface EventEffect {
@@ -97,7 +100,7 @@ export type TurnAction =
   | { type: 'buy'; assetId: string }
   | { type: 'sell'; ownedIndex: number }
   | { type: 'upgrade'; ownedIndex: number }
-  | { type: 'research'; target: 'market' | 'sector' | 'event'; sector?: Sector }
+  | { type: 'research'; target: 'market' | 'sector' | 'event' | 'competitor' | 'strategy' | 'share'; sector?: Sector; targetCompanyId?: string }
   | { type: 'endTurn' }
 
 // === 기업 엔티티 (플레이어/AI 공통) ===

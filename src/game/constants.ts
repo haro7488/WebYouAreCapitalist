@@ -38,6 +38,18 @@ export const SECTOR_MARKET_MULTIPLIER: Record<Sector, Record<MarketCondition, nu
   finance: { boom: 1.8, stable: 0.9, recession: 0.2 },
 }
 
+// === 섹터 수요 프리미엄 (경쟁사 투자 집중 → 매입 비용 상승) ===
+// 키: 해당 섹터에 투자 중인 경쟁사 수 → 프리미엄 비율
+export const SECTOR_DEMAND_PREMIUM: Record<number, number> = {
+  0: 0,
+  1: 0.10, // 경쟁사 1개 → +10%
+  2: 0.15, // 경쟁사 2개 → +15%
+  3: 0.20, // 경쟁사 3개+ → +20%
+}
+
+// === 순위 효과 ===
+export const RANK_FIRST_INFLUENCE_BONUS = 2 // 1위: 턴당 영향력 +2
+
 // === 시장 상수 ===
 export const MARKET_CHANGE_MIN_TURNS = 4
 export const MARKET_CHANGE_MAX_TURNS = 8

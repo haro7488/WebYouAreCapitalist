@@ -12,6 +12,7 @@ import {
   INFLUENCE_TIERS,
   SECTOR_FLOW_RATE,
   SECTOR_MARKET_MULTIPLIER,
+  SECTOR_DEMAND_PREMIUM,
 } from './constants'
 
 /** 자산 정보를 ID로 조회 */
@@ -31,6 +32,37 @@ export function updateCompany(state: GameState, index: number, updated: Company)
   const newCompanies = [...state.companies]
   newCompanies[index] = updated
   return newCompanies
+}
+
+// === 섹터 수요 프리미엄 ===
+
+const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'retail', 'finance']
+
+/** 해당 섹터에 투자 중인 경쟁사 수 (매입자 제외) */
+function countCompetitorsInSector(companies: Company[], buyerIndex: number, sector: Sector): number {
+  let count = 0
+  for (let i = 0; i < companies.length; i++) {
+    if (i === buyerIndex) continue
+    for (const owned of companies[i].assets) {
+      const asset = findAsset(owned.assetId)
+      if (asset && asset.sector === sector) {
+        count++
+        break // 이 기업은 이미 투자 중이므로 다음 기업으로
+      }
+    }
+  }
+  return count
+}
+
+/** 섹터 수요 프리미엄 배율 (경쟁사 투자 집중 → +10~20%) */
+export function calculateSectorDemandPremium(
+  companies: Company[],
+  buyerIndex: number,
+  sector: Sector,
+): number {
+  const competitorCount = countCompetitorsInSector(companies, buyerIndex, sector)
+  const key = Math.min(competitorCount, 3)
+  return 1 + (SECTOR_DEMAND_PREMIUM[key] ?? 0)
 }
 
 // === 지배력 ===
@@ -60,6 +92,73 @@ export function calculateDominance(assets: OwnedAsset[]): Record<Sector, Dominan
   }
 
   return result
+}
+
+/** 글로벌 지배력: 섹터당 지배자 1명만 (섹터 내 자산 가치 기준) */
+export function calculateGlobalDominance(
+  company: Company,
+  allCompanies: Company[],
+): Record<Sector, DominanceInfo> {
+  const localDominance = calculateDominance(company.assets)
+
+  for (const sector of ALL_SECTORS) {
+    if (localDominance[sector].level !== 'dominant') continue
+
+    // 같은 섹터에서 dominant인 다른 기업이 있으면 자산 가치로 비교
+    const myValue = calculateCompanySectorValue(company, sector)
+    for (const other of allCompanies) {
+      if (other.id === company.id) continue
+      const otherDominance = calculateDominance(other.assets)
+      if (otherDominance[sector].level === 'dominant') {
+        const otherValue = calculateCompanySectorValue(other, sector)
+        if (otherValue > myValue) {
+          // 패배 → competitor로 강등
+          localDominance[sector] = {
+            level: 'competitor',
+            count: localDominance[sector].count,
+            incomeBonus: DOMINANCE_THRESHOLDS.competitor.incomeBonus,
+          }
+          break
+        }
+      }
+    }
+  }
+
+  return localDominance
+}
+
+/** 순위 계산: netWorth 내림차순 정렬된 기업 인덱스 배열 반환 */
+export function calculateRankings(companies: Company[]): number[] {
+  return companies
+    .map((c, i) => ({ index: i, netWorth: c.netWorth }))
+    .sort((a, b) => b.netWorth - a.netWorth)
+    .map((r) => r.index)
+}
+
+/** 특정 기업의 순위 반환 (1-based) */
+export function getCompanyRank(companies: Company[], companyIndex: number): number {
+  const rankings = calculateRankings(companies)
+  return rankings.indexOf(companyIndex) + 1
+}
+
+/** 섹터별 점유율 계산 (모든 기업) */
+export function calculateSectorShares(
+  companies: Company[],
+  sector: Sector,
+): { companyId: string; companyName: string; share: number }[] {
+  const totalValue = calculateSectorAssetValue(companies, sector)
+  if (totalValue === 0) return []
+
+  return companies
+    .map((company) => {
+      const value = calculateCompanySectorValue(company, sector)
+      return {
+        companyId: company.id,
+        companyName: company.name,
+        share: value / totalValue,
+      }
+    })
+    .filter((s) => s.share > 0)
 }
 
 // === 시장 풀 기반 소득 계산 ===
@@ -102,7 +201,7 @@ export function calculateSectorFlow(
   return marketPool * flowRate * marketMult * trendMult
 }
 
-/** 특정 기업의 섹터별 소득 계산 (시장 풀 기반) */
+/** 특정 기업의 섹터별 소득 계산 (시장 풀 기반, 글로벌 지배력 적용) */
 export function calculateCompanySectorIncome(
   company: Company,
   sector: Sector,
@@ -116,7 +215,8 @@ export function calculateCompanySectorIncome(
   if (companyValue === 0) return 0
 
   const share = companyValue / totalSectorValue
-  const dominance = calculateDominance(company.assets)
+  // 글로벌 지배력: 섹터당 지배자 1명만
+  const dominance = calculateGlobalDominance(company, state.companies)
   const dominanceMult = dominance[sector].incomeBonus
 
   return sectorFlow * share * dominanceMult
