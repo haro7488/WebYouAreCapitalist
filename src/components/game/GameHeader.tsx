@@ -1,8 +1,7 @@
-import { useState } from 'react'
 import { useGameStore } from '@stores/gameStore'
+import { useUIStore } from '@stores/uiStore'
 import { MoneyDisplay, ProgressBar } from '@components/common'
 import { MarketIndicator } from './MarketIndicator'
-import { HelpModal } from './HelpModal'
 import { Home, HelpCircle } from 'lucide-react'
 
 interface GameHeaderProps {
@@ -12,7 +11,7 @@ interface GameHeaderProps {
 /** 게임 상단 헤더: 홈, 도움말, 턴, 자금, 영향력, AP, 시장 상태 표시 */
 export function GameHeader({ onHome }: GameHeaderProps) {
   const gameState = useGameStore((s) => s.gameState)
-  const [showHelp, setShowHelp] = useState(false)
+  const openHelp = useUIStore((s) => s.openHelp)
 
   if (!gameState) return null
 
@@ -21,9 +20,7 @@ export function GameHeader({ onHome }: GameHeaderProps) {
   const { cash: money, influence, ap: actionPoints, maxAp: maxActionPoints } = player
 
   return (
-    <>
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700 p-3">
-      {/* 모바일: 2행 그리드 / 데스크톱: 1행 flex */}
       <div className="grid grid-cols-2 gap-2 md:flex md:items-center md:justify-between">
         {/* 홈 + 도움말 버튼 */}
         <div className="flex items-center gap-1">
@@ -37,7 +34,7 @@ export function GameHeader({ onHome }: GameHeaderProps) {
             </button>
           )}
           <button
-            onClick={() => setShowHelp(true)}
+            onClick={() => openHelp()}
             className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
             aria-label="도움말"
           >
@@ -45,33 +42,26 @@ export function GameHeader({ onHome }: GameHeaderProps) {
           </button>
         </div>
 
-        {/* 턴 표시 */}
         <span className="text-sm font-medium text-slate-300">
           턴 {turn}/{maxTurns}
         </span>
 
-        {/* 자금 표시 */}
         <div className="text-right md:text-left">
           <MoneyDisplay amount={money} />
         </div>
 
-        {/* 영향력 게이지 */}
         <div className="min-w-[120px]">
           <ProgressBar value={influence} max={100} showLabel />
         </div>
 
-        {/* AP 표시 */}
         <span className="text-sm text-slate-300">
           AP {actionPoints}/{maxActionPoints}
         </span>
 
-        {/* 시장 상태 */}
         <div className="flex justify-end md:justify-start">
           <MarketIndicator condition={market.condition} />
         </div>
       </div>
     </header>
-    {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
-    </>
   )
 }

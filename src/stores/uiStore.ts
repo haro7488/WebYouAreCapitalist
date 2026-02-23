@@ -22,6 +22,9 @@ interface UIStoreState {
   isAnimating: boolean
   /** 사이드바 열림 상태 (모바일) */
   isSidebarOpen: boolean
+  /** 도움말 모달 열림 + 이동할 용어 ID */
+  helpOpen: boolean
+  helpTermId: string | null
 }
 
 interface UIStoreActions {
@@ -39,6 +42,10 @@ interface UIStoreActions {
   toggleSidebar: () => void
   /** 사이드바 닫기 */
   closeSidebar: () => void
+  /** 도움말 열기 (특정 용어로 이동) */
+  openHelp: (termId?: string) => void
+  /** 도움말 닫기 */
+  closeHelp: () => void
   /** UI 초기화 */
   reset: () => void
 }
@@ -53,6 +60,8 @@ const initialState: UIStoreState = {
   modal: null,
   isAnimating: false,
   isSidebarOpen: false,
+  helpOpen: false,
+  helpTermId: null,
 }
 
 // === 스토어 생성 ===
@@ -86,5 +95,7 @@ export const useUIStore = create<UIStore>()((set, get) => ({
   setAnimating: (isAnimating) => set({ isAnimating }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   closeSidebar: () => set({ isSidebarOpen: false }),
+  openHelp: (termId?: string) => set({ helpOpen: true, helpTermId: termId ?? null }),
+  closeHelp: () => set({ helpOpen: false, helpTermId: null }),
   reset: () => set(initialState),
 }))

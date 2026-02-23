@@ -1,142 +1,36 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { X, Search } from 'lucide-react'
-import { GLOSSARY, GLOSSARY_CATEGORIES, type GlossaryCategory, type GlossaryEntry } from '@game/glossary'
+import { GLOSSARY, GLOSSARY_CATEGORIES, type GlossaryCategory } from '@game/glossary'
+import { useGlossaryText } from '@components/glossary'
 
 interface HelpModalProps {
   onClose: () => void
+  initialTermId?: string
 }
 
 const CATEGORY_ORDER: GlossaryCategory[] = ['basic', 'economy', 'asset', 'competition', 'info', 'meta']
 
-// === 용어 링크 + 툴팁 ===
-
-/** 용어 매칭용 정렬 (긴 용어 우선 — "시장 상태"가 "시장"보다 먼저 매칭되도록) */
-const SORTED_TERMS = [...GLOSSARY].sort((a, b) => b.term.length - a.term.length)
-
-/** 짧은 별칭 매핑 (설명에서 자주 쓰이는 축약어) */
-const TERM_ALIASES: Record<string, string> = {}
-for (const entry of GLOSSARY) {
-  // "AP (행동력)" → "AP"도 매칭
-  const match = entry.term.match(/^(.+?)\s*\(/)
-  if (match) TERM_ALIASES[match[1]] = entry.id
-  // 한국어 이름만도 매칭: "호황 (Boom)" → "호황"
-  const kr = entry.term.match(/^(.+?)\s*\(/)
-  if (kr && kr[1].length >= 2) TERM_ALIASES[kr[1]] = entry.id
+function DescriptionWithLinks({ text, excludeId }: { text: string; excludeId: string }) {
+  const parts = useGlossaryText(text, excludeId)
+  return <>{parts}</>
 }
 
-function LinkedDescription({
-  text,
-  currentId,
-  onTermClick,
-}: {
-  text: string
-  currentId: string
-  onTermClick: (id: string) => void
-}) {
-  const parts = useMemo(() => {
-    const result: { type: 'text' | 'link'; value: string; entry?: GlossaryEntry }[] = []
-    let remaining = text
-
-    while (remaining.length > 0) {
-      let earliest = -1
-      let matchedEntry: GlossaryEntry | null = null
-      let matchedText = ''
-
-      // 용어 + 별칭 중 가장 먼저 나타나는 것 찾기
-      for (const entry of SORTED_TERMS) {
-        if (entry.id === currentId) continue
-
-        // 정확한 term 매칭
-        const idx = remaining.indexOf(entry.term)
-        if (idx !== -1 && (earliest === -1 || idx < earliest)) {
-          earliest = idx
-          matchedEntry = entry
-          matchedText = entry.term
-        }
-
-        // 별칭 매칭
-        const alias = Object.entries(TERM_ALIASES).find(([, id]) => id === entry.id)
-        if (alias) {
-          const aliasIdx = remaining.indexOf(alias[0])
-          if (aliasIdx !== -1 && (earliest === -1 || aliasIdx < earliest)) {
-            earliest = aliasIdx
-            matchedEntry = entry
-            matchedText = alias[0]
-          }
-        }
-      }
-
-      if (earliest === -1 || !matchedEntry) {
-        result.push({ type: 'text', value: remaining })
-        break
-      }
-
-      if (earliest > 0) {
-        result.push({ type: 'text', value: remaining.slice(0, earliest) })
-      }
-      result.push({ type: 'link', value: matchedText, entry: matchedEntry })
-      remaining = remaining.slice(earliest + matchedText.length)
-    }
-
-    return result
-  }, [text, currentId])
-
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.type === 'text' ? (
-          <span key={i}>{part.value}</span>
-        ) : (
-          <TermLink key={i} entry={part.entry!} label={part.value} onClick={onTermClick} />
-        ),
-      )}
-    </>
-  )
-}
-
-function TermLink({
-  entry,
-  label,
-  onClick,
-}: {
-  entry: GlossaryEntry
-  label: string
-  onClick: (id: string) => void
-}) {
-  const [showTooltip, setShowTooltip] = useState(false)
-
-  return (
-    <span className="relative inline-block">
-      <button
-        className="text-blue-400 underline decoration-dotted underline-offset-2 hover:text-blue-300 transition-colors"
-        onClick={(e) => { e.stopPropagation(); onClick(entry.id) }}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
-        {label}
-      </button>
-      {showTooltip && (
-        <div className="absolute z-60 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-900 border border-slate-600 rounded-lg shadow-xl px-3 py-2 pointer-events-none">
-          <p className="text-xs font-medium text-blue-400 mb-1">{entry.term}</p>
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">{entry.description}</p>
-          {entry.formula && (
-            <p className="text-[10px] text-blue-400/70 font-mono mt-1 truncate">{entry.formula}</p>
-          )}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-            <div className="w-2 h-2 bg-slate-900 border-r border-b border-slate-600 rotate-45" />
-          </div>
-        </div>
-      )}
-    </span>
-  )
-}
-
-// === 메인 모달 ===
-
-export function HelpModal({ onClose }: HelpModalProps) {
+export function HelpModal({ onClose, initialTermId }: HelpModalProps) {
   const [activeTab, setActiveTab] = useState<GlossaryCategory>('basic')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  // initialTermId가 있으면 해당 용어로 이동
+  useEffect(() => {
+    if (initialTermId) {
+      const entry = GLOSSARY.find((e) => e.id === initialTermId)
+      if (entry) {
+        setActiveTab(entry.category)
+        setSelectedId(entry.id)
+        setSearch('')
+      }
+    }
+  }, [initialTermId])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return GLOSSARY.filter((e) => e.category === activeTab)
@@ -147,18 +41,12 @@ export function HelpModal({ onClose }: HelpModalProps) {
   }, [search, activeTab])
 
   const selected = useMemo(() => {
-    if (!selectedId) return filtered[0] ?? null
-    return GLOSSARY.find((e) => e.id === selectedId) ?? filtered[0] ?? null
-  }, [selectedId, filtered])
-
-  const handleTermClick = useCallback((id: string) => {
-    const entry = GLOSSARY.find((e) => e.id === id)
-    if (entry) {
-      setActiveTab(entry.category)
-      setSelectedId(id)
-      setSearch('')
+    if (selectedId) {
+      const found = GLOSSARY.find((e) => e.id === selectedId)
+      if (found) return found
     }
-  }, [])
+    return filtered[0] ?? null
+  }, [selectedId, filtered])
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -243,11 +131,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
                   <h3 className="text-xl font-bold text-slate-100 mt-2">{selected.term}</h3>
                 </div>
                 <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
-                  <LinkedDescription
-                    text={selected.description}
-                    currentId={selected.id}
-                    onTermClick={handleTermClick}
-                  />
+                  <DescriptionWithLinks text={selected.description} excludeId={selected.id} />
                 </p>
                 {selected.formula && (
                   <div className="bg-slate-900/60 rounded-lg px-4 py-3 border border-slate-700">
