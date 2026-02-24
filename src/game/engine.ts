@@ -60,9 +60,6 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
   const company = state.companies[companyIndex]
   if (!company) return state
 
-  // 중복 자산 체크
-  if (company.assets.some((a) => a.assetId === assetId)) return state
-
   // 수요 프리미엄: 경쟁사 투자 집중 섹터 → 매입 비용 상승
   const demandPremium = calculateSectorDemandPremium(state.companies, companyIndex, asset.sector)
 
