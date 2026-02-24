@@ -1,4 +1,5 @@
 import { useGameStore } from '@stores/gameStore'
+import { GlossaryText } from '@components/glossary'
 import { ASSETS } from '@game/index'
 import { AssetCard } from './AssetCard'
 
@@ -52,10 +53,10 @@ export function AssetMarket() {
             {/* 섹터 헤더 */}
             <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-700">
               <span className="text-xl">{meta.icon}</span>
-              <h3 className="text-base font-bold text-slate-200">{meta.label}</h3>
+              <h3 className="text-base font-bold text-slate-200"><GlossaryText>{meta.label}</GlossaryText></h3>
               {isInformation && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-900/60 text-amber-300 border border-amber-700">
-                  💡 조사에 필요!
+                  💡 <GlossaryText>조사에 필요!</GlossaryText>
                 </span>
               )}
             </div>

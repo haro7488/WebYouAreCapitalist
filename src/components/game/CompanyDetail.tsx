@@ -1,4 +1,5 @@
 import { Card, MoneyDisplay, StatRow, Badge } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 import type { Company, Sector } from '@game/types'
 
 // 전략 정보 매핑
@@ -55,14 +56,14 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
         {/* 공개 정보 */}
         <div className="p-4 space-y-4">
           {/* 재무 현황 */}
-          <Card header="재무 현황">
-            <StatRow label="순자산" value={<MoneyDisplay amount={company.netWorth} />} />
-            <StatRow label="보유 현금" value={<MoneyDisplay amount={company.cash} />} />
-            <StatRow label="보유 자산" value={`${company.assets.length}개`} />
+          <Card header={<GlossaryText>재무 현황</GlossaryText>}>
+            <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={company.netWorth} />} />
+            <StatRow label={<GlossaryText>보유 현금</GlossaryText>} value={<MoneyDisplay amount={company.cash} />} />
+            <StatRow label={<GlossaryText>보유 자산</GlossaryText>} value={`${company.assets.length}개`} />
           </Card>
 
           {/* 섹터 지배 */}
-          <Card header="섹터 현황">
+          <Card header={<GlossaryText>섹터 현황</GlossaryText>}>
             {company.dominatedSectors.length > 0 ? (
               <div className="space-y-1">
                 {company.dominatedSectors.map(sector => (
@@ -73,15 +74,15 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">지배 중인 섹터 없음</p>
+              <p className="text-sm text-slate-500"><GlossaryText>지배 중인 섹터 없음</GlossaryText></p>
             )}
           </Card>
 
           {/* 전략 힌트 (AI 경쟁사만) */}
           {!isPlayer && (
-            <Card header="기업 동향">
+            <Card header={<GlossaryText>기업 동향</GlossaryText>}>
               {strategyInfo ? (
-                <p className="text-sm text-slate-300">{strategyInfo.hint}</p>
+                <p className="text-sm text-slate-300"><GlossaryText>{strategyInfo.hint}</GlossaryText></p>
               ) : (
                 <p className="text-sm text-slate-500">정보 없음</p>
               )}
@@ -90,12 +91,12 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
 
           {/* 비밀 정보 자리 (Proto-4 연동용) */}
           {!isPlayer && (
-            <Card header="상세 정보">
+            <Card header={<GlossaryText>상세 정보</GlossaryText>}>
               <div className="flex items-center gap-2 py-2">
                 <span className="text-slate-500">🔒</span>
                 <div>
-                  <p className="text-sm text-slate-400">조사 필요</p>
-                  <p className="text-xs text-slate-500">AP를 소모하여 경쟁사를 조사할 수 있습니다</p>
+                  <p className="text-sm text-slate-400"><GlossaryText>조사 필요</GlossaryText></p>
+                  <p className="text-xs text-slate-500"><GlossaryText>AP를 소모하여 경쟁사를 조사할 수 있습니다</GlossaryText></p>
                 </div>
               </div>
             </Card>

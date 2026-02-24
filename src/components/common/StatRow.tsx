@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 interface StatRowProps {
-  label: string
+  label: ReactNode
   value: ReactNode
   icon?: LucideIcon
 }

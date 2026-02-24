@@ -1,4 +1,5 @@
 import type { MarketCondition, Sector } from '@game/index'
+import { GlossaryText } from '@components/glossary'
 import { TrendingUp, Minus, TrendingDown } from 'lucide-react'
 import { Badge } from '@components/common'
 import { useGameStore } from '@stores/gameStore'
@@ -74,7 +75,7 @@ export function MarketIndicator({ condition }: MarketIndicatorProps) {
         <div className="text-[10px] space-y-0.5 text-right">
           {changingNextTurn.map(({ sector, nextTrend }) => (
             <div key={sector} className="flex items-center justify-end gap-1">
-              <span className="text-slate-500">{SECTOR_LABELS[sector]}</span>
+              <span className="text-slate-500"><GlossaryText>{SECTOR_LABELS[sector]}</GlossaryText></span>
               <span className={TREND_NEXT_COLOR[nextTrend] ?? 'text-slate-400'}>
                 {TREND_NEXT_LABEL[nextTrend] ?? nextTrend}
               </span>
