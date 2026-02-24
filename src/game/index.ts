@@ -79,7 +79,7 @@ calculateCompanyNetIncome,
 } from './economy'
 
 // Market
-export { createInitialMarket, updateMarket, createInitialSectorStates, updateSectorTrends } from './market'
+export { createInitialMarket, updateMarket, createInitialSectorStates, updateSectorTrends, previewNextTrends } from './market'
 
 // Events
 export { EVENT_REGISTRY, rollForEvent, findEventById } from './events'

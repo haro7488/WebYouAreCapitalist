@@ -1,5 +1,6 @@
-import type { MarketState, MarketCondition, Sector, SectorState, SectorTrend } from './types'
+import type { MarketState, MarketCondition, Sector, SectorState, SectorTrend, GameState } from './types'
 import type { Rng } from './utils'
+import { createRng } from './utils'
 import {
   MARKET_CHANGE_MIN_TURNS,
   MARKET_CHANGE_MAX_TURNS,
@@ -110,4 +111,21 @@ export function updateSectorTrends(
   }
 
   return updated
+}
+
+/**
+ * 다음 턴의 섹터 트렌드를 미리 계산 (trendForesight 특성용)
+ * 현재 시드와 턴 정보를 기반으로 결정적 RNG를 생성하여 예측
+ */
+export function previewNextTrends(state: GameState): Record<Sector, SectorTrend> {
+  // 현재 rngState를 기반으로 별도의 예측용 RNG 생성 (실제 게임 RNG와 독립)
+  const previewSeed = (state.seed ^ ((state.turn + 1) * 2654435761)) | 0
+  const previewRng = createRng(previewSeed)
+  const nextStates = updateSectorTrends(state.sectorStates, state.market.condition, previewRng)
+
+  const result = {} as Record<Sector, SectorTrend>
+  for (const sector of SECTORS) {
+    result[sector] = nextStates[sector].trend
+  }
+  return result
 }
