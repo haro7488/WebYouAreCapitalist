@@ -124,7 +124,7 @@ function applySellFor(state: GameState, companyIndex: number, ownedIndex: number
     ...company,
     cash: company.cash + sellValue,
     assets: newAssets,
-    actionsThisTurn: [...company.actionsThisTurn, { type: 'sell', ownedIndex }],
+    actionsThisTurn: [...company.actionsThisTurn, { type: 'sell', ownedIndex, assetId: owned.assetId }],
   }
 
   const poolChange = owned.currentValue - sellValue
@@ -161,7 +161,7 @@ function applyUpgradeFor(state: GameState, companyIndex: number, ownedIndex: num
     ...company,
     cash: company.cash - upgradeCost,
     assets: newAssets,
-    actionsThisTurn: [...company.actionsThisTurn, { type: 'upgrade', ownedIndex }],
+    actionsThisTurn: [...company.actionsThisTurn, { type: 'upgrade', ownedIndex, assetId: owned.assetId }],
   }
 
   const valueIncrease = newValue - owned.currentValue
@@ -327,7 +327,72 @@ function applyResearch(
       break
     }
     case 'government': {
-      result = { type: 'event', hint: '정부 정책 조사 결과 (미구현)' }
+      // 현재 상태 기준 eligible 정부 이벤트 필터링
+      const govEligible = (GOVERNMENT_EVENTS as GovernmentEvent[]).filter((e) =>
+        !e.conditions || checkEventConditions(e.conditions, state, player),
+      )
+
+      // eligible 이벤트의 inflationDelta 합산으로 트렌드 결정
+      let totalInflationDelta = 0
+      for (const e of govEligible) {
+        if (e.effect?.inflationDelta) {
+          totalInflationDelta += e.effect.inflationDelta
+        }
+        // choices가 있는 경우 첫 번째 선택지 효과도 고려
+        if (e.choices) {
+          for (const c of e.choices) {
+            if (c.effect.inflationDelta) {
+              totalInflationDelta += c.effect.inflationDelta * 0.5
+            }
+          }
+        }
+      }
+
+      // inflationDelta 합산 기준으로 트렌드 결정
+      let inflationTrend: 'rising' | 'stable' | 'falling'
+      if (totalInflationDelta > 0.005) {
+        inflationTrend = 'rising'
+      } else if (totalInflationDelta < -0.005) {
+        inflationTrend = 'falling'
+      } else {
+        inflationTrend = 'stable'
+      }
+
+      // 가장 영향력 있는 (weight 높은 또는 첫 번째) eligible 이벤트를 likelyPolicy로 선택
+      // GovernmentEvent에는 weight 없으므로 inflationDelta 절댓값이 가장 큰 이벤트 선택
+      let likelyPolicy: { title: string; description: string } | null = null
+      if (govEligible.length > 0) {
+        const topEvent = govEligible.reduce((best, e) => {
+          const bestDelta = Math.abs(best.effect?.inflationDelta ?? 0)
+          const eDelta = Math.abs(e.effect?.inflationDelta ?? 0)
+          return eDelta > bestDelta ? e : best
+        }, govEligible[0])
+        likelyPolicy = { title: topEvent.title, description: topEvent.description }
+      }
+
+      // eligible 이벤트의 sectorShift에서 영향 섹터 추출 (중복 제거)
+      const affectedSectorsSet = new Set<Sector>()
+      for (const e of govEligible) {
+        if (e.effect?.sectorShift) {
+          affectedSectorsSet.add(e.effect.sectorShift.sector)
+        }
+        if (e.choices) {
+          for (const c of e.choices) {
+            if (c.effect.sectorShift) {
+              affectedSectorsSet.add(c.effect.sectorShift.sector)
+            }
+          }
+        }
+      }
+      const affectedSectors = Array.from(affectedSectorsSet)
+
+      result = {
+        type: 'government',
+        currentInflation: state.inflation,
+        inflationTrend,
+        likelyPolicy,
+        affectedSectors,
+      }
       break
     }
   }

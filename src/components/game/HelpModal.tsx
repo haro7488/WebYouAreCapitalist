@@ -19,6 +19,8 @@ export function HelpModal({ onClose, initialTermId }: HelpModalProps) {
   const [activeTab, setActiveTab] = useState<GlossaryCategory>('basic')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  // 모바일: 상세 패널 표시 여부 (용어 선택 시 true)
+  const [showDetail, setShowDetail] = useState(false)
 
   // initialTermId가 있으면 해당 용어로 이동
   useEffect(() => {
@@ -28,6 +30,7 @@ export function HelpModal({ onClose, initialTermId }: HelpModalProps) {
         setActiveTab(entry.category)
         setSelectedId(entry.id)
         setSearch('')
+        setShowDetail(true)
       }
     }
   }, [initialTermId])
@@ -93,17 +96,17 @@ export function HelpModal({ onClose, initialTermId }: HelpModalProps) {
           )}
         </div>
 
-        {/* 좌우 분할 */}
+        {/* 좌우 분할 (모바일: 단일 컬럼, sm+: 좌1/3 + 우2/3) */}
         <div className="flex-1 flex min-h-0">
-          {/* 좌측: 목록 */}
-          <div className="w-1/3 border-r border-slate-700 overflow-y-auto">
+          {/* 목록 패널: 모바일에서 상세 보기 중이면 숨김 */}
+          <div className={`w-full sm:w-1/3 border-r border-slate-700 overflow-y-auto ${showDetail ? 'hidden sm:block' : 'block'}`}>
             {filtered.length === 0 && (
               <p className="text-sm text-slate-500 text-center py-8">검색 결과 없음</p>
             )}
             {filtered.map((entry) => (
               <button
                 key={entry.id}
-                onClick={() => setSelectedId(entry.id)}
+                onClick={() => { setSelectedId(entry.id); setShowDetail(true) }}
                 className={`w-full text-left px-4 py-3 text-sm border-b border-slate-700/50 transition-colors ${
                   selected?.id === entry.id
                     ? 'bg-slate-700 text-white'
@@ -120,8 +123,15 @@ export function HelpModal({ onClose, initialTermId }: HelpModalProps) {
             ))}
           </div>
 
-          {/* 우측: 설명 */}
-          <div className="w-2/3 overflow-y-auto p-5">
+          {/* 상세 패널: 모바일에서 목록 보기 중이면 숨김 */}
+          <div className={`w-full sm:w-2/3 overflow-y-auto p-5 ${showDetail ? 'block' : 'hidden sm:block'}`}>
+            {/* 뒤로 가기 버튼 (모바일 전용) */}
+            <button
+              className="sm:hidden mb-3 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+              onClick={() => setShowDetail(false)}
+            >
+              ← 뒤로
+            </button>
             {selected ? (
               <div className="space-y-4">
                 <div>

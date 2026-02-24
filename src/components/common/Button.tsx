@@ -33,6 +33,7 @@ export function Button({
   return (
     <button
       className={`
+        inline-flex items-center justify-center gap-1.5
         rounded-lg font-medium transition-colors
         ${variantStyles[variant]}
         ${sizeStyles[size]}

@@ -1,6 +1,10 @@
 import { Card, MoneyDisplay, StatRow, Badge } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import type { Company, Sector } from '@game/types'
+import { TraitBar } from './TraitDisplay'
+import { useGameStore } from '@stores/gameStore'
+import { ASSETS } from '@game/index'
+import type { Company, Sector, ResearchResult } from '@game/types'
+import { TRAIT_REGISTRY, type Trait } from '@game/traits'
 
 // 전략 정보 매핑
 const STRATEGY_INFO: Record<string, { name: string; hint: string }> = {
@@ -8,6 +12,14 @@ const STRATEGY_INFO: Record<string, { name: string; hint: string }> = {
   aggressive: { name: '공격형', hint: '공격적인 고수익 추구 행보' },
   domination: { name: '지배형', hint: '특정 섹터 집중 투자 행보' },
   opportunist: { name: '기회형', hint: '트렌드 추종 매매 행보' },
+}
+
+// 조사로 드러나는 전략 표시명
+const STRATEGY_DISPLAY_NAMES: Record<string, string> = {
+  conservative: '안정 추구형',
+  aggressive: '공격 투자형',
+  domination: '섹터 지배형',
+  opportunist: '기회주의형',
 }
 
 // 섹터 한국어 이름
@@ -21,6 +33,9 @@ const SECTOR_NAMES: Record<Sector, string> = {
   finance: '💰 금융',
 }
 
+// 업그레이드 레벨 표시용 헬퍼
+const UPGRADE_LABELS = ['기본', '레벨1', '레벨2', '레벨3']
+
 interface CompanyDetailProps {
   company: Company
   isPlayer: boolean
@@ -32,6 +47,38 @@ interface CompanyDetailProps {
 /** 기업 상세 정보 모달 */
 export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: CompanyDetailProps) {
   const strategyInfo = strategyId ? STRATEGY_INFO[strategyId] : null
+
+  // company.traits가 있으면 TRAIT_REGISTRY에서 Trait 객체 조회
+  const activeTraits: Trait[] = (company.traits ?? [])
+    .map((id) => TRAIT_REGISTRY.find((t) => t.id === id))
+    .filter((t): t is Trait => t != null)
+
+  // 플레이어 기업의 조사 이력에서 이 경쟁사에 해당하는 기록을 추출
+  const gameState = useGameStore((s) => s.gameState)
+  const playerHistory = gameState?.companies[0]?.researchHistory ?? []
+
+  // 포트폴리오 조사 결과 중 이 기업 것만 필터, 가장 최근 것 사용
+  const competitorRecords = playerHistory.filter(
+    (r) => r.result.type === 'competitor' &&
+      (r.result as Extract<ResearchResult, { type: 'competitor' }>).companyId === company.id
+  )
+  const latestCompetitorRecord = competitorRecords.length > 0 ? competitorRecords[competitorRecords.length - 1] : null
+  const competitorResult = latestCompetitorRecord?.result.type === 'competitor'
+    ? (latestCompetitorRecord.result as Extract<ResearchResult, { type: 'competitor' }>)
+    : null
+
+  // 전략 조사 결과 중 이 기업 것만 필터, 가장 최근 것 사용
+  const strategyRecords = playerHistory.filter(
+    (r) => r.result.type === 'strategy' &&
+      (r.result as Extract<ResearchResult, { type: 'strategy' }>).companyId === company.id
+  )
+  const latestStrategyRecord = strategyRecords.length > 0 ? strategyRecords[strategyRecords.length - 1] : null
+  const strategyResult = latestStrategyRecord?.result.type === 'strategy'
+    ? (latestStrategyRecord.result as Extract<ResearchResult, { type: 'strategy' }>)
+    : null
+
+  // assetId → Asset 이름/섹터 조회를 위한 맵
+  const assetMap = Object.fromEntries(ASSETS.map((a) => [a.id, a]))
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center" onClick={onClose}>
@@ -78,10 +125,28 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
             )}
           </Card>
 
+          {/* 보유 특성 (특성이 있을 때만 표시) */}
+          {activeTraits.length > 0 && (
+            <Card header={<GlossaryText>보유 특성</GlossaryText>}>
+              <TraitBar traits={activeTraits} />
+            </Card>
+          )}
+
           {/* 전략 힌트 (AI 경쟁사만) */}
           {!isPlayer && (
             <Card header={<GlossaryText>기업 동향</GlossaryText>}>
-              {strategyInfo ? (
+              {/* 전략 조사 결과가 있으면 구체적 전략명 표시, 없으면 힌트 또는 정보 없음 */}
+              {strategyResult ? (
+                <div className="space-y-1">
+                  <p className="text-sm text-amber-300 font-medium">
+                    {STRATEGY_DISPLAY_NAMES[strategyResult.strategyId] ?? strategyResult.strategyId}
+                  </p>
+                  {strategyInfo && (
+                    <p className="text-xs text-slate-400">{strategyInfo.hint}</p>
+                  )}
+                  <p className="text-xs text-slate-500">턴 {latestStrategyRecord!.turn}에 조사됨</p>
+                </div>
+              ) : strategyInfo ? (
                 <p className="text-sm text-slate-300"><GlossaryText>{strategyInfo.hint}</GlossaryText></p>
               ) : (
                 <p className="text-sm text-slate-500">정보 없음</p>
@@ -89,16 +154,49 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
             </Card>
           )}
 
-          {/* 비밀 정보 자리 (Proto-4 연동용) */}
+          {/* 상세 정보: 포트폴리오 조사 결과 또는 잠금 안내 */}
           {!isPlayer && (
             <Card header={<GlossaryText>상세 정보</GlossaryText>}>
-              <div className="flex items-center gap-2 py-2">
-                <span className="text-slate-500">🔒</span>
-                <div>
-                  <p className="text-sm text-slate-400"><GlossaryText>조사 필요</GlossaryText></p>
-                  <p className="text-xs text-slate-500"><GlossaryText>AP를 소모하여 경쟁사를 조사할 수 있습니다</GlossaryText></p>
+              {competitorResult ? (
+                <div className="space-y-2">
+                  {/* 조사 시점 표시 */}
+                  <p className="text-xs text-slate-500">턴 {latestCompetitorRecord!.turn}에 조사됨</p>
+                  {competitorResult.assets.length === 0 ? (
+                    <p className="text-sm text-slate-400">보유 자산 없음</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {competitorResult.assets.map((owned, idx) => {
+                        const asset = assetMap[owned.assetId]
+                        return (
+                          <div key={idx} className="flex items-center justify-between py-1 border-b border-slate-700 last:border-0">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-slate-200 truncate">
+                                {asset?.name ?? owned.assetId}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {asset ? SECTOR_NAMES[asset.sector] : ''}{' '}
+                                {owned.upgradeLevel > 0 && (
+                                  <span className="text-amber-500">{UPGRADE_LABELS[owned.upgradeLevel] ?? `Lv${owned.upgradeLevel}`}</span>
+                                )}
+                              </p>
+                            </div>
+                            <MoneyDisplay amount={owned.currentValue} size="sm" />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                /* 조사 기록 없음 — 잠금 상태 */
+                <div className="flex items-center gap-2 py-2">
+                  <span className="text-slate-500">🔒</span>
+                  <div>
+                    <p className="text-sm text-slate-400"><GlossaryText>조사 필요</GlossaryText></p>
+                    <p className="text-xs text-slate-500"><GlossaryText>AP를 소모하여 경쟁사를 조사할 수 있습니다</GlossaryText></p>
+                  </div>
+                </div>
+              )}
             </Card>
           )}
         </div>

@@ -20,8 +20,6 @@ interface UIStoreState {
   modal: ModalType
   /** 턴 결과 애니메이션 진행 중 여부 */
   isAnimating: boolean
-  /** 사이드바 열림 상태 (모바일) */
-  isSidebarOpen: boolean
   /** 도움말 모달 열림 + 이동할 용어 ID */
   helpOpen: boolean
   helpTermId: string | null
@@ -38,10 +36,6 @@ interface UIStoreActions {
   closeModal: () => void
   /** 애니메이션 상태 설정 */
   setAnimating: (isAnimating: boolean) => void
-  /** 사이드바 토글 */
-  toggleSidebar: () => void
-  /** 사이드바 닫기 */
-  closeSidebar: () => void
   /** 도움말 열기 (특정 용어로 이동) */
   openHelp: (termId?: string) => void
   /** 도움말 닫기 */
@@ -59,7 +53,6 @@ const initialState: UIStoreState = {
   previousScreen: null,
   modal: null,
   isAnimating: false,
-  isSidebarOpen: false,
   helpOpen: false,
   helpTermId: null,
 }
@@ -75,7 +68,6 @@ export const useUIStore = create<UIStore>()((set, get) => ({
     set({
       currentScreen: screen,
       previousScreen: current,
-      isSidebarOpen: false,
     })
   },
 
@@ -85,7 +77,6 @@ export const useUIStore = create<UIStore>()((set, get) => ({
       set({
         currentScreen: previousScreen,
         previousScreen: null,
-        isSidebarOpen: false,
       })
     }
   },
@@ -93,8 +84,6 @@ export const useUIStore = create<UIStore>()((set, get) => ({
   showModal: (modal) => set({ modal }),
   closeModal: () => set({ modal: null }),
   setAnimating: (isAnimating) => set({ isAnimating }),
-  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  closeSidebar: () => set({ isSidebarOpen: false }),
   openHelp: (termId?: string) => set({ helpOpen: true, helpTermId: termId ?? null }),
   closeHelp: () => set({ helpOpen: false, helpTermId: null }),
   reset: () => set(initialState),

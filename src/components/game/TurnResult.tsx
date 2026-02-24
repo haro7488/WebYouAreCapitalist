@@ -66,31 +66,75 @@ export function TurnResult() {
 
       {/* 경쟁사 주요 행동 */}
       {(() => {
+        // 섹터 한국어 라벨 매핑
+        const SECTOR_NAMES: Record<string, string> = {
+          food: '식품',
+          tech: '기술',
+          realEstate: '부동산',
+          logistics: '물류',
+          finance: '금융',
+          energy: '에너지',
+          information: '정보',
+        }
+
         const competitors = gameState.companies.slice(1)
         const assetMap = new Map(ASSETS.map((a) => [a.id, a]))
+
+        // buy/sell/upgrade 액션을 모두 수집하고 아이콘·색상·메시지를 결정
         const actions = competitors.flatMap((c) =>
           c.actionsThisTurn
-            .filter((a): a is { type: 'buy'; assetId: string } => a.type === 'buy')
+            .filter(
+              (a): a is
+                | { type: 'buy'; assetId: string }
+                | { type: 'sell'; ownedIndex: number; assetId: string }
+                | { type: 'upgrade'; ownedIndex: number; assetId: string } =>
+                a.type === 'buy' || a.type === 'sell' || a.type === 'upgrade',
+            )
             .map((a) => {
               const asset = assetMap.get(a.assetId)
-              const sectorLabels: Record<string, string> = {
-                food: '식품', tech: '기술', realEstate: '부동산', logistics: '물류', finance: '금융',
-  energy: '에너지',
-  information: '정보',
+              if (!asset) return null
+
+              if (a.type === 'buy') {
+                return {
+                  icon: '📈',
+                  colorClass: 'text-green-400',
+                  msg: `${c.name}이(가) ${SECTOR_NAMES[asset.sector] ?? asset.sector} 섹터에 투자`,
+                }
+              } else if (a.type === 'sell') {
+                return {
+                  icon: '📉',
+                  colorClass: 'text-red-400',
+                  msg: `${c.name}이(가) ${asset.name}을(를) 매각`,
+                }
+              } else {
+                // upgrade
+                return {
+                  icon: '⬆️',
+                  colorClass: 'text-blue-400',
+                  msg: `${c.name}이(가) ${asset.name}을(를) 강화`,
+                }
               }
-              return asset
-                ? `${c.name}이(가) ${sectorLabels[asset.sector] ?? asset.sector} 섹터에 투자했습니다`
-                : null
             })
             .filter(Boolean),
-        )
+        ) as { icon: string; colorClass: string; msg: string }[]
+
         if (actions.length === 0) return null
+
         return (
           <div className="mb-4 space-y-1">
-            <span className="text-xs font-medium text-slate-400">경쟁사 동향</span>
-            {actions.map((msg, i) => (
-              <div key={i} className="text-xs text-slate-300 bg-slate-700/50 rounded px-2 py-1">
-                <GlossaryText>{msg as string}</GlossaryText>
+            {/* 경쟁사 동향 헤더에 건수 표시 */}
+            <span className="text-xs font-medium text-slate-400">
+              경쟁사 동향 ({actions.length}건)
+            </span>
+            {actions.map((item, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-1.5 text-xs bg-slate-700/50 rounded px-2 py-1"
+              >
+                <span>{item.icon}</span>
+                <span className={item.colorClass}>
+                  <GlossaryText>{item.msg}</GlossaryText>
+                </span>
               </div>
             ))}
           </div>

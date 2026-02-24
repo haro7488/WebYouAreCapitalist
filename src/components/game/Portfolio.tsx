@@ -71,8 +71,8 @@ export function Portfolio() {
                     asset={def}
                     index={index}
                     marketCondition={market.condition}
-                    onSell={(idx) => submitAction({ type: 'sell', ownedIndex: idx })}
-                    onUpgrade={(idx) => submitAction({ type: 'upgrade', ownedIndex: idx })}
+                    onSell={(idx) => submitAction({ type: 'sell', ownedIndex: idx, assetId: owned.assetId })}
+                    onUpgrade={(idx) => submitAction({ type: 'upgrade', ownedIndex: idx, assetId: owned.assetId })}
                   />
                 )
               })}

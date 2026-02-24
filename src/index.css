@@ -5,4 +5,7 @@
 body {
   @apply bg-slate-900 text-slate-100 min-h-screen;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  /* 모바일 탭 하이라이트 제거 + 스크롤 오버플로우 방지 */
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }

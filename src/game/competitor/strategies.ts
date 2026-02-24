@@ -113,7 +113,7 @@ export const aggressiveStrategy: CompetitorStrategy = {
         const asset = ASSETS.find(a => a.id === company.assets[upgradeIdx].assetId)
         const cost = asset ? Math.floor(asset.cost * 0.3 * (company.assets[upgradeIdx].upgradeLevel + 1)) : Infinity
         if (cash >= cost) {
-          actions.push({ type: 'upgrade', ownedIndex: upgradeIdx })
+          actions.push({ type: 'upgrade', ownedIndex: upgradeIdx, assetId: company.assets[upgradeIdx].assetId })
         }
       }
     }
@@ -163,7 +163,7 @@ export const dominationStrategy: CompetitorStrategy = {
       if (asset?.sector === targetSector && owned.upgradeLevel < 3) {
         const upgradeCost = Math.floor(asset.cost * 0.3 * (owned.upgradeLevel + 1))
         if (cash >= upgradeCost) {
-          actions.push({ type: 'upgrade', ownedIndex: i })
+          actions.push({ type: 'upgrade', ownedIndex: i, assetId: owned.assetId })
           cash -= upgradeCost
         }
       }
@@ -190,7 +190,7 @@ export const opportunistStrategy: CompetitorStrategy = {
       const owned = company.assets[i]
       const asset = ASSETS.find(a => a.id === owned.assetId)
       if (asset && state.sectorStates[asset.sector].trend === 'cold') {
-        actions.push({ type: 'sell', ownedIndex: i })
+        actions.push({ type: 'sell', ownedIndex: i, assetId: owned.assetId })
         cash += Math.floor(owned.currentValue * 0.85) // 대략적 매각 대금 추정
       }
     }

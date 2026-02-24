@@ -36,16 +36,17 @@ export function OwnedAssetRow({
   const incomeBonus = Math.round((ASSET_UPGRADE_INCOME_MULTIPLIER - 1) * 100)
 
   return (
-    <div className="flex items-center justify-between p-3 border-b border-slate-700">
-      {/* 좌측: 이름 + 레벨 + 소득 정보 */}
-      <div className="flex flex-col">
-        <span className="text-sm font-medium text-slate-200">
+    // 모바일에서 버튼이 두 번째 줄로 내려가도록 flex-wrap 적용
+    <div className="flex flex-wrap items-center justify-between p-3 border-b border-slate-700">
+      {/* 좌측: 이름 + 레벨 + 소득 정보 — 텍스트 넘침 방지 */}
+      <div className="flex flex-col flex-1 min-w-0">
+        <span className="text-sm font-medium text-slate-200 truncate">
           <GlossaryText>{asset.name}</GlossaryText>
           <span className="text-xs text-slate-400 ml-1.5">
             Lv.{owned.upgradeLevel}/{maxLevel}
           </span>
         </span>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500 truncate">
           <GlossaryText>{`매입 턴${owned.purchaseTurn} | 소득 ${formatMoney(asset.baseIncome)}/턴`}</GlossaryText>
         </span>
       </div>
@@ -56,8 +57,8 @@ export function OwnedAssetRow({
         <span className="text-sm text-slate-400">{MARKET_ARROW[marketCondition]}</span>
       </div>
 
-      {/* 우측: 업그레이드 정보 + 버튼 */}
-      <div className="flex items-center gap-2">
+      {/* 우측: 업그레이드 정보 + 버튼 — 모바일에서 전체 너비로 두 번째 줄에 배치 */}
+      <div className="w-full sm:w-auto flex items-center gap-2 justify-end mt-2 sm:mt-0">
         {isMaxLevel ? (
           <span className="text-xs text-amber-400 font-medium">최대</span>
         ) : (

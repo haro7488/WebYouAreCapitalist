@@ -206,5 +206,44 @@
     "riskLevel": "low",
     "marketMultiplier": { "boom": 1.1, "stable": 1.0, "recession": 0.95 },
     "maxUpgradeLevel": 3
+  },
+  {
+    "id": "gas-station",
+    "name": "주유소",
+    "description": "안정적인 유류 판매 수익을 올리는 주유소 운영",
+    "sector": "energy",
+    "tier": 1,
+    "cost": 120,
+    "baseIncome": 16,
+    "appreciation": 0.015,
+    "riskLevel": "medium",
+    "marketMultiplier": { "boom": 1.5, "stable": 1.0, "recession": 0.5 },
+    "maxUpgradeLevel": 3
+  },
+  {
+    "id": "power-plant",
+    "name": "발전소 지분",
+    "description": "지역 발전소의 지분을 확보하여 안정적인 전력 수익 창출",
+    "sector": "energy",
+    "tier": 2,
+    "cost": 450,
+    "baseIncome": 45,
+    "appreciation": 0.025,
+    "riskLevel": "medium",
+    "marketMultiplier": { "boom": 1.5, "stable": 1.0, "recession": 0.5 },
+    "maxUpgradeLevel": 3
+  },
+  {
+    "id": "energy-corp",
+    "name": "에너지 대기업",
+    "description": "국내 에너지 시장을 장악한 대형 에너지 기업의 대주주로 참여",
+    "sector": "energy",
+    "tier": 3,
+    "cost": 1300,
+    "baseIncome": 100,
+    "appreciation": 0.03,
+    "riskLevel": "medium",
+    "marketMultiplier": { "boom": 1.5, "stable": 1.0, "recession": 0.5 },
+    "maxUpgradeLevel": 3
   }
 ]

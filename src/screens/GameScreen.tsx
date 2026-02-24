@@ -115,19 +115,20 @@ export function GameScreen() {
       <GameHeader onHome={() => navigateTo('mainMenu')} />
 
       {/* 메인 콘텐츠 */}
-      <main className="flex-1 overflow-y-auto p-4 pb-24">
+      {/* 모바일 p-3, 데스크탑 p-4 */}
+      <main className="flex-1 overflow-y-auto p-3 sm:p-4 pb-24">
         {/* Planning 페이즈 */}
         {phase === 'planning' && (
-          <div className="flex gap-4 flex-col lg:flex-row">
-            {/* 좌측: 기업 순위 현황판 (현황 탭에서만) */}
+          <div className="flex gap-3 lg:gap-4 flex-col lg:flex-row">
+            {/* 좌측: 기업 순위 현황판 (현황 탭에서만) — 모바일에서 메인 콘텐츠 아래 */}
             {planningView === 'summary' && (
-              <div className="w-full lg:w-72 shrink-0">
+              <div className="w-full lg:w-72 shrink-0 order-2 lg:order-1">
                 <Leaderboard />
               </div>
             )}
 
-            {/* 우측: 기존 콘텐츠 */}
-            <div className="flex-1 min-w-0">
+            {/* 우측: 기존 콘텐츠 — 모바일에서 위로 */}
+            <div className="flex-1 min-w-0 order-1 lg:order-2">
               {planningView === 'summary' && (
                 <div className="space-y-4">
                   {/* 시장 상세 */}

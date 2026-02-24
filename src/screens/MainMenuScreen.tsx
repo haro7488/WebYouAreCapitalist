@@ -32,8 +32,10 @@ export function MainMenuScreen() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full px-4 flex flex-col gap-6 items-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-money-400">You Are Capitalist</h1>
-          <p className="text-slate-400 mt-2">턴제 경영 로그라이트</p>
+          {/* 타이틀: 모바일에서 축소 */}
+          <h1 className="text-2xl sm:text-4xl font-bold text-money-400">You Are Capitalist</h1>
+          {/* 부제: 모바일에서 축소 */}
+          <p className="text-sm sm:text-base text-slate-400 mt-2">턴제 경영 로그라이트</p>
         </div>
 
         {/* 통계 카드 — 플레이 기록이 있을 때만 표시 */}

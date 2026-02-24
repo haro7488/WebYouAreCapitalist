@@ -151,6 +151,8 @@ export function endRun(finalState: GameState, meta: MetaState): { result: RunRes
     dominatedSectors,
     maxInfluence: player.influence,
     rankings,
+    rankingHistory: finalState.rankingHistory,
+    companyNames: finalState.companies.map(c => c.name),
     goalAchieved: player.goalCompleted,
     goalBonus: player.goalCompleted && finalState.selectedGoal ? finalState.selectedGoal.bonus : undefined,
   }

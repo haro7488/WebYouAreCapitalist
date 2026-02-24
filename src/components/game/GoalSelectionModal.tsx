@@ -24,7 +24,8 @@ const GOAL_COLORS: Record<string, string> = {
 export function GoalSelectionModal({ goals, onSelect }: GoalSelectionModalProps) {
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 rounded-lg w-full max-w-2xl p-6">
+      {/* 모바일 스크롤 + 패딩 대응 */}
+      <div className="bg-slate-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-100 mb-2">🎯 목표 선택</h2>
           <p className="text-slate-400 text-sm">

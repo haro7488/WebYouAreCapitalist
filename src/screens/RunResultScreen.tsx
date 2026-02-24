@@ -1,4 +1,5 @@
 import { Button, Card, StatRow, MoneyDisplay, Badge } from '@components/common'
+import { RankingChart } from '@components/game/RankingChart'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { ASSETS } from '@game/index'
@@ -33,6 +34,8 @@ export function RunResultScreen() {
     ownedAssets,
     dominatedSectors,
     rankings,
+    rankingHistory,
+    companyNames,
   } = lastRunResult
 
   // 보유 자산을 섹터별로 그룹핑
@@ -56,7 +59,8 @@ export function RunResultScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-lg w-full px-4 flex flex-col gap-6">
-        <h1 className="text-3xl font-bold text-center">게임 종료!</h1>
+        {/* 타이틀: 모바일에서 축소 */}
+        <h1 className="text-2xl sm:text-3xl font-bold text-center">게임 종료!</h1>
 
         {/* 최종 결과 카드 */}
         <Card header="최종 결과">
@@ -109,6 +113,17 @@ export function RunResultScreen() {
             })}
           </div>
         </Card>
+
+        {/* 순위 변동 차트 카드 */}
+        {rankingHistory && rankingHistory.length >= 2 && companyNames && (
+          <Card header="순위 변동">
+            <RankingChart
+              rankingHistory={rankingHistory}
+              companyNames={companyNames}
+              playerIndex={0}
+            />
+          </Card>
+        )}
 
         {/* 최종 포트폴리오 카드 */}
         {ownedAssets.length > 0 && (

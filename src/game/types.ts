@@ -69,6 +69,7 @@ export type ResearchResult =
   | { type: 'competitor'; companyId: string; companyName: string; assets: OwnedAsset[] }
   | { type: 'strategy'; companyId: string; companyName: string; strategyId: string }
   | { type: 'share'; sector: Sector; shares: { companyId: string; companyName: string; share: number }[] }
+  | { type: 'government'; currentInflation: number; inflationTrend: 'rising' | 'stable' | 'falling'; likelyPolicy: { title: string; description: string } | null; affectedSectors: Sector[] }
 
 // === 이벤트 ===
 export interface EventEffect {
@@ -135,8 +136,8 @@ export interface GameEvent {
 // === 턴 액션 ===
 export type TurnAction =
   | { type: 'buy'; assetId: string }
-  | { type: 'sell'; ownedIndex: number }
-  | { type: 'upgrade'; ownedIndex: number }
+  | { type: 'sell'; ownedIndex: number; assetId: string }
+  | { type: 'upgrade'; ownedIndex: number; assetId: string }
   | { type: 'research'; target: 'market' | 'sector' | 'event' | 'competitor' | 'strategy' | 'share' | 'government'; sector?: Sector; targetCompanyId?: string }
   | { type: 'endTurn' }
 
@@ -293,6 +294,8 @@ export interface RunResult {
   dominatedSectors: Sector[]
   maxInfluence: number
   rankings: RunResultRanking[] // 순자산 내림차순 정렬된 전체 기업 순위
+  rankingHistory: number[][] // 턴별 기업 순위 기록
+  companyNames: string[] // 기업명 (rankingHistory 인덱스 매칭)
   goalAchieved?: boolean
   goalBonus?: number
 }
