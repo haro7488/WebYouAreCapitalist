@@ -54,6 +54,12 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
   const company = state.companies[companyIndex]
   if (!company) return state
 
+  // AP 체크
+  if (company.ap <= 0) return state
+
+  // 중복 자산 체크
+  if (company.assets.some((a) => a.assetId === assetId)) return state
+
   // 수요 프리미엄: 경쟁사 투자 집중 섹터 → 매입 비용 상승
   const demandPremium = calculateSectorDemandPremium(state.companies, companyIndex, asset.sector)
 
@@ -100,6 +106,7 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
 function applySellFor(state: GameState, companyIndex: number, ownedIndex: number): GameState {
   const company = state.companies[companyIndex]
   if (!company) return state
+  if (company.ap <= 0) return state
   const owned = company.assets[ownedIndex]
   if (!owned) return state
 
@@ -132,6 +139,7 @@ function applySellFor(state: GameState, companyIndex: number, ownedIndex: number
 function applyUpgradeFor(state: GameState, companyIndex: number, ownedIndex: number): GameState {
   const company = state.companies[companyIndex]
   if (!company) return state
+  if (company.ap <= 0) return state
   const owned = company.assets[ownedIndex]
   if (!owned) return state
   if (owned.upgradeLevel >= ASSET_MAX_UPGRADE_LEVEL) return state

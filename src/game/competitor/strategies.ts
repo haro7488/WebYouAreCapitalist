@@ -8,11 +8,13 @@ import { createRng } from '../utils'
 
 const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'retail', 'finance']
 
-/** 기업이 구매 가능한 자산 필터 */
-function getAffordableAssets(cash: number, maxTier?: number) {
+/** 기업이 구매 가능한 자산 필터 (보유 중 제외) */
+function getAffordableAssets(company: Company, cash: number, maxTier?: number) {
+  const owned = new Set(company.assets.map(a => a.assetId))
   return ASSETS.filter(a =>
     a.cost <= cash &&
-    (!maxTier || a.tier <= maxTier),
+    (!maxTier || a.tier <= maxTier) &&
+    !owned.has(a.id),
   )
 }
 
@@ -62,7 +64,7 @@ export const conservativeStrategy: CompetitorStrategy = {
 
     // Tier 1~2 분산 매입 (미보유 섹터 우선, 가격 오름차순)
     const ownedSectors = getOwnedSectors(company)
-    const affordable = getAffordableAssets(cash, 2)
+    const affordable = getAffordableAssets(company, cash, 2)
       .sort((a, b) => {
         const aNew = ownedSectors.has(a.sector) ? 0 : 1
         const bNew = ownedSectors.has(b.sector) ? 0 : 1
@@ -96,7 +98,7 @@ export const aggressiveStrategy: CompetitorStrategy = {
 
     // Tier 2~3 집중 (호황 시 Tier 2+, 평시 Tier 1+)
     const minTier = state.market.condition === 'boom' ? 2 : 1
-    const affordable = getAffordableAssets(cash)
+    const affordable = getAffordableAssets(company, cash)
       .filter(a => a.tier >= minTier)
       .sort((a, b) => b.cost - a.cost) // 비싼 것부터
 
@@ -150,7 +152,7 @@ export const dominationStrategy: CompetitorStrategy = {
 
     // 타겟 섹터만 매입 (비싼 것부터)
     const affordable = ASSETS
-      .filter(a => a.sector === targetSector && a.cost <= cash)
+      .filter(a => a.sector === targetSector && a.cost <= cash && !company.assets.some(o => o.assetId === a.id))
       .sort((a, b) => b.cost - a.cost)
 
     for (const asset of affordable) {
@@ -213,7 +215,7 @@ export const opportunistStrategy: CompetitorStrategy = {
       : ALL_SECTORS.filter(s => state.sectorStates[s].trend === 'neutral')
 
     const affordable = ASSETS
-      .filter(a => targetSectors.includes(a.sector) && a.cost <= cash)
+      .filter(a => targetSectors.includes(a.sector) && a.cost <= cash && !company.assets.some(o => o.assetId === a.id))
       .sort((a, b) => b.cost - a.cost)
 
     for (const asset of affordable) {
