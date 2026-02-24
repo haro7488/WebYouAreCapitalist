@@ -8,6 +8,7 @@ export interface GlossaryEntry {
   category: GlossaryCategory
   description: string
   formula?: string
+  aliases?: string[]
 }
 
 // 데이터 → data/glossary.json + schema/glossary.schema.ts
