@@ -81,7 +81,7 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
     currentValue: asset.cost,
   }
 
-  const influenceGain = INFLUENCE_PER_PURCHASE[asset.tier] ?? 0
+  const influenceGain = Math.round((INFLUENCE_PER_PURCHASE[asset.tier] ?? 0) * traitEffects.influenceGainMultiplier)
 
   const updatedEffects = nextDiscount > 0
     ? company.activeEffects.map((e) => e.nextPurchaseDiscount ? { ...e, nextPurchaseDiscount: 0 } : e)

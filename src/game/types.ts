@@ -102,6 +102,7 @@ export interface EventConditions {
   dominatesCount?: number
   rank?: number // 최소 순위 (3 = 3위 이하)
   hasSector?: Sector // 해당 섹터 자산 보유 여부
+  hasSectorAsset?: Sector // hasSector 동의어 — JSON 이벤트 조건용
   minInflation?: number
   // 하위 호환
   sectorTrendNot?: { sector: Sector; trend: SectorTrend }
@@ -113,6 +114,7 @@ export interface GameEvent {
   id: string
   title: string
   description: string
+  type?: 'opportunity' | 'choice' | 'pressure' // 이벤트 유형 (가중치 보정용)
   choices: [EventChoice, EventChoice] // 기본 2개 선택지
   minTurn: number // 이 이벤트가 나올 수 있는 최소 턴
   weight: number // 등장 확률 가중치

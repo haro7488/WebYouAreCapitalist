@@ -3,6 +3,7 @@ import type { Rng } from './utils'
 import { VOLATILITY_EVENT_BONUS } from './constants'
 import { EVENT_REGISTRY } from './schema/events.schema'
 import { checkEventConditions } from './logic/eventConditions'
+import { getCompanyTraitEffects } from './logic/traitEngine'
 
 export { EVENT_REGISTRY }
 
@@ -19,12 +20,22 @@ function getEligibleEvents(state: GameState, excludeIds: string[] = []): GameEve
   })
 }
 
-/** 가중치 기반 이벤트 선택 */
-function pickWeightedEvent(eligible: GameEvent[], rng: Rng): GameEvent {
-  const totalWeight = eligible.reduce((sum, e) => sum + e.weight, 0)
+/** 가중치 기반 이벤트 선택 (플레이어 특성 보정 포함) */
+function pickWeightedEvent(eligible: GameEvent[], rng: Rng, state: GameState): GameEvent {
+  const player = state.companies[0]
+  const traitEffects = getCompanyTraitEffects(player)
+
+  const effectiveWeight = (e: GameEvent): number => {
+    let w = e.weight
+    if (e.type === 'opportunity') w += traitEffects.opportunityWeightBonus
+    if (e.type === 'pressure') w += traitEffects.pressureWeightBonus
+    return Math.max(w, 0)
+  }
+
+  const totalWeight = eligible.reduce((sum, e) => sum + effectiveWeight(e), 0)
   let roll = rng.random() * totalWeight
   for (const event of eligible) {
-    roll -= event.weight
+    roll -= effectiveWeight(event)
     if (roll <= 0) return event
   }
   return eligible[eligible.length - 1]
@@ -36,7 +47,7 @@ export function rollForEvents(state: GameState, rng: Rng): GameEvent[] {
   if (eligible.length === 0) return []
 
   // 1번째: 조건 충족 이벤트에서 무조건 1개 선택 (guaranteed)
-  const first = pickWeightedEvent(eligible, rng)
+  const first = pickWeightedEvent(eligible, rng, state)
   const result: GameEvent[] = [first]
 
   // 2번째: 기존 확률 판정으로 추가 이벤트 (1번째와 다른 이벤트)
@@ -44,7 +55,7 @@ export function rollForEvents(state: GameState, rng: Rng): GameEvent[] {
   if (rng.random() <= probability) {
     const secondEligible = getEligibleEvents(state, [first.id])
     if (secondEligible.length > 0) {
-      result.push(pickWeightedEvent(secondEligible, rng))
+      result.push(pickWeightedEvent(secondEligible, rng, state))
     }
   }
 
