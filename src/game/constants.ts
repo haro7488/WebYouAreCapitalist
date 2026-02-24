@@ -9,14 +9,14 @@ import type {
 } from './types'
 
 // === 경제 상수 ===
-export const STARTING_MONEY = 1_000
+export const STARTING_MONEY = 1_500
 export const MAX_TURNS = 30
-export const BASE_EXPENSES = 15 // 기본 턴당 지출 (유지비)
+export const BASE_EXPENSES = 10 // 기본 턴당 지출 (유지비)
 export const STARTING_INFLUENCE = 0
-export const BASE_ACTION_POINTS = 2
+export const BASE_ACTION_POINTS = 3
 
 // === 시장 풀 상수 ===
-export const INITIAL_MARKET_POOL = 20_000 // 시장 풀 초기 화폐량
+export const INITIAL_MARKET_POOL = 50_000 // 시장 풀 초기 화폐량
 export const PLAYER_COMPANY_ID = 'player' // 플레이어 기업 ID
 export const DEFAULT_COMPANY_NAME = '내 기업' // 플레이어 기업 기본 이름
 export const DEFAULT_COMPETITOR_COUNT = 3 // 기본 AI 경쟁사 수
@@ -126,7 +126,7 @@ export const ASSETS: Asset[] = [
     sector: 'food',
     tier: 1,
     cost: 100,
-    baseIncome: 8,
+    baseIncome: 14,
     appreciation: 0.01,
     riskLevel: 'low',
     marketMultiplier: { boom: 1.2, stable: 1.0, recession: 0.85 },
@@ -139,7 +139,7 @@ export const ASSETS: Asset[] = [
     sector: 'food',
     tier: 2,
     cost: 400,
-    baseIncome: 28,
+    baseIncome: 42,
     appreciation: 0.02,
     riskLevel: 'medium',
     marketMultiplier: { boom: 1.3, stable: 1.0, recession: 0.8 },
@@ -151,8 +151,8 @@ export const ASSETS: Asset[] = [
     description: '전국 체인으로 외식 시장 장악',
     sector: 'food',
     tier: 3,
-    cost: 1_200,
-    baseIncome: 72,
+    cost: 900,
+    baseIncome: 95,
     appreciation: 0.03,
     riskLevel: 'medium',
     marketMultiplier: { boom: 1.4, stable: 1.0, recession: 0.7 },
@@ -167,7 +167,7 @@ export const ASSETS: Asset[] = [
     sector: 'tech',
     tier: 1,
     cost: 150,
-    baseIncome: 12,
+    baseIncome: 18,
     appreciation: 0.03,
     riskLevel: 'high',
     marketMultiplier: { boom: 1.6, stable: 0.9, recession: 0.5 },
@@ -180,7 +180,7 @@ export const ASSETS: Asset[] = [
     sector: 'tech',
     tier: 2,
     cost: 500,
-    baseIncome: 40,
+    baseIncome: 55,
     appreciation: 0.04,
     riskLevel: 'high',
     marketMultiplier: { boom: 1.7, stable: 0.9, recession: 0.4 },
@@ -192,8 +192,8 @@ export const ASSETS: Asset[] = [
     description: '글로벌 기술 기업 대규모 지분 확보',
     sector: 'tech',
     tier: 3,
-    cost: 1_500,
-    baseIncome: 105,
+    cost: 1_100,
+    baseIncome: 120,
     appreciation: 0.05,
     riskLevel: 'high',
     marketMultiplier: { boom: 1.8, stable: 0.9, recession: 0.3 },
@@ -208,7 +208,7 @@ export const ASSETS: Asset[] = [
     sector: 'realEstate',
     tier: 1,
     cost: 200,
-    baseIncome: 12,
+    baseIncome: 22,
     appreciation: 0.02,
     riskLevel: 'low',
     marketMultiplier: { boom: 1.1, stable: 1.05, recession: 0.95 },
@@ -221,7 +221,7 @@ export const ASSETS: Asset[] = [
     sector: 'realEstate',
     tier: 2,
     cost: 600,
-    baseIncome: 30,
+    baseIncome: 52,
     appreciation: 0.03,
     riskLevel: 'low',
     marketMultiplier: { boom: 1.2, stable: 1.05, recession: 0.9 },
@@ -233,8 +233,8 @@ export const ASSETS: Asset[] = [
     description: '대형 오피스 빌딩으로 프리미엄 임대 수익',
     sector: 'realEstate',
     tier: 3,
-    cost: 2_000,
-    baseIncome: 80,
+    cost: 1_400,
+    baseIncome: 110,
     appreciation: 0.04,
     riskLevel: 'medium',
     marketMultiplier: { boom: 1.3, stable: 1.05, recession: 0.85 },
@@ -249,7 +249,7 @@ export const ASSETS: Asset[] = [
     sector: 'retail',
     tier: 1,
     cost: 120,
-    baseIncome: 10,
+    baseIncome: 16,
     appreciation: 0.015,
     riskLevel: 'low',
     marketMultiplier: { boom: 1.3, stable: 1.0, recession: 0.7 },
@@ -262,7 +262,7 @@ export const ASSETS: Asset[] = [
     sector: 'retail',
     tier: 2,
     cost: 450,
-    baseIncome: 32,
+    baseIncome: 45,
     appreciation: 0.025,
     riskLevel: 'medium',
     marketMultiplier: { boom: 1.4, stable: 1.0, recession: 0.6 },
@@ -274,8 +274,8 @@ export const ASSETS: Asset[] = [
     description: '전국 유통망을 장악한 대형 유통 기업',
     sector: 'retail',
     tier: 3,
-    cost: 1_300,
-    baseIncome: 78,
+    cost: 1_000,
+    baseIncome: 100,
     appreciation: 0.03,
     riskLevel: 'medium',
     marketMultiplier: { boom: 1.5, stable: 1.0, recession: 0.5 },
@@ -290,7 +290,7 @@ export const ASSETS: Asset[] = [
     sector: 'finance',
     tier: 1,
     cost: 180,
-    baseIncome: 15,
+    baseIncome: 20,
     appreciation: 0,
     riskLevel: 'high',
     marketMultiplier: { boom: 1.5, stable: 0.8, recession: 0.3 },
@@ -303,7 +303,7 @@ export const ASSETS: Asset[] = [
     sector: 'finance',
     tier: 2,
     cost: 550,
-    baseIncome: 44,
+    baseIncome: 58,
     appreciation: 0.01,
     riskLevel: 'high',
     marketMultiplier: { boom: 1.8, stable: 0.9, recession: 0.2 },
@@ -315,8 +315,8 @@ export const ASSETS: Asset[] = [
     description: '시중 은행의 대주주로 참여',
     sector: 'finance',
     tier: 3,
-    cost: 1_800,
-    baseIncome: 126,
+    cost: 1_300,
+    baseIncome: 140,
     appreciation: 0.02,
     riskLevel: 'high',
     marketMultiplier: { boom: 2.0, stable: 0.9, recession: 0.1 },
