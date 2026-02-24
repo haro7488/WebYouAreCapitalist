@@ -39,6 +39,9 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     dominatedSectors: [],
     traits: [],
     goalCompleted: false,
+    netWorthHistory: [],
+    revenueHistory: [],
+    cashHistory: [],
   }
 
   // 경쟁사 생성
@@ -65,6 +68,9 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
       dominatedSectors: [],
       traits: [],
       goalCompleted: false,
+      netWorthHistory: [],
+      revenueHistory: [],
+      cashHistory: [],
     }
   })
 
@@ -104,6 +110,8 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     config: cfg,
 
     rankingHistory: [initialRanks],
+
+    inflationHistory: [],
 
     rngState: rng.getState(),
 

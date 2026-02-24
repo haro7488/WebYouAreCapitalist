@@ -52,6 +52,7 @@ export interface OwnedAsset {
   purchasePrice: number // 매입가
   upgradeLevel: number // 0~3
   currentValue: number // 현재 평가 가치 (매 턴 갱신)
+  valueHistory: number[] // 턴별 자산 가치 히스토리
 }
 
 // === 시장 조사 ===
@@ -165,6 +166,11 @@ export interface Company {
   netWorth: number // cash + Σ(asset value)
   dominatedSectors: Sector[] // 지배 중인 섹터 목록
   goalCompleted: boolean // 목표 달성 여부
+
+  // 턴별 히스토리
+  netWorthHistory: number[]
+  revenueHistory: number[]
+  cashHistory: number[]
 }
 
 // === 핵심 게임 상태 ===
@@ -206,6 +212,9 @@ export interface GameState {
 
   // 턴별 순위 기록 (각 원소 = 기업별 순위 배열)
   rankingHistory: number[][]
+
+  // 인플레이션 히스토리
+  inflationHistory: number[]
 
   // RNG 상태
   rngState: number
@@ -298,4 +307,19 @@ export interface RunResult {
   companyNames: string[] // 기업명 (rankingHistory 인덱스 매칭)
   goalAchieved?: boolean
   goalBonus?: number
+}
+
+// === 금액 내역 분해 ===
+export interface BreakdownItem {
+  label: string
+  value: number
+  type: 'base' | 'add' | 'multiply'
+}
+
+export interface MoneyBreakdown {
+  title?: string
+  items: BreakdownItem[]
+  final: number
+  history?: number[]   // 턴별 변동 추이
+  maxValue?: number    // 차트 Y축 최대값 (티어별 최대)
 }

@@ -1,9 +1,13 @@
+import { useState, useRef, useCallback } from 'react'
 import { formatMoney } from '@game/index'
+import type { MoneyBreakdown } from '@game/types'
+import { BreakdownPopover } from './BreakdownPopover'
 
 interface MoneyDisplayProps {
   amount: number
   size?: 'sm' | 'md' | 'lg'
   showSign?: boolean
+  getBreakdown?: () => MoneyBreakdown
 }
 
 // 크기별 텍스트 스타일
@@ -18,13 +22,38 @@ export function MoneyDisplay({
   amount,
   size = 'md',
   showSign = false,
+  getBreakdown,
 }: MoneyDisplayProps) {
   const colorClass = amount >= 0 ? 'text-money-400' : 'text-danger-400'
   const sign = showSign && amount > 0 ? '+' : ''
+  const [breakdown, setBreakdown] = useState<MoneyBreakdown | null>(null)
+  const ref = useRef<HTMLSpanElement>(null)
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!getBreakdown) return
+      e.stopPropagation()
+      setBreakdown((prev) => (prev ? null : getBreakdown()))
+    },
+    [getBreakdown],
+  )
 
   return (
-    <span className={`${sizeStyles[size]} ${colorClass}`}>
-      {sign}{formatMoney(amount)}
-    </span>
+    <>
+      <span
+        ref={ref}
+        className={`${sizeStyles[size]} ${colorClass}${getBreakdown ? ' cursor-pointer border-b border-dashed border-current/30' : ''}`}
+        onClick={handleClick}
+      >
+        {sign}{formatMoney(amount)}
+      </span>
+      {breakdown && (
+        <BreakdownPopover
+          breakdown={breakdown}
+          anchorEl={ref.current}
+          onClose={() => setBreakdown(null)}
+        />
+      )}
+    </>
   )
 }

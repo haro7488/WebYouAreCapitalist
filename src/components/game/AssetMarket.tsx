@@ -1,7 +1,15 @@
 import { useGameStore } from '@stores/gameStore'
 import { GlossaryText } from '@components/glossary'
-import { ASSETS } from '@game/index'
+import { Badge } from '@components/common'
+import { ASSETS, SECTOR_MARKET_MULTIPLIER } from '@game/index'
+import type { SectorTrend } from '@game/index'
 import { AssetCard } from './AssetCard'
+
+const TREND_BADGE: Record<SectorTrend, { variant: 'boom' | 'stable' | 'recession'; text: string }> = {
+  hot: { variant: 'boom', text: '호황' },
+  neutral: { variant: 'stable', text: '보통' },
+  cold: { variant: 'recession', text: '침체' },
+}
 
 /** 섹터 표시 정보 */
 const SECTOR_META: Record<string, { label: string; icon: string }> = {
@@ -19,7 +27,8 @@ const SECTOR_ORDER = ['information', 'food', 'tech', 'realEstate', 'logistics', 
 
 /** 구매 가능한 자산 목록 — 섹터별 그룹 표시 */
 export function AssetMarket() {
-  const money = useGameStore((s) => s.gameState?.companies[0].cash ?? 0)
+  const gameState = useGameStore((s) => s.gameState)
+  const money = gameState?.companies[0].cash ?? 0
   const submitAction = useGameStore((s) => s.submitAction)
 
   // 섹터별 그룹핑
@@ -51,15 +60,29 @@ export function AssetMarket() {
         return (
           <section key={sector}>
             {/* 섹터 헤더 */}
-            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-700">
-              <span className="text-xl">{meta.icon}</span>
-              <h3 className="text-base font-bold text-slate-200"><GlossaryText>{meta.label}</GlossaryText></h3>
-              {isInformation && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-900/60 text-amber-300 border border-amber-700">
-                  💡 <GlossaryText>조사에 필요!</GlossaryText>
-                </span>
-              )}
-            </div>
+            {(() => {
+              const trend = gameState?.sectorStates[sector as keyof typeof gameState.sectorStates]?.trend
+              const mult = SECTOR_MARKET_MULTIPLIER[sector as keyof typeof SECTOR_MARKET_MULTIPLIER]
+              const recColor = mult ? (mult.recession < 0.5 ? 'text-red-400' : mult.recession >= 0.8 ? 'text-emerald-400' : 'text-orange-400') : 'text-slate-400'
+              return (
+                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-700 flex-wrap">
+                  <span className="text-xl">{meta.icon}</span>
+                  <h3 className="text-base font-bold text-slate-200"><GlossaryText>{meta.label}</GlossaryText></h3>
+                  {trend && <Badge variant={TREND_BADGE[trend].variant} label={TREND_BADGE[trend].text} />}
+                  {mult && (
+                    <span className="text-xs text-slate-500 ml-auto">
+                      호황<span className="text-blue-400">×{mult.boom}</span>
+                      {' '}불황<span className={recColor}>×{mult.recession}</span>
+                    </span>
+                  )}
+                  {isInformation && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-900/60 text-amber-300 border border-amber-700">
+                      💡 <GlossaryText>조사에 필요!</GlossaryText>
+                    </span>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* 자산 카드 그리드 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

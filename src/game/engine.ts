@@ -79,6 +79,7 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
     purchasePrice: cost,
     upgradeLevel: 0,
     currentValue: asset.cost,
+    valueHistory: [],
   }
 
   const influenceGain = Math.round((INFLUENCE_PER_PURCHASE[asset.tier] ?? 0) * traitEffects.influenceGainMultiplier)
@@ -494,6 +495,7 @@ function processAIEventChoices(state: GameState, event: GameEvent): GameState {
           purchasePrice: 0,
           upgradeLevel: 0,
           currentValue: asset.cost,
+          valueHistory: [],
         }]
       }
     }
@@ -570,6 +572,7 @@ function applyEventChoice(state: GameState, choice: EventChoice): GameState {
         purchasePrice: 0,
         upgradeLevel: 0,
         currentValue: asset.cost,
+        valueHistory: [],
       }
       updatedPlayer = {
         ...updatedPlayer,
@@ -1001,8 +1004,23 @@ export function advanceTurn(state: GameState): GameState {
   const currentRanks = checked.companies.map((_, i) => getCompanyRank(checked.companies, i))
   const newRankingHistory = [...checked.rankingHistory, currentRanks]
 
+  // 기업별 수치 히스토리 기록
+  const historiedCompanies = checked.companies.map(c => ({
+    ...c,
+    netWorthHistory: [...(c.netWorthHistory ?? []), c.netWorth],
+    revenueHistory: [...(c.revenueHistory ?? []), c.revenue],
+    cashHistory: [...(c.cashHistory ?? []), c.cash],
+    assets: c.assets.map(a => ({
+      ...a,
+      valueHistory: [...(a.valueHistory ?? []), a.currentValue],
+    })),
+  }))
+
+  // 인플레이션 히스토리
+  const newInflationHistory = [...(checked.inflationHistory ?? []), checked.cumulativeInflation]
+
   // 턴 상태 초기화
-  const resetCompanies = checked.companies.map((company) => ({
+  const resetCompanies = historiedCompanies.map((company) => ({
     ...company,
     actionsThisTurn: [] as TurnAction[],
     researchResult: null,
@@ -1014,6 +1032,7 @@ export function advanceTurn(state: GameState): GameState {
     phase: 'planning',
     companies: resetCompanies,
     rankingHistory: newRankingHistory,
+    inflationHistory: newInflationHistory,
   }
 }
 

@@ -3,7 +3,7 @@ import { Card, StatRow, MoneyDisplay, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { MarketIndicator } from './MarketIndicator'
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react'
-import { ASSETS, getCompanyRank } from '@game/index'
+import { ASSETS, getCompanyRank, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
 
 /** 턴 결과 요약 카드 */
 export function TurnResult() {
@@ -34,12 +34,12 @@ export function TurnResult() {
       <div className="space-y-2 mb-4">
         <StatRow
           label="자산 수익"
-          value={<MoneyDisplay amount={revenue} size="sm" showSign />}
+          value={<MoneyDisplay amount={revenue} size="sm" showSign getBreakdown={() => getRevenueBreakdown(player, gameState)} />}
           icon={ArrowUpRight}
         />
         <StatRow
           label="지출"
-          value={<MoneyDisplay amount={-expenses} size="sm" showSign />}
+          value={<MoneyDisplay amount={-expenses} size="sm" showSign getBreakdown={() => getExpenseBreakdown(player, gameState)} />}
           icon={ArrowDownRight}
         />
         <div className="border-t border-slate-700 pt-2">
@@ -55,7 +55,7 @@ export function TurnResult() {
         />
         <StatRow
           label={<GlossaryText>순자산</GlossaryText>}
-          value={<MoneyDisplay amount={netWorth} size="sm" />}
+          value={<MoneyDisplay amount={netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(player)} />}
           icon={TrendingUp}
         />
       </div>

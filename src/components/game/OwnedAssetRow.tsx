@@ -1,7 +1,8 @@
 import type { OwnedAsset, Asset, SectorTrend } from '@game/index'
 import { Button, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import { formatMoney, ASSET_UPGRADE_COST_RATIO, ASSET_UPGRADE_INCOME_MULTIPLIER } from '@game/index'
+import { formatMoney, ASSET_UPGRADE_COST_RATIO, ASSET_UPGRADE_INCOME_MULTIPLIER, getAssetIncomeBreakdown } from '@game/index'
+import { useGameStore } from '@stores/gameStore'
 
 // 섹터 트렌드별 방향 표시
 const TREND_ARROW: Record<SectorTrend, { symbol: string; color: string }> = {
@@ -28,6 +29,8 @@ export function OwnedAssetRow({
   onSell,
   onUpgrade,
 }: OwnedAssetRowProps) {
+  const gameState = useGameStore((s) => s.gameState)
+  const player = gameState?.companies[0]
   const maxLevel = asset.maxUpgradeLevel ?? 3
   const isMaxLevel = owned.upgradeLevel >= maxLevel
   const upgradeCost = isMaxLevel
@@ -46,14 +49,17 @@ export function OwnedAssetRow({
             Lv.{owned.upgradeLevel}/{maxLevel}
           </span>
         </span>
-        <span className="text-xs text-slate-500 truncate">
-          <GlossaryText>{`매입 턴${owned.purchaseTurn} | 소득 ${formatMoney(asset.baseIncome)}/턴`}</GlossaryText>
+        <span className="text-xs text-slate-500 truncate flex items-center gap-0.5">
+          <GlossaryText>{`매입 턴${owned.purchaseTurn}`}</GlossaryText>
+          {' | 소득 '}
+          <MoneyDisplay amount={asset.baseIncome} size="sm" getBreakdown={gameState && player ? () => getAssetIncomeBreakdown(owned, gameState, player) : undefined} />
+          /턴
         </span>
       </div>
 
       {/* 중앙: 현재 가치 + 시장 방향 */}
       <div className="flex items-center gap-2">
-        <MoneyDisplay amount={owned.currentValue} size="sm" />
+        <MoneyDisplay amount={owned.currentValue} size="sm" getBreakdown={gameState && player ? () => getAssetIncomeBreakdown(owned, gameState, player) : undefined} />
         <span className={`text-sm ${TREND_ARROW[sectorTrend].color}`}>{TREND_ARROW[sectorTrend].symbol}</span>
       </div>
 

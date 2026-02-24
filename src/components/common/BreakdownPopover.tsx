@@ -1,0 +1,138 @@
+import { useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import type { MoneyBreakdown, BreakdownItem } from '@game/types'
+import { formatMoney } from '@game/utils'
+import { BreakdownChart } from './BreakdownChart'
+
+function formatItemValue(item: BreakdownItem): string {
+  switch (item.type) {
+    case 'base': return formatMoney(item.value)
+    case 'add': return `${item.value >= 0 ? '+' : ''}${formatMoney(item.value)}`
+    case 'multiply': return `×${item.value.toFixed(2)}`
+  }
+}
+
+function itemColor(item: BreakdownItem): string {
+  if (item.type === 'base') return 'text-slate-200'
+  if (item.type === 'multiply') return item.value >= 1 ? 'text-blue-400' : 'text-orange-400'
+  return item.value >= 0 ? 'text-emerald-400' : 'text-red-400'
+}
+
+interface BreakdownPopoverProps {
+  breakdown: MoneyBreakdown
+  anchorEl: HTMLElement | null
+  onClose: () => void
+}
+
+export function BreakdownPopover({ breakdown, anchorEl, onClose }: BreakdownPopoverProps) {
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  // 위치 계산
+  let top = 0
+  let left = 0
+  let showAbove = false
+
+  if (anchorEl) {
+    const rect = anchorEl.getBoundingClientRect()
+    const popoverHeight = 200 // 예상 높이
+    const spaceBelow = window.innerHeight - rect.bottom
+    showAbove = spaceBelow < popoverHeight && rect.top > popoverHeight
+
+    left = rect.left + rect.width / 2 - 140 // width 280 / 2
+    // 화면 밖으로 나가지 않도록 클램프
+    left = Math.max(8, Math.min(left, window.innerWidth - 288))
+
+    if (showAbove) {
+      top = rect.top + window.scrollY - 8 // 화살표 공간
+    } else {
+      top = rect.bottom + window.scrollY + 8
+    }
+  }
+
+  // 바깥 클릭 감지
+  useEffect(() => {
+    function handleMouseDown(e: MouseEvent) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node) &&
+        e.target !== anchorEl
+      ) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [anchorEl, onClose])
+
+  const content = (
+    <div
+      ref={popoverRef}
+      className="fixed z-[200] w-[280px] rounded-lg border border-slate-600 bg-slate-800 shadow-xl"
+      style={{ top, left }}
+    >
+      {/* 화살표 */}
+      {showAbove ? (
+        <div
+          className="absolute left-1/2 bottom-[-6px] -translate-x-1/2 w-3 h-3 rotate-45 bg-slate-800 border-r border-b border-slate-600"
+        />
+      ) : (
+        <div
+          className="absolute left-1/2 top-[-6px] -translate-x-1/2 w-3 h-3 rotate-45 bg-slate-800 border-l border-t border-slate-600"
+        />
+      )}
+
+      <div className="p-3">
+        {breakdown.title && (
+          <div className="mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+            {breakdown.title}
+          </div>
+        )}
+
+        {/* 히스토리가 2개 이상이면 라인차트 + 스택바 */}
+        {(breakdown.history?.length ?? 0) >= 2 && (
+          <>
+            <div className="mb-2">
+              <BreakdownChart
+                history={breakdown.history}
+                maxValue={breakdown.maxValue}
+                items={breakdown.items}
+                final={breakdown.final}
+              />
+            </div>
+            <div className="border-b border-slate-700 mb-2" />
+          </>
+        )}
+
+        {/* 히스토리 없어도 아이템 2개 이상이면 스택바만 */}
+        {breakdown.items.length > 1 && (breakdown.history?.length ?? 0) < 2 && (
+          <>
+            <div className="mb-2">
+              <BreakdownChart
+                items={breakdown.items}
+                final={breakdown.final}
+                maxValue={breakdown.maxValue}
+              />
+            </div>
+            <div className="border-b border-slate-700 mb-2" />
+          </>
+        )}
+
+        <div className="space-y-1">
+          {breakdown.items.map((item, i) => (
+            <div key={i} className="flex justify-between items-center text-sm">
+              <span className="text-slate-400">{item.label}</span>
+              <span className={itemColor(item)}>{formatItemValue(item)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-2 pt-2 border-t border-slate-600 flex justify-between items-center">
+          <span className="text-sm font-semibold text-slate-200">합계</span>
+          <span className="text-sm font-bold text-money-400">{formatMoney(breakdown.final)}</span>
+        </div>
+      </div>
+    </div>
+  )
+
+  return createPortal(content, document.body)
+}

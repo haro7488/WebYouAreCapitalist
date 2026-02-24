@@ -1,7 +1,8 @@
 import type { Asset } from '@game/index'
 import { Button, Card, Badge, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import { formatMoney } from '@game/index'
+import { formatMoney, getPurchaseCostBreakdown } from '@game/index'
+import { useGameStore } from '@stores/gameStore'
 
 // 리스크 레벨 한국어 매핑
 const RISK_LABEL: Record<string, string> = {
@@ -42,6 +43,7 @@ interface AssetCardProps {
 
 /** 개별 자산 카드 */
 export function AssetCard({ asset, canAfford, onBuy }: AssetCardProps) {
+  const gameState = useGameStore((s) => s.gameState)
   const { name, description, cost, riskLevel, baseIncome, sector, tier, marketMultiplier } = asset
   const disabled = !canAfford
 
@@ -71,7 +73,7 @@ export function AssetCard({ asset, canAfford, onBuy }: AssetCardProps) {
       {/* 비용 및 기본 소득 */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-slate-500">매입가</span>
-        <MoneyDisplay amount={cost} size="sm" />
+        <MoneyDisplay amount={cost} size="sm" getBreakdown={gameState ? () => getPurchaseCostBreakdown(gameState, 0, asset.id) : undefined} />
       </div>
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs text-slate-500">기본 소득</span>

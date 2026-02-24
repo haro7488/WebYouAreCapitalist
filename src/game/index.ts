@@ -26,6 +26,8 @@ export type {
   GovernmentEvent,
   Goal,
   EventConditions,
+  MoneyBreakdown,
+  BreakdownItem,
 } from './types'
 
 // Constants
@@ -38,6 +40,7 @@ export {
   ASSETS,
   META_UPGRADES,
   MARKET_TRANSITION,
+  SECTOR_MARKET_MULTIPLIER,
   SECTOR_TREND_MULTIPLIER,
   SECTOR_TREND_TRANSITION,
   DOMINANCE_THRESHOLDS,
@@ -72,12 +75,23 @@ export {
   calculateAssetValue,
   calculateNetWorth,
   calculateCompanyTotalIncome,
-calculateCompanyNetIncome,
+  calculateCompanyNetIncome,
   calculateDominance,
   calculateScore,
   getInfluenceTier,
   getCompanyRank,
+  mergeEffects,
 } from './economy'
+
+// Breakdown
+export {
+  getPurchaseCostBreakdown,
+  getAssetIncomeBreakdown,
+  getSellPriceBreakdown,
+  getRevenueBreakdown,
+  getExpenseBreakdown,
+  getNetWorthBreakdown,
+} from './breakdown'
 
 // Market
 export { createInitialMarket, updateMarket, createInitialSectorStates, updateSectorTrends, previewNextTrends } from './market'

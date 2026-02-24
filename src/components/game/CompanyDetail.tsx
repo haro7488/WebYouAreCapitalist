@@ -2,7 +2,7 @@ import { Card, MoneyDisplay, StatRow, Badge, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { TraitBar } from './TraitDisplay'
 import { useGameStore } from '@stores/gameStore'
-import { ASSETS } from '@game/index'
+import { ASSETS, getNetWorthBreakdown } from '@game/index'
 import type { Company, Sector, ResearchResult } from '@game/types'
 import { TRAIT_REGISTRY, type Trait } from '@game/traits'
 
@@ -115,7 +115,7 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
         <div className="p-4 space-y-4">
           {/* 재무 현황 */}
           <Card header={<GlossaryText>재무 현황</GlossaryText>}>
-            <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={company.netWorth} />} />
+            <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={company.netWorth} getBreakdown={() => getNetWorthBreakdown(company)} />} />
             <StatRow label={<GlossaryText>보유 현금</GlossaryText>} value={<MoneyDisplay amount={company.cash} />} />
             <StatRow label={<GlossaryText>보유 자산</GlossaryText>} value={`${company.assets.length}개`} />
           </Card>

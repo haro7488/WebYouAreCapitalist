@@ -246,7 +246,7 @@ export function calculateNetWorth(state: GameState): number {
 }
 
 /** 활성 효과들을 합산 */
-function mergeEffects(effects: EventEffect[]): EventEffect {
+export function mergeEffects(effects: EventEffect[]): EventEffect {
   const merged: EventEffect = {
     money: 0,
     revenueMultiplier: 1,

@@ -4,7 +4,7 @@ import { Card, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { CompanyDetail } from './CompanyDetail'
 import { RankingChart } from './RankingChart'
-import { calculateCompanyTotalIncome } from '@game/index'
+import { calculateCompanyTotalIncome, getNetWorthBreakdown } from '@game/index'
 import type { Company, Sector } from '@game/types'
 import { formatMoney } from '@game/index'
 
@@ -139,7 +139,7 @@ export function Leaderboard() {
 
                   {/* 순자산 + 변동 */}
                   <div className="flex items-center shrink-0">
-                    <MoneyDisplay amount={company.netWorth} size="sm" />
+                    <MoneyDisplay amount={company.netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(company)} />
                     <RankChange prev={prevRank} current={rank} />
                   </div>
                 </div>

@@ -5,8 +5,10 @@ import { TraitBar } from './TraitDisplay'
 import { Home, HelpCircle, Target, CheckCircle } from 'lucide-react'
 import { TRAIT_REGISTRY, type Trait } from '@game/traits'
 import { calculateCompanyNetWorth, calculateCompanyTotalIncome } from '@game/economy'
+import { getNetWorthBreakdown, getRevenueBreakdown } from '@game/breakdown'
 import { checkPlayerGoalCompletion } from '@game/logic/goalEngine'
 import { formatMoney } from '@game/utils'
+import { MoneyDisplay } from '@components/common'
 
 interface GameHeaderProps {
   onHome?: () => void
@@ -70,12 +72,13 @@ export function GameHeader({ onHome }: GameHeaderProps) {
             ⭐ {influence}
           </span>
           {/* 순자산: 모바일에서 숨김 */}
-          <span className="hidden sm:inline-flex text-yellow-400" title="순자산">
-            💰 {formatMoney(netWorth)}
+          <span className="hidden sm:inline-flex items-center gap-0.5" title="순자산">
+            💰 <MoneyDisplay amount={netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(player)} />
           </span>
           {/* 예상수익: 모바일에서 숨김 */}
-          <span className={`hidden sm:inline-flex ${expectedIncome >= 0 ? 'text-emerald-400' : 'text-red-400'}`} title="예상 수익">
-            📈 {expectedIncome >= 0 ? '+' : ''}{formatMoney(Math.floor(expectedIncome))}/턴
+          <span className="hidden sm:inline-flex items-center gap-0.5" title="예상 수익">
+            📈 <MoneyDisplay amount={Math.floor(expectedIncome)} size="sm" showSign getBreakdown={() => getRevenueBreakdown(player, gameState)} />
+            <span className={expectedIncome >= 0 ? 'text-emerald-400' : 'text-red-400'}>/턴</span>
           </span>
           {/* 인플레이션: 모바일에서 숨김 */}
           <span

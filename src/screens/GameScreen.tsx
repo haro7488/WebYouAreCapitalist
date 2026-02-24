@@ -4,7 +4,7 @@ import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, Leaderboard, GoalSelectionModal } from '@components/game'
-import { calculateDominance, calculateCompanyNetIncome } from '@game/index'
+import { calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
 import { formatMoney } from '@game/utils'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
 import GOALS_DATA from '@game/data/goals.json'
@@ -139,14 +139,26 @@ export function GameScreen() {
                     />
                     <StatRow label={<GlossaryText>남은 턴</GlossaryText>} value={`${gameState.market.turnsRemaining}턴`} />
                     <StatRow label={<GlossaryText>변동성</GlossaryText>} value={`${Math.round(gameState.market.volatility * 100)}%`} />
-                    <StatRow
-                      label={<GlossaryText>인플레이션</GlossaryText>}
-                      value={<span className={gameState.inflation > 0.05 ? 'text-red-400' : 'text-slate-300'}>{(gameState.inflation * 100).toFixed(1)}%</span>}
-                    />
-                    <StatRow
-                      label={<GlossaryText>누적 배율</GlossaryText>}
-                      value={<span className={gameState.cumulativeInflation > 1.2 ? 'text-red-400' : 'text-slate-300'}>x{gameState.cumulativeInflation.toFixed(2)}</span>}
-                    />
+                  </Card>
+
+                  {/* 정부 정책 — 항시 표시 */}
+                  <Card header={<GlossaryText>정부 정책</GlossaryText>}>
+                    {gameState.governmentEvent ? (
+                      <>
+                        <StatRow label="현행 정책" value={<span className="text-amber-300">{gameState.governmentEvent.title}</span>} />
+                        <p className="text-xs text-slate-400 mt-1 px-1">{gameState.governmentEvent.description}</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-slate-500 py-1">정책 없음 (다음 턴 발표)</p>
+                    )}
+                    <div className="mt-2 pt-2 border-t border-slate-700">
+                      <StatRow
+                        label={<GlossaryText>인플레이션</GlossaryText>}
+                        value={<span className={gameState.inflation > 0.05 ? 'text-red-400' : 'text-slate-300'}>
+                          {(gameState.inflation * 100).toFixed(1)}% (x{gameState.cumulativeInflation.toFixed(2)})
+                        </span>}
+                      />
+                    </div>
                   </Card>
 
                   {/* 수익/지출 */}
@@ -154,8 +166,8 @@ export function GameScreen() {
                     const income = calculateCompanyNetIncome(player, gameState)
                     return (
                       <Card header={<GlossaryText>수익 구조</GlossaryText>}>
-                        <StatRow label={<GlossaryText>총 수익</GlossaryText>} value={<span className="text-emerald-400">+{formatMoney(income.revenue)}</span>} />
-                        <StatRow label={<GlossaryText>기본 지출</GlossaryText>} value={<span className="text-red-400">-{formatMoney(income.expenses)}</span>} />
+                        <StatRow label={<GlossaryText>총 수익</GlossaryText>} value={<MoneyDisplay amount={income.revenue} size="sm" showSign getBreakdown={() => getRevenueBreakdown(player, gameState)} />} />
+                        <StatRow label={<GlossaryText>기본 지출</GlossaryText>} value={<MoneyDisplay amount={-income.expenses} size="sm" showSign getBreakdown={() => getExpenseBreakdown(player, gameState)} />} />
                         <StatRow label={<GlossaryText>순수익</GlossaryText>} value={
                           <span className={income.net >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                             {income.net >= 0 ? '+' : ''}{formatMoney(income.net)}/턴
@@ -170,7 +182,7 @@ export function GameScreen() {
                     <StatRow label={<GlossaryText>현금</GlossaryText>} value={<MoneyDisplay amount={money} />} />
                     <StatRow label={<GlossaryText>보유 자산</GlossaryText>} value={`${ownedAssets.length}개`} />
                     <StatRow label={<GlossaryText>자산 가치</GlossaryText>} value={<MoneyDisplay amount={totalAssetValue} />} />
-                    <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={money + totalAssetValue} />} />
+                    <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={money + totalAssetValue} getBreakdown={() => getNetWorthBreakdown(player)} />} />
                   </Card>
 
                   {/* 섹터 트렌드 + 지배력 통합 */}
@@ -186,6 +198,16 @@ export function GameScreen() {
                             <span className={TREND_COLORS[sectorState.trend]}>
                               <GlossaryText>{TREND_LABELS[sectorState.trend]}</GlossaryText>
                               <span className="text-slate-500 ml-1">({sectorState.turnsRemaining}턴)</span>
+                            </span>
+                            <span className="flex items-center gap-1 text-xs">
+                              <span className="text-emerald-400">호황x{SECTOR_MARKET_MULTIPLIER[sector].boom}</span>
+                              <span className={
+                                SECTOR_MARKET_MULTIPLIER[sector].recession < 0.5
+                                  ? 'text-red-400'
+                                  : SECTOR_MARKET_MULTIPLIER[sector].recession >= 0.8
+                                    ? 'text-emerald-400'
+                                    : 'text-orange-400'
+                              }>불황x{SECTOR_MARKET_MULTIPLIER[sector].recession}</span>
                             </span>
                             <span className={`min-w-[3rem] text-right ${isActive ? DOMINANCE_COLORS[info.level] : 'text-slate-600'}`}>
                               <GlossaryText>{isActive ? DOMINANCE_LABELS[info.level] : '미진출'}</GlossaryText>

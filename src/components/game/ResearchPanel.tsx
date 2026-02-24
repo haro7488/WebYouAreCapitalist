@@ -40,6 +40,7 @@ interface ResearchPanelProps {
 export function ResearchPanel({ onResearch }: ResearchPanelProps) {
   const gameState = useGameStore((s) => s.gameState)
   const [showSectorSelect, setShowSectorSelect] = useState(false)
+  const [selectedRecord, setSelectedRecord] = useState<ResearchRecord | null>(null)
 
   // 정보 자산 개수 및 남은 조사 횟수 계산
   const infoAssetCount = gameState?.companies[0].assets.filter(
@@ -116,6 +117,108 @@ export function ResearchPanel({ onResearch }: ResearchPanelProps) {
       default:
         return '조사 결과'
     }
+  }
+
+  // 조사 결과 상세 렌더링 (이번 턴 결과 + 기록 상세 공용)
+  const renderResultDetail = (result: ResearchResult) => {
+    if (result.type === 'market') {
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={16} className="text-money-400" />
+            <span className="font-medium text-slate-200 text-sm">
+              <GlossaryText>시장 동향</GlossaryText>
+            </span>
+          </div>
+          <p className="text-sm text-slate-300">
+            시장 전환까지 약 <span className="text-slate-100 font-medium">{result.turnsToChange}턴</span> 남았습니다.
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-400">
+              <GlossaryText>예상 다음 상태:</GlossaryText>
+            </span>
+            <Badge
+              variant={result.likelyNext}
+              label={result.likelyNext === 'boom' ? '호황' : result.likelyNext === 'stable' ? '안정' : '불황'}
+            />
+          </div>
+        </div>
+      )
+    }
+    if (result.type === 'sector') {
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <BarChart3 size={16} className="text-amber-400" />
+            <span className="font-medium text-slate-200 text-sm">
+              <GlossaryText>섹터 분석</GlossaryText>
+            </span>
+          </div>
+          <p className="text-sm text-slate-300">
+            <GlossaryText>{`${SECTOR_NAMES[result.sector]} 섹터의 다음 트렌드:`}</GlossaryText>
+          </p>
+          <Badge
+            variant={TREND_BADGE_VARIANT[result.nextTrend]}
+            label={TREND_LABELS[result.nextTrend]}
+          />
+        </div>
+      )
+    }
+    if (result.type === 'event') {
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="text-sky-400" />
+            <span className="font-medium text-slate-200 text-sm">
+              <GlossaryText>이벤트 예측</GlossaryText>
+            </span>
+          </div>
+          <p className="text-sm text-slate-300">
+            <GlossaryText>{result.hint}</GlossaryText>
+          </p>
+        </div>
+      )
+    }
+    if (result.type === 'government') {
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Landmark size={16} className="text-violet-400" />
+            <span className="font-medium text-slate-200 text-sm">
+              <GlossaryText>정부 정책 동향</GlossaryText>
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-400">현재 인플레이션</span>
+            <span className="text-slate-100 font-medium">{(result.currentInflation * 100).toFixed(2)}%</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-400">전망</span>
+            <Badge
+              variant={result.inflationTrend === 'rising' ? 'recession' : result.inflationTrend === 'falling' ? 'boom' : 'stable'}
+              label={result.inflationTrend === 'rising' ? '상승 예상' : result.inflationTrend === 'falling' ? '하락 예상' : '안정 예상'}
+            />
+          </div>
+          {result.likelyPolicy && (
+            <div className="bg-slate-800 rounded-md p-2 space-y-0.5">
+              <p className="text-xs font-medium text-violet-300">예상 정책: {result.likelyPolicy.title}</p>
+              <p className="text-xs text-slate-400 leading-snug">{result.likelyPolicy.description}</p>
+            </div>
+          )}
+          {result.affectedSectors.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-xs text-slate-500">영향 섹터:</span>
+              {result.affectedSectors.map((sector) => (
+                <span key={sector} className="text-xs bg-violet-500/15 text-violet-300 px-1.5 py-0.5 rounded">
+                  {SECTOR_NAMES[sector]}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    }
+    return null
   }
 
   // 조사 기록 아이콘
@@ -276,125 +379,7 @@ export function ResearchPanel({ onResearch }: ResearchPanelProps) {
       {researchResult && (
         <Card>
           <div className="text-xs text-slate-500 font-medium mb-2 uppercase tracking-wide">이번 턴 결과</div>
-          {researchResult.type === 'market' && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <TrendingUp size={16} className="text-money-400" />
-                <span className="font-medium text-slate-200 text-sm">
-                  <GlossaryText>시장 동향</GlossaryText>
-                </span>
-              </div>
-              <p className="text-sm text-slate-300">
-                시장 전환까지 약 <span className="text-slate-100 font-medium">{researchResult.turnsToChange}턴</span> 남았습니다.
-              </p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">
-                  <GlossaryText>예상 다음 상태:</GlossaryText>
-                </span>
-                <Badge
-                  variant={researchResult.likelyNext}
-                  label={researchResult.likelyNext === 'boom' ? '호황' : researchResult.likelyNext === 'stable' ? '안정' : '불황'}
-                />
-              </div>
-            </div>
-          )}
-
-          {researchResult.type === 'sector' && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <BarChart3 size={16} className="text-amber-400" />
-                <span className="font-medium text-slate-200 text-sm">
-                  <GlossaryText>섹터 분석</GlossaryText>
-                </span>
-              </div>
-              <p className="text-sm text-slate-300">
-                <GlossaryText>
-                  {`${SECTOR_NAMES[researchResult.sector]} 섹터의 다음 트렌드:`}
-                </GlossaryText>
-              </p>
-              <Badge
-                variant={TREND_BADGE_VARIANT[researchResult.nextTrend]}
-                label={TREND_LABELS[researchResult.nextTrend]}
-              />
-            </div>
-          )}
-
-          {researchResult.type === 'event' && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <AlertCircle size={16} className="text-sky-400" />
-                <span className="font-medium text-slate-200 text-sm">
-                  <GlossaryText>이벤트 예측</GlossaryText>
-                </span>
-              </div>
-              <p className="text-sm text-slate-300">
-                <GlossaryText>{researchResult.hint}</GlossaryText>
-              </p>
-            </div>
-          )}
-
-          {researchResult.type === 'government' && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Landmark size={16} className="text-violet-400" />
-                <span className="font-medium text-slate-200 text-sm">
-                  <GlossaryText>정부 정책 동향</GlossaryText>
-                </span>
-              </div>
-              {/* 인플레이션 현황 */}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">현재 인플레이션</span>
-                <span className="text-slate-100 font-medium">
-                  {(researchResult.currentInflation * 100).toFixed(2)}%
-                </span>
-              </div>
-              {/* 인플레이션 트렌드 */}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">전망</span>
-                <Badge
-                  variant={
-                    researchResult.inflationTrend === 'rising'
-                      ? 'recession'
-                      : researchResult.inflationTrend === 'falling'
-                        ? 'boom'
-                        : 'stable'
-                  }
-                  label={
-                    researchResult.inflationTrend === 'rising'
-                      ? '상승 예상'
-                      : researchResult.inflationTrend === 'falling'
-                        ? '하락 예상'
-                        : '안정 예상'
-                  }
-                />
-              </div>
-              {/* 예상 정책 */}
-              {researchResult.likelyPolicy && (
-                <div className="bg-slate-800 rounded-md p-2 space-y-0.5">
-                  <p className="text-xs font-medium text-violet-300">
-                    예상 정책: {researchResult.likelyPolicy.title}
-                  </p>
-                  <p className="text-xs text-slate-400 leading-snug">
-                    {researchResult.likelyPolicy.description}
-                  </p>
-                </div>
-              )}
-              {/* 영향 섹터 */}
-              {researchResult.affectedSectors.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="text-xs text-slate-500">영향 섹터:</span>
-                  {researchResult.affectedSectors.map((sector) => (
-                    <span
-                      key={sector}
-                      className="text-xs bg-violet-500/15 text-violet-300 px-1.5 py-0.5 rounded"
-                    >
-                      {SECTOR_NAMES[sector]}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          {renderResultDetail(researchResult)}
         </Card>
       )}
 
@@ -406,6 +391,19 @@ export function ResearchPanel({ onResearch }: ResearchPanelProps) {
           <div className="flex-1 h-px bg-slate-700" />
         </div>
 
+        {/* 선택된 기록 상세 */}
+        {selectedRecord && (
+          <Card header={`턴 ${selectedRecord.turn} 조사 결과`}>
+            {renderResultDetail(selectedRecord.result)}
+            <button
+              onClick={() => setSelectedRecord(null)}
+              className="mt-3 w-full text-xs text-slate-400 hover:text-slate-200 transition-colors py-1 border border-slate-700 rounded-md hover:border-slate-500"
+            >
+              닫기
+            </button>
+          </Card>
+        )}
+
         {sortedHistory.length === 0 ? (
           <p className="text-sm text-slate-500 text-center py-4">조사 기록이 없습니다</p>
         ) : (
@@ -413,7 +411,11 @@ export function ResearchPanel({ onResearch }: ResearchPanelProps) {
             {sortedHistory.map((record, i) => (
               <div
                 key={i}
-                className="flex items-start gap-2 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/50"
+                onClick={() => setSelectedRecord(selectedRecord?.turn === record.turn ? null : record)}
+                className={`flex items-start gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors
+                  ${selectedRecord?.turn === record.turn
+                    ? 'bg-blue-900/30 border border-blue-500/50'
+                    : 'bg-slate-800/60 border border-slate-700/50 hover:bg-slate-700/50'}`}
               >
                 <span className="text-xs text-slate-500 font-mono shrink-0 mt-0.5 w-10">
                   턴 {record.turn}
