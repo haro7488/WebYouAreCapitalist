@@ -36,7 +36,7 @@ export function GlossaryText({ children, className = '', highlightAll = false }:
         patterns.push({
           id: entry.id,
           pattern: term,
-          regex: new RegExp(regexStr, 'gi')
+          regex: new RegExp(regexStr, 'i')
         })
       })
     })
