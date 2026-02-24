@@ -14,8 +14,9 @@ export function GlossaryTerm({ termId, children, className = '' }: Props) {
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
+    const isInsidePopover = !!(e.currentTarget as HTMLElement).closest('[data-glossary-popover]')
     if (ref.current) {
-      openTerm(termId, ref.current.getBoundingClientRect())
+      openTerm(termId, ref.current.getBoundingClientRect(), isInsidePopover)
     }
   }, [termId, openTerm])
 

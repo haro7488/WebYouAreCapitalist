@@ -11,7 +11,7 @@ interface StackItem {
 }
 
 interface GlossaryState {
-  openTerm: (termId: string, rect: DOMRect) => void
+  openTerm: (termId: string, rect: DOMRect, fromPopover?: boolean) => void
   dismiss: () => void
   close: () => void
   openHelp: (termId: string) => void
@@ -35,8 +35,14 @@ interface Props {
 export function GlossaryProvider({ children, onOpenHelp }: Props) {
   const [stack, setStack] = useState<StackItem[]>([])
 
-  const openTerm = useCallback((id: string, rect: DOMRect) => {
-    setStack((prev) => [...prev, { termId: id, anchorRect: rect }])
+  const openTerm = useCallback((id: string, rect: DOMRect, fromPopover = false) => {
+    if (fromPopover) {
+      // 팝오버 내부 → push (체이닝)
+      setStack((prev) => [...prev, { termId: id, anchorRect: rect }])
+    } else {
+      // 게임 화면(루트) → 스택 리셋 + 새 항목
+      setStack([{ termId: id, anchorRect: rect }])
+    }
   }, [])
 
   const dismiss = useCallback(() => {
