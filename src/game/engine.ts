@@ -564,15 +564,24 @@ function resolveEconomy(state: GameState): GameState {
   const { scaledIncomes } = calculatePoolScaledIncomes(state)
 
   let totalInterestCollected = 0
+  let totalAssetValueIncrease = 0
 
   let updatedCompanies = state.companies.map((company, idx) => {
     const income = calculateCompanyNetIncome(company, state, scaledIncomes[idx])
+
+    // 보유 자산 현재 가치 갱신 전 총 가치 계산
+    const oldAssetValue = company.assets.reduce((sum, owned) => sum + owned.currentValue, 0)
 
     // 보유 자산 현재 가치 갱신
     const updatedAssets = company.assets.map((owned) => ({
       ...owned,
       currentValue: calculateAssetValue(owned, state),
     }))
+
+    // 자산 가치 증가분 추적 (appreciation + inflation으로 인한 증가)
+    const newAssetValue = updatedAssets.reduce((sum, owned) => sum + owned.currentValue, 0)
+    const assetValueIncrease = newAssetValue - oldAssetValue
+    totalAssetValueIncrease += assetValueIncrease
 
     // 영향력 자연 감소
     const newInfluence = clamp(company.influence - INFLUENCE_DECAY_PER_TURN, 0, 100)
@@ -673,10 +682,16 @@ function resolveEconomy(state: GameState): GameState {
     rngState: rng.getState(),
   }
 
-  // 화폐 보존: 풀 재계산 + 이자 페널티 추가
-  const updatedState: GameState = {
+  // 화폐 보존: 자산 가치 증가분 반영 후 풀 재계산
+  const newTotalMoney = newState.totalMoney + totalAssetValueIncrease
+  const stateWithUpdatedMoney: GameState = {
     ...newState,
-    marketPool: recalculateMarketPool(newState) + totalInterestCollected,
+    totalMoney: newTotalMoney,
+  }
+  
+  const updatedState: GameState = {
+    ...stateWithUpdatedMoney,
+    marketPool: recalculateMarketPool(stateWithUpdatedMoney) + totalInterestCollected,
   }
 
   // 화폐 보존 검증
