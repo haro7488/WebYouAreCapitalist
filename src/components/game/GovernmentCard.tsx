@@ -26,7 +26,7 @@ function EffectPreview({ effect }: { effect: { money?: number; influence?: numbe
 export function GovernmentCard() {
   const gameState = useGameStore((s) => s.gameState)
   const submitGovernmentChoice = useGameStore((s) => s.submitGovernmentChoice)
-  const processGovernmentPhase = useGameStore((s) => s.processGovernmentPhase)
+  const confirmGovernmentEvent = useGameStore((s) => s.confirmGovernmentEvent)
 
   if (!gameState?.governmentEvent) return null
 
@@ -67,7 +67,7 @@ export function GovernmentCard() {
                 <EffectPreview effect={governmentEvent.effect} />
               </div>
             )}
-            <Button variant="primary" fullWidth onClick={() => processGovernmentPhase()}>
+            <Button variant="primary" fullWidth onClick={() => confirmGovernmentEvent()}>
               확인
             </Button>
           </>

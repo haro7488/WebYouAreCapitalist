@@ -816,17 +816,19 @@ export function processGovernmentPhase(state: GameState): GameState {
 
   const govEvent = rng.pick(eligible) as GovernmentEvent
 
+  // autoApply 이벤트: 효과 적용하되 government phase 유지 (유저가 볼 수 있게)
   if (govEvent.autoApply && govEvent.effect) {
     let newInflation = state.inflation
     if (govEvent.effect.inflationDelta) {
       newInflation = Math.max(0, state.inflation + govEvent.effect.inflationDelta)
     }
-    return rollAndSetEvents({
+    return {
       ...state,
       inflation: newInflation,
       governmentEvent: govEvent,
+      phase: 'government',
       rngState: rng.getState(),
-    })
+    }
   }
 
   // 선택지가 있는 정부 이벤트 → government phase 유지
@@ -868,6 +870,16 @@ export function submitGovernmentChoice(state: GameState, choiceId: string): Game
     ...withPlayer(state, updatedPlayer),
     inflation: newInflation,
   })
+}
+
+/**
+ * Government Phase: autoApply 정부 이벤트 확인 (다음 페이즈로 전환)
+ */
+export function confirmGovernmentEvent(state: GameState): GameState {
+  if (state.phase !== 'government' || !state.governmentEvent) return state
+
+  // autoApply 이벤트의 "확인" 처리 → rollAndSetEvents 호출
+  return rollAndSetEvents(state)
 }
 
 /**

@@ -8,6 +8,7 @@ import {
   submitEventChoice as engineSubmitEventChoice,
   submitGovernmentChoice as engineSubmitGovernmentChoice,
   processGovernmentPhase as engineProcessGovernmentPhase,
+  confirmGovernmentEvent as engineConfirmGovernmentEvent,
   resolvePhase as engineResolvePhase,
   advanceTurn as engineAdvanceTurn,
   findEventById,
@@ -42,6 +43,8 @@ interface GameStoreActions {
   processGovernmentPhase: () => void
   /** Government Phase: 정부 이벤트 선택지 제출 */
   submitGovernmentChoice: (choiceId: string) => void
+  /** Government Phase: autoApply 정부 이벤트 확인 */
+  confirmGovernmentEvent: () => void
   /** Resolution Phase: 경제 계산 실행 */
   resolvePhase: () => void
   /** Result Phase: 다음 턴으로 진행 */
@@ -120,6 +123,12 @@ export const useGameStore = create<GameStore>()(
         const { gameState } = get()
         if (!gameState) return
         set({ gameState: engineSubmitGovernmentChoice(gameState, choiceId) })
+      },
+
+      confirmGovernmentEvent: () => {
+        const { gameState } = get()
+        if (!gameState) return
+        set({ gameState: engineConfirmGovernmentEvent(gameState) })
       },
 
       resolvePhase: () => {
