@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { GLOSSARY, GLOSSARY_CATEGORIES } from '@game/glossary'
 import { GlossaryText } from './GlossaryText'
@@ -12,8 +12,6 @@ interface StackItem {
 
 interface GlossaryState {
   openTerm: (termId: string, rect: DOMRect, popoverIndex?: number | null) => void
-  startCloseTimer: () => void
-  cancelCloseTimer: () => void
   dismiss: () => void
   close: () => void
   openHelp: (termId: string) => void
@@ -39,33 +37,23 @@ interface Props {
 
 export function GlossaryProvider({ children, onOpenHelp }: Props) {
   const [stack, setStack] = useState<StackItem[]>([])
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // unmount 시 타이머 정리
+  // 외부 클릭 시 전체 닫기
   useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+    if (stack.length === 0) return
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('[data-glossary-popover]')) return
+      if (target.closest('[data-glossary-term]')) return
+      setStack([]) // 전체 닫기
     }
-  }, [])
-
-  const cancelCloseTimer = useCallback(() => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current)
-      closeTimerRef.current = null
-    }
-  }, [])
-
-  const startCloseTimer = useCallback(() => {
-    cancelCloseTimer()
-    closeTimerRef.current = setTimeout(() => {
-      setStack([])
-    }, 300)
-  }, [cancelCloseTimer])
+    document.addEventListener('mousedown', handler, true)
+    return () => document.removeEventListener('mousedown', handler, true)
+  }, [stack.length])
 
   const openTerm = useCallback((id: string, rect: DOMRect, popoverIndex?: number | null) => {
-    cancelCloseTimer()
     if (popoverIndex != null) {
-      // popover 내부에서 hover → 해당 popover 이후 항목 잘라내고 push
+      // popover 내부에서 클릭 → 해당 popover 이후 항목 잘라내고 push
       setStack((prev) => {
         // 이미 스택에 있는 termId는 무시 (무한루프 방지)
         if (prev.some((item) => item.termId === id)) return prev
@@ -75,10 +63,10 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
         return [...base, { termId: id, anchorRect: rect }]
       })
     } else {
-      // 루트에서 hover → 스택 리셋 + 새 항목
+      // 루트에서 클릭 → 스택 리셋 + 새 항목
       setStack([{ termId: id, anchorRect: rect }])
     }
-  }, [cancelCloseTimer])
+  }, [])
 
   const dismiss = useCallback(() => {
     setStack((prev) => prev.slice(0, -1))
@@ -94,7 +82,7 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
   }, [onOpenHelp, close])
 
   return (
-    <GlossaryContext.Provider value={{ openTerm, startCloseTimer, cancelCloseTimer, dismiss, close, openHelp }}>
+    <GlossaryContext.Provider value={{ openTerm, dismiss, close, openHelp }}>
       {children}
       {stack.map((item, i) => (
         <GlossaryPopover
@@ -127,7 +115,6 @@ function GlossaryPopover({
   stackIndex,
   onNavigate,
 }: GlossaryPopoverProps) {
-  const { cancelCloseTimer, startCloseTimer } = useGlossary()
   const entry = GLOSSARY.find((e) => e.id === termId)
   if (!entry) return null
 
@@ -156,8 +143,6 @@ function GlossaryPopover({
         data-glossary-popover
         className="fixed animate-in fade-in duration-150"
         style={{ top: top - window.scrollY, left, width: popoverWidth, zIndex }}
-        onMouseEnter={cancelCloseTimer}
-        onMouseLeave={startCloseTimer}
       >
         <div className="bg-slate-900 border border-slate-600 rounded-lg shadow-2xl overflow-hidden">
           {/* 카테고리 + 용어명 */}
@@ -170,7 +155,7 @@ function GlossaryPopover({
 
           {/* 설명 */}
           <div className="px-3 pb-2 text-xs text-slate-300 leading-relaxed">
-            <GlossaryText>{entry.description}</GlossaryText>
+            <GlossaryText decorated>{entry.description}</GlossaryText>
           </div>
 
           {/* 공식 */}

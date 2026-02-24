@@ -67,7 +67,7 @@ export function useGlossaryText(text: string, excludeId?: string) {
       }
 
       result.push(
-        createElement(GlossaryTerm, { key: `g-${keyIdx++}`, termId: best.entry.id, children: best.matchText }),
+        createElement(GlossaryTerm, { key: `g-${keyIdx++}`, termId: best.entry.id, decorated: true, children: best.matchText }),
       )
       remaining = remaining.slice(earliest + best.matchText.length)
     }

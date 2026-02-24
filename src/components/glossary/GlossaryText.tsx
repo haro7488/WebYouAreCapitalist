@@ -6,6 +6,7 @@ interface Props {
   children: string
   className?: string
   highlightAll?: boolean // 기본 false: 첫 매칭만
+  decorated?: boolean // 점선 밑줄 표시 여부 (popover/help 내부에서 true)
 }
 
 interface TermPattern {
@@ -20,7 +21,7 @@ interface TextSegment {
   termId?: string
 }
 
-export function GlossaryText({ children, className = '', highlightAll = false }: Props) {
+export function GlossaryText({ children, className = '', highlightAll = false, decorated = false }: Props) {
   // 1. GLOSSARY에서 모든 term/aliases 수집하고 길이순 내림차순 정렬
   const termPatterns = useMemo((): TermPattern[] => {
     const patterns: TermPattern[] = []
@@ -115,7 +116,7 @@ export function GlossaryText({ children, className = '', highlightAll = false }:
       {segments.map((segment, idx) => {
         if (segment.type === 'term' && segment.termId) {
           return (
-            <GlossaryTerm key={`${segment.termId}-${idx}`} termId={segment.termId}>
+            <GlossaryTerm key={`${segment.termId}-${idx}`} termId={segment.termId} decorated={decorated}>
               {segment.content}
             </GlossaryTerm>
           )

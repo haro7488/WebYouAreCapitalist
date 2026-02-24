@@ -5,42 +5,34 @@ interface Props {
   termId: string
   children: ReactNode
   className?: string
+  decorated?: boolean // true면 점선 밑줄 (popover/help 내부)
 }
 
-export function GlossaryTerm({ termId, children, className = '' }: Props) {
-  const { openTerm, startCloseTimer, cancelCloseTimer } = useGlossary()
+export function GlossaryTerm({ termId, children, className = '', decorated = false }: Props) {
+  const { openTerm } = useGlossary()
   const popoverIndex = useContext(PopoverStackIndexContext)
   const ref = useRef<HTMLSpanElement>(null)
 
-  const handleMouseEnter = useCallback(() => {
-    cancelCloseTimer()
-    if (ref.current) {
-      // popoverIndex: null이면 루트, 숫자면 해당 popover의 stackIndex
-      openTerm(termId, ref.current.getBoundingClientRect(), popoverIndex)
-    }
-  }, [termId, openTerm, cancelCloseTimer, popoverIndex])
-
-  const handleMouseLeave = useCallback(() => {
-    startCloseTimer()
-  }, [startCloseTimer])
-
-  // 모바일 터치 대응
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
     if (ref.current) {
-      openTerm(termId, ref.current.getBoundingClientRect(), popoverIndex)
+      openTerm(termId, ref.current.getBoundingClientRect(), popoverIndex ?? null)
     }
   }, [termId, openTerm, popoverIndex])
+
+  // decorated (popover/help 내부): 점선 밑줄 + cursor help
+  // inline (인게임): 밑줄 없음, hover 시 약간 밝아짐
+  const styleClass = decorated
+    ? 'border-b border-dashed border-current/30 cursor-help hover:border-current/60'
+    : 'cursor-help hover:text-blue-300 transition-colors'
 
   return (
     <span
       ref={ref}
       data-glossary-term={termId}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       onClick={handleClick}
-      className={`border-b border-dashed border-current/30 cursor-help transition-opacity hover:border-current/60 ${className}`}
+      className={`${styleClass} ${className}`}
     >
       {children}
     </span>
