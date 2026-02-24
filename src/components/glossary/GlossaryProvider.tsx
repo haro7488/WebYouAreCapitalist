@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { GLOSSARY, GLOSSARY_CATEGORIES } from '@game/glossary'
+import { GlossaryText } from './GlossaryText'
 
 // === Context ===
 
@@ -133,8 +134,8 @@ function GlossaryPopover({
         </div>
 
         {/* 설명 */}
-        <div className="px-3 pb-2">
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">{entry.description}</p>
+        <div className="px-3 pb-2 text-xs text-slate-300 leading-relaxed">
+          <GlossaryText>{entry.description}</GlossaryText>
         </div>
 
         {/* 공식 */}
