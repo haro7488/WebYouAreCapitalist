@@ -45,7 +45,7 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
       const target = e.target as HTMLElement
       if (target.closest('[data-glossary-popover]')) return
       if (target.closest('[data-glossary-term]')) return
-      setStack([]) // 전체 닫기
+      setStack((prev) => prev.slice(0, -1)) // 마지막 팝오버부터 하나씩 닫기
     }
     document.addEventListener('mousedown', handler, true)
     return () => document.removeEventListener('mousedown', handler, true)
