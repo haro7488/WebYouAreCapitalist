@@ -207,7 +207,7 @@ export function EventCard() {
                       <GlossaryText>{choice.text}</GlossaryText>
                     </span>
                     {isDominanceChoice && (
-                      <Badge variant="info" label={`${SECTOR_LABEL[dominanceSector!]} 지배`} />
+                      <Badge variant="info" label={<GlossaryText>{`${SECTOR_LABEL[dominanceSector!]} 지배`}</GlossaryText>} />
                     )}
                     {isLocked && (
                       <span className="text-xs text-slate-500 ml-auto">우유부단: 선택 불가</span>

@@ -50,10 +50,10 @@ export function AssetCard({ asset, canAfford, onBuy }: AssetCardProps) {
       {/* 섹터 + 티어 + 리스크 배지 */}
       <div className="flex justify-between -mt-1 mb-1">
         <div className="flex gap-1">
-          <Badge variant="info" label={SECTOR_LABEL[sector]} />
+          <Badge variant="info" label={<GlossaryText>{SECTOR_LABEL[sector]}</GlossaryText>} />
           <Badge variant="info" label={`Tier ${tier}`} />
         </div>
-        <Badge variant={RISK_VARIANT[riskLevel]} label={RISK_LABEL[riskLevel]} />
+        <Badge variant={RISK_VARIANT[riskLevel]} label={<GlossaryText>{RISK_LABEL[riskLevel]}</GlossaryText>} />
       </div>
       {/* 리스크 설명 + 시장 배율 요약 */}
       <p className="text-xs text-slate-500 mb-2">

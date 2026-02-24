@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react'
+
 type BadgeVariant = 'boom' | 'stable' | 'recession' | 'low' | 'medium' | 'high' | 'info'
 
 interface BadgeProps {
   variant: BadgeVariant
-  label: string
+  label: ReactNode
 }
 
 // 변형별 배지 색상

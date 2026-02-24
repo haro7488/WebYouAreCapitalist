@@ -69,7 +69,7 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
                 {company.dominatedSectors.map(sector => (
                   <div key={sector} className="flex justify-between items-center py-1">
                     <span className="text-slate-300">{SECTOR_NAMES[sector]}</span>
-                    <Badge variant="boom" label="지배" />
+                    <Badge variant="boom" label={<GlossaryText>지배</GlossaryText>} />
                   </div>
                 ))}
               </div>

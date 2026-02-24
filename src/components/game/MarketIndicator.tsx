@@ -67,7 +67,7 @@ export function MarketIndicator({ condition }: MarketIndicatorProps) {
     <div className="flex flex-col items-end gap-1">
       <div className="flex items-center gap-1.5">
         <Icon size={16} />
-        <Badge variant={condition} label={label} />
+        <Badge variant={condition} label={<GlossaryText>{label}</GlossaryText>} />
       </div>
 
       {/* trendForesight: 다음 턴 트렌드 변화 힌트 */}
