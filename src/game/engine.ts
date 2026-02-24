@@ -335,6 +335,7 @@ function applyResearch(
   const updatedPlayer: Company = {
     ...player,
     researchResult: result!,
+    researchHistory: [...player.researchHistory, { turn: state.turn, result: result! }],
     actionsThisTurn: [...player.actionsThisTurn, { type: 'research', target, sector }],
   }
 

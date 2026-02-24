@@ -55,6 +55,13 @@ export interface OwnedAsset {
 }
 
 // === 시장 조사 ===
+
+/** 조사 기록 1건 */
+export interface ResearchRecord {
+  turn: number
+  result: ResearchResult
+}
+
 export type ResearchResult =
   | { type: 'market'; turnsToChange: number; likelyNext: MarketCondition }
   | { type: 'sector'; sector: Sector; nextTrend: SectorTrend }
@@ -150,6 +157,7 @@ export interface Company {
   // 턴별 추적
   actionsThisTurn: TurnAction[]
   researchResult: ResearchResult | null
+  researchHistory: ResearchRecord[] // 누적 조사 기록
   activeEffects: EventEffect[]
 
   // 매 턴 resolution에서 갱신
