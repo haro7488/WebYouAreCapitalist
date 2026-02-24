@@ -13,9 +13,6 @@ interface GameHeaderProps {
   onHome?: () => void
 }
 
-// 샘플: 테스트용 활성 특성 (이후 gameState에서 가져올 예정)
-// 실제 traits는 gameState에서 가져옴
-
 function TraitIcon({ trait }: { trait: Trait }) {
   const [showTooltip, setShowTooltip] = useState(false)
   const borderColor = trait.type === 'positive' ? 'border-emerald-500' : 'border-red-500'
@@ -83,7 +80,6 @@ export function GameHeader({ onHome }: GameHeaderProps) {
   const netWorth = calculateCompanyNetWorth(player)
   const expectedIncome = calculateCompanyTotalIncome(player, gameState)
 
-  // TODO: gameState에서 traits 가져오기 (현재 샘플)
   const activeTraits = player.traits
     .map(id => TRAIT_REGISTRY.find(t => t.id === id))
     .filter((t): t is Trait => t != null)
