@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { GLOSSARY, GLOSSARY_CATEGORIES } from '@game/glossary'
 import { GlossaryText } from './GlossaryText'
@@ -11,13 +11,18 @@ interface StackItem {
 }
 
 interface GlossaryState {
-  openTerm: (termId: string, rect: DOMRect, fromPopover?: boolean) => void
+  openTerm: (termId: string, rect: DOMRect, popoverIndex?: number | null) => void
+  startCloseTimer: () => void
+  cancelCloseTimer: () => void
   dismiss: () => void
   close: () => void
   openHelp: (termId: string) => void
 }
 
 const GlossaryContext = createContext<GlossaryState | null>(null)
+
+// popover 내부에서 자신의 stackIndex를 알 수 있게 하는 context
+export const PopoverStackIndexContext = createContext<number | null>(null)
 
 export function useGlossary() {
   const ctx = useContext(GlossaryContext)
@@ -34,16 +39,46 @@ interface Props {
 
 export function GlossaryProvider({ children, onOpenHelp }: Props) {
   const [stack, setStack] = useState<StackItem[]>([])
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const openTerm = useCallback((id: string, rect: DOMRect, fromPopover = false) => {
-    if (fromPopover) {
-      // 팝오버 내부 → push (체이닝)
-      setStack((prev) => [...prev, { termId: id, anchorRect: rect }])
-    } else {
-      // 게임 화면(루트) → 스택 리셋 + 새 항목
-      setStack([{ termId: id, anchorRect: rect }])
+  // unmount 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     }
   }, [])
+
+  const cancelCloseTimer = useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }, [])
+
+  const startCloseTimer = useCallback(() => {
+    cancelCloseTimer()
+    closeTimerRef.current = setTimeout(() => {
+      setStack([])
+    }, 300)
+  }, [cancelCloseTimer])
+
+  const openTerm = useCallback((id: string, rect: DOMRect, popoverIndex?: number | null) => {
+    cancelCloseTimer()
+    if (popoverIndex != null) {
+      // popover 내부에서 hover → 해당 popover 이후 항목 잘라내고 push
+      setStack((prev) => {
+        // 이미 스택에 있는 termId는 무시 (무한루프 방지)
+        if (prev.some((item) => item.termId === id)) return prev
+        // 최대 5개 제한
+        const base = prev.slice(0, popoverIndex + 1)
+        if (base.length >= 5) return prev
+        return [...base, { termId: id, anchorRect: rect }]
+      })
+    } else {
+      // 루트에서 hover → 스택 리셋 + 새 항목
+      setStack([{ termId: id, anchorRect: rect }])
+    }
+  }, [cancelCloseTimer])
 
   const dismiss = useCallback(() => {
     setStack((prev) => prev.slice(0, -1))
@@ -58,21 +93,8 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
     close()
   }, [onOpenHelp, close])
 
-  // 다른 곳 클릭 시 마지막 팝오버 하나 닫기
-  useEffect(() => {
-    if (stack.length === 0) return
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      if (target.closest('[data-glossary-popover]')) return
-      if (target.closest('[data-glossary-term]')) return
-      dismiss()
-    }
-    document.addEventListener('mousedown', handler, true)
-    return () => document.removeEventListener('mousedown', handler, true)
-  }, [stack.length, dismiss])
-
   return (
-    <GlossaryContext.Provider value={{ openTerm, dismiss, close, openHelp }}>
+    <GlossaryContext.Provider value={{ openTerm, startCloseTimer, cancelCloseTimer, dismiss, close, openHelp }}>
       {children}
       {stack.map((item, i) => (
         <GlossaryPopover
@@ -80,6 +102,7 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
           termId={item.termId}
           anchorRect={item.anchorRect}
           zIndex={100 + i}
+          stackIndex={i}
           onNavigate={() => openHelp(item.termId)}
         />
       ))}
@@ -93,6 +116,7 @@ interface GlossaryPopoverProps {
   termId: string
   anchorRect: DOMRect
   zIndex: number
+  stackIndex: number
   onNavigate: () => void
 }
 
@@ -100,8 +124,10 @@ function GlossaryPopover({
   termId,
   anchorRect,
   zIndex,
+  stackIndex,
   onNavigate,
 }: GlossaryPopoverProps) {
+  const { cancelCloseTimer, startCloseTimer } = useGlossary()
   const entry = GLOSSARY.find((e) => e.id === termId)
   if (!entry) return null
 
@@ -125,55 +151,59 @@ function GlossaryPopover({
   left = Math.max(8, Math.min(left, window.innerWidth - popoverWidth - 8))
 
   return createPortal(
-    <div
-      data-glossary-popover
-      className="fixed animate-in fade-in duration-150"
-      style={{ top: top - window.scrollY, left, width: popoverWidth, zIndex }}
-    >
-      <div className="bg-slate-900 border border-slate-600 rounded-lg shadow-2xl overflow-hidden">
-        {/* 카테고리 + 용어명 */}
-        <div className="px-3 pt-3 pb-2">
-          <span className="text-[10px] text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded">
-            {GLOSSARY_CATEGORIES[entry.category]}
-          </span>
-          <p className="text-sm font-bold text-slate-100 mt-1">{entry.term}</p>
-        </div>
-
-        {/* 설명 */}
-        <div className="px-3 pb-2 text-xs text-slate-300 leading-relaxed">
-          <GlossaryText>{entry.description}</GlossaryText>
-        </div>
-
-        {/* 공식 */}
-        {entry.formula && (
-          <div className="px-3 pb-2">
-            <p className="text-[10px] text-blue-400/70 font-mono bg-slate-800/50 rounded px-2 py-1 truncate">
-              {entry.formula}
-            </p>
-          </div>
-        )}
-
-        {/* 자세히 보기 */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onNavigate() }}
-          className="w-full text-center text-xs text-blue-400 hover:text-blue-300 py-2 border-t border-slate-700 transition-colors"
-        >
-          자세히 보기 →
-        </button>
-      </div>
-
-      {/* 화살표 */}
+    <PopoverStackIndexContext.Provider value={stackIndex}>
       <div
-        className="absolute left-1/2 -translate-x-1/2"
-        style={showAbove ? { bottom: -5 } : { top: -5 }}
+        data-glossary-popover
+        className="fixed animate-in fade-in duration-150"
+        style={{ top: top - window.scrollY, left, width: popoverWidth, zIndex }}
+        onMouseEnter={cancelCloseTimer}
+        onMouseLeave={startCloseTimer}
       >
+        <div className="bg-slate-900 border border-slate-600 rounded-lg shadow-2xl overflow-hidden">
+          {/* 카테고리 + 용어명 */}
+          <div className="px-3 pt-3 pb-2">
+            <span className="text-[10px] text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded">
+              {GLOSSARY_CATEGORIES[entry.category]}
+            </span>
+            <p className="text-sm font-bold text-slate-100 mt-1">{entry.term}</p>
+          </div>
+
+          {/* 설명 */}
+          <div className="px-3 pb-2 text-xs text-slate-300 leading-relaxed">
+            <GlossaryText>{entry.description}</GlossaryText>
+          </div>
+
+          {/* 공식 */}
+          {entry.formula && (
+            <div className="px-3 pb-2">
+              <p className="text-[10px] text-blue-400/70 font-mono bg-slate-800/50 rounded px-2 py-1 truncate">
+                {entry.formula}
+              </p>
+            </div>
+          )}
+
+          {/* 자세히 보기 */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onNavigate() }}
+            className="w-full text-center text-xs text-blue-400 hover:text-blue-300 py-2 border-t border-slate-700 transition-colors"
+          >
+            자세히 보기 →
+          </button>
+        </div>
+
+        {/* 화살표 */}
         <div
-          className={`w-2.5 h-2.5 bg-slate-900 border-slate-600 rotate-45 ${
-            showAbove ? 'border-r border-b' : 'border-l border-t'
-          }`}
-        />
+          className="absolute left-1/2 -translate-x-1/2"
+          style={showAbove ? { bottom: -5 } : { top: -5 }}
+        >
+          <div
+            className={`w-2.5 h-2.5 bg-slate-900 border-slate-600 rotate-45 ${
+              showAbove ? 'border-r border-b' : 'border-l border-t'
+            }`}
+          />
+        </div>
       </div>
-    </div>,
+    </PopoverStackIndexContext.Provider>,
     document.body,
   )
 }
