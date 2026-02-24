@@ -41,7 +41,7 @@
       "recession": 0.2
     },
     "energy": {
-      "boom": 1.5,
+      "boom": 1.6,
       "stable": 1.0,
       "recession": 0.5
     },
@@ -150,7 +150,7 @@
   "SELL_BASE_RATIO": 0.85,
   "SELL_MARKET_RATIO": 0.15,
   "SCORE_NETWORTH_WEIGHT": 1,
-  "SCORE_INFLUENCE_WEIGHT": 20,
+  "SCORE_INFLUENCE_WEIGHT": 50,
   "SCORE_TURN_BONUS": 5,
   "SCORE_DOMINANCE_BONUS": 500,
   "META_CURRENCY_RATE": 0.008,

@@ -1,4 +1,4 @@
-import { Card, MoneyDisplay, StatRow, Badge } from '@components/common'
+import { Card, MoneyDisplay, StatRow, Badge, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { TraitBar } from './TraitDisplay'
 import { useGameStore } from '@stores/gameStore'
@@ -55,7 +55,18 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
 
   // 플레이어 기업의 조사 이력에서 이 경쟁사에 해당하는 기록을 추출
   const gameState = useGameStore((s) => s.gameState)
+  const submitAction = useGameStore((s) => s.submitAction)
   const playerHistory = gameState?.companies[0]?.researchHistory ?? []
+
+  // 조사 가능 여부 계산
+  const player = gameState?.companies[0]
+  const infoAssetCount = player?.assets.filter(a => {
+    const def = ASSETS.find(d => d.id === a.assetId)
+    return def?.sector === 'information'
+  }).length ?? 0
+  const researchUsed = player?.actionsThisTurn.filter(a => a.type === 'research').length ?? 0
+  const remainingResearch = Math.max(0, infoAssetCount - researchUsed)
+  const canResearch = remainingResearch > 0 && gameState?.phase === 'planning'
 
   // 포트폴리오 조사 결과 중 이 기업 것만 필터, 가장 최근 것 사용
   const competitorRecords = playerHistory.filter(
@@ -186,15 +197,56 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
                       })}
                     </div>
                   )}
+                  {/* 재조사 버튼 */}
+                  {gameState?.phase === 'planning' && (
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-slate-700">
+                      <Button variant="secondary" size="sm" fullWidth disabled={!canResearch}
+                        onClick={() => { submitAction({ type: 'research', target: 'competitor', targetCompanyId: company.id }); onClose() }}>
+                        🔄 재조사 ({remainingResearch}회)
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
-                /* 조사 기록 없음 — 잠금 상태 */
-                <div className="flex items-center gap-2 py-2">
-                  <span className="text-slate-500">🔒</span>
-                  <div>
-                    <p className="text-sm text-slate-400"><GlossaryText>조사 필요</GlossaryText></p>
-                    <p className="text-xs text-slate-500"><GlossaryText>AP를 소모하여 경쟁사를 조사할 수 있습니다</GlossaryText></p>
+                /* 조사 기록 없음 — 조사 버튼 */
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 py-2">
+                    <span className="text-slate-500">🔒</span>
+                    <div>
+                      <p className="text-sm text-slate-400"><GlossaryText>조사 필요</GlossaryText></p>
+                      <p className="text-xs text-slate-500">
+                        남은 조사: {remainingResearch}/{infoAssetCount}회
+                      </p>
+                    </div>
                   </div>
+                  {gameState?.phase === 'planning' && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        fullWidth
+                        disabled={!canResearch}
+                        onClick={() => {
+                          submitAction({ type: 'research', target: 'competitor', targetCompanyId: company.id })
+                          onClose()
+                        }}
+                      >
+                        📋 포트폴리오
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        fullWidth
+                        disabled={!canResearch}
+                        onClick={() => {
+                          submitAction({ type: 'research', target: 'strategy', targetCompanyId: company.id })
+                          onClose()
+                        }}
+                      >
+                        🎯 전략
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </Card>

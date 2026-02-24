@@ -77,6 +77,13 @@ export function GameHeader({ onHome }: GameHeaderProps) {
           <span className={`hidden sm:inline-flex ${expectedIncome >= 0 ? 'text-emerald-400' : 'text-red-400'}`} title="예상 수익">
             📈 {expectedIncome >= 0 ? '+' : ''}{formatMoney(Math.floor(expectedIncome))}/턴
           </span>
+          {/* 인플레이션: 모바일에서 숨김 */}
+          <span
+            className={`hidden sm:inline-flex ${gameState.cumulativeInflation > 1.2 ? 'text-red-400' : 'text-orange-400'}`}
+            title={`누적 x${gameState.cumulativeInflation.toFixed(2)}`}
+          >
+            🏷️ {(gameState.inflation * 100).toFixed(1)}%
+          </span>
         </div>
 
         <span className="text-sm font-bold text-slate-200">

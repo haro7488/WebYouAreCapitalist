@@ -76,6 +76,7 @@ calculateCompanyNetIncome,
   calculateDominance,
   calculateScore,
   getInfluenceTier,
+  getCompanyRank,
 } from './economy'
 
 // Market

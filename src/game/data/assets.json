@@ -178,7 +178,7 @@
     "baseIncome": 58,
     "appreciation": 0.01,
     "riskLevel": "high",
-    "marketMultiplier": { "boom": 1.8, "stable": 0.9, "recession": 0.2 },
+    "marketMultiplier": { "boom": 1.8, "stable": 0.9, "recession": 0.3 },
     "maxUpgradeLevel": 3
   },
   {
@@ -191,7 +191,7 @@
     "baseIncome": 140,
     "appreciation": 0.02,
     "riskLevel": "high",
-    "marketMultiplier": { "boom": 2.0, "stable": 0.9, "recession": 0.1 },
+    "marketMultiplier": { "boom": 2.0, "stable": 0.9, "recession": 0.25 },
     "maxUpgradeLevel": 3
   },
   {
@@ -217,7 +217,7 @@
     "baseIncome": 16,
     "appreciation": 0.015,
     "riskLevel": "medium",
-    "marketMultiplier": { "boom": 1.5, "stable": 1.0, "recession": 0.5 },
+    "marketMultiplier": { "boom": 1.3, "stable": 1.0, "recession": 0.7 },
     "maxUpgradeLevel": 3
   },
   {
@@ -240,10 +240,10 @@
     "sector": "energy",
     "tier": 3,
     "cost": 1300,
-    "baseIncome": 100,
+    "baseIncome": 115,
     "appreciation": 0.03,
-    "riskLevel": "medium",
-    "marketMultiplier": { "boom": 1.5, "stable": 1.0, "recession": 0.5 },
+    "riskLevel": "high",
+    "marketMultiplier": { "boom": 1.7, "stable": 1.0, "recession": 0.4 },
     "maxUpgradeLevel": 3
   }
 ]

@@ -139,6 +139,14 @@ export function GameScreen() {
                     />
                     <StatRow label={<GlossaryText>남은 턴</GlossaryText>} value={`${gameState.market.turnsRemaining}턴`} />
                     <StatRow label={<GlossaryText>변동성</GlossaryText>} value={`${Math.round(gameState.market.volatility * 100)}%`} />
+                    <StatRow
+                      label={<GlossaryText>인플레이션</GlossaryText>}
+                      value={<span className={gameState.inflation > 0.05 ? 'text-red-400' : 'text-slate-300'}>{(gameState.inflation * 100).toFixed(1)}%</span>}
+                    />
+                    <StatRow
+                      label={<GlossaryText>누적 배율</GlossaryText>}
+                      value={<span className={gameState.cumulativeInflation > 1.2 ? 'text-red-400' : 'text-slate-300'}>x{gameState.cumulativeInflation.toFixed(2)}</span>}
+                    />
                   </Card>
 
                   {/* 수익/지출 */}

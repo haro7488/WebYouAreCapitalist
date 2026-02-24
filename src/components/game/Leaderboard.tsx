@@ -79,14 +79,14 @@ export function Leaderboard() {
     .map((c, originalIdx) => ({ company: c, isPlayer: originalIdx === 0 }))
     .sort((a, b) => b.company.netWorth - a.company.netWorth)
 
-  // 이전 턴 순위 추정: 현재 순위를 기반으로 변동 계산
-  // revenue - expenses가 양수면 상승 중, 음수면 하락 중으로 근사
+  // 이전 턴 실제 순위 (rankingHistory 기반)
   const getRankTrend = (c: Company, currentRank: number): number => {
-    if (turn <= 1) return currentRank // 첫 턴은 변동 없음
-    const netChange = c.revenue - c.expenses
-    if (netChange > 0) return currentRank + 1 // 이전 순위가 더 낮았을 것
-    if (netChange < 0) return currentRank - 1
-    return currentRank
+    const { rankingHistory } = gameState
+    if (turn <= 1 || !rankingHistory || rankingHistory.length === 0) return currentRank
+    const companyIdx = companies.findIndex(co => co.id === c.id)
+    if (companyIdx === -1) return currentRank
+    const lastRanks = rankingHistory[rankingHistory.length - 1]
+    return lastRanks[companyIdx] ?? currentRank
   }
 
   return (

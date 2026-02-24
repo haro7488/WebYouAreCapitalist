@@ -3,7 +3,7 @@ import { Card, StatRow, MoneyDisplay, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { MarketIndicator } from './MarketIndicator'
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react'
-import { ASSETS } from '@game/index'
+import { ASSETS, getCompanyRank } from '@game/index'
 
 /** 턴 결과 요약 카드 */
 export function TurnResult() {
@@ -19,6 +19,14 @@ export function TurnResult() {
   const netIncome = revenue - expenses
   const assetValue = ownedAssets.reduce((sum, a) => sum + a.currentValue, 0)
   const netWorth = money + assetValue
+
+  // 순위 변동 계산
+  const currentRank = getCompanyRank(gameState.companies, 0)
+  const { rankingHistory } = gameState
+  const prevRank = rankingHistory.length > 0
+    ? rankingHistory[rankingHistory.length - 1][0]
+    : currentRank
+  const rankDiff = prevRank - currentRank
 
   return (
     <Card header={`턴 ${turn} 결과`}>
@@ -56,6 +64,17 @@ export function TurnResult() {
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-slate-400">영향력</span>
         <span className="text-sm font-medium text-slate-200">{Math.floor(influence)}</span>
+      </div>
+
+      {/* 순위 */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-slate-400">순위</span>
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-medium text-slate-200">{currentRank}위 / {gameState.companies.length}</span>
+          {rankDiff > 0 && <span className="text-money-400 text-xs">▲{rankDiff}</span>}
+          {rankDiff < 0 && <span className="text-danger-400 text-xs">▼{Math.abs(rankDiff)}</span>}
+          {rankDiff === 0 && <span className="text-slate-500 text-xs">─</span>}
+        </div>
       </div>
 
       {/* 시장 상태 */}

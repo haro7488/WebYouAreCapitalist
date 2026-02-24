@@ -1,20 +1,20 @@
-import type { OwnedAsset, Asset, MarketCondition } from '@game/index'
+import type { OwnedAsset, Asset, SectorTrend } from '@game/index'
 import { Button, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { formatMoney, ASSET_UPGRADE_COST_RATIO, ASSET_UPGRADE_INCOME_MULTIPLIER } from '@game/index'
 
-// 시장 상태별 방향 표시
-const MARKET_ARROW: Record<MarketCondition, string> = {
-  boom: '\u2191',
-  stable: '\u2192',
-  recession: '\u2193',
+// 섹터 트렌드별 방향 표시
+const TREND_ARROW: Record<SectorTrend, { symbol: string; color: string }> = {
+  hot: { symbol: '↑', color: 'text-red-400' },
+  neutral: { symbol: '→', color: 'text-slate-400' },
+  cold: { symbol: '↓', color: 'text-blue-400' },
 }
 
 interface OwnedAssetRowProps {
   owned: OwnedAsset
   asset: Asset
   index: number
-  marketCondition: MarketCondition
+  sectorTrend: SectorTrend
   onSell: (index: number) => void
   onUpgrade: (index: number) => void
 }
@@ -24,7 +24,7 @@ export function OwnedAssetRow({
   owned,
   asset,
   index,
-  marketCondition,
+  sectorTrend,
   onSell,
   onUpgrade,
 }: OwnedAssetRowProps) {
@@ -54,7 +54,7 @@ export function OwnedAssetRow({
       {/* 중앙: 현재 가치 + 시장 방향 */}
       <div className="flex items-center gap-2">
         <MoneyDisplay amount={owned.currentValue} size="sm" />
-        <span className="text-sm text-slate-400">{MARKET_ARROW[marketCondition]}</span>
+        <span className={`text-sm ${TREND_ARROW[sectorTrend].color}`}>{TREND_ARROW[sectorTrend].symbol}</span>
       </div>
 
       {/* 우측: 업그레이드 정보 + 버튼 — 모바일에서 전체 너비로 두 번째 줄에 배치 */}
