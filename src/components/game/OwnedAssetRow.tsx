@@ -1,5 +1,6 @@
 import type { OwnedAsset, Asset, MarketCondition } from '@game/index'
 import { Button, MoneyDisplay } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 import { formatMoney, ASSET_UPGRADE_COST_RATIO, ASSET_UPGRADE_INCOME_MULTIPLIER } from '@game/index'
 
 // 시장 상태별 방향 표시
@@ -39,13 +40,13 @@ export function OwnedAssetRow({
       {/* 좌측: 이름 + 레벨 + 소득 정보 */}
       <div className="flex flex-col">
         <span className="text-sm font-medium text-slate-200">
-          {asset.name}
+          <GlossaryText>{asset.name}</GlossaryText>
           <span className="text-xs text-slate-400 ml-1.5">
             Lv.{owned.upgradeLevel}/{maxLevel}
           </span>
         </span>
         <span className="text-xs text-slate-500">
-          매입 턴{owned.purchaseTurn} | 소득 {formatMoney(asset.baseIncome)}/턴
+          <GlossaryText>{`매입 턴${owned.purchaseTurn} | 소득 ${formatMoney(asset.baseIncome)}/턴`}</GlossaryText>
         </span>
       </div>
 
