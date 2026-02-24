@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
-import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, Leaderboard } from '@components/game'
+import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, Leaderboard, GoalSelectionModal } from '@components/game'
 import { calculateDominance, calculateCompanyNetIncome } from '@game/index'
 import { formatMoney } from '@game/utils'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
+import GOALS_DATA from '@game/data/goals.json'
 
 // 섹터 한국어 이름
 const SECTOR_NAMES: Record<Sector, string> = {
@@ -61,7 +62,11 @@ export function GameScreen() {
   const lastRunResult = useGameStore((s) => s.lastRunResult)
   const submitAction = useGameStore((s) => s.submitAction)
   const resolvePhase = useGameStore((s) => s.resolvePhase)
+  const selectGoal = useGameStore((s) => s.selectGoal)
   const navigateTo = useUIStore((s) => s.navigateTo)
+
+  // 목표 선택 모달 표시 여부
+  const showGoalSelection = gameState && !gameState.selectedGoal && gameState.turn === 1 && gameState.phase === 'planning'
 
   // Resolution 페이즈 자동 전환
   useEffect(() => {
@@ -250,6 +255,14 @@ export function GameScreen() {
             />
           )}
         </>
+      )}
+
+      {/* 목표 선택 모달 */}
+      {showGoalSelection && (
+        <GoalSelectionModal
+          goals={GOALS_DATA}
+          onSelect={selectGoal}
+        />
       )}
     </div>
   )

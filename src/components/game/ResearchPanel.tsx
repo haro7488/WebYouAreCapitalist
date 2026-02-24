@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Card, Button, Badge } from '@components/common'
-import { TrendingUp, BarChart3, AlertCircle, X } from 'lucide-react'
-import type { ResearchResult, Sector, SectorTrend } from '@game/index'
+import { TrendingUp, BarChart3, AlertCircle, X, AlertTriangle } from 'lucide-react'
+import { useGameStore } from '@stores/gameStore'
+import { ASSETS } from '@game/constants'
+import type { ResearchResult, Sector, SectorTrend, OwnedAsset } from '@game/index'
 
 // 섹터 한국어 이름
 const SECTOR_NAMES: Record<Sector, string> = {
@@ -38,9 +40,27 @@ interface ResearchPanelProps {
 
 /** 조사 오버레이 패널: 3단계 (종류 선택 → 섹터 선택 → 결과 표시) */
 export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchPanelProps) {
+  const gameState = useGameStore((s) => s.gameState)
+  
   // researchResult가 있으면 result 단계부터 시작
   const [step, setStep] = useState<ResearchStep>(researchResult ? 'result' : 'select')
   const [result, setResult] = useState<ResearchResult | null>(researchResult)
+
+  // 정보 자산 개수 및 남은 조사 횟수 계산
+  const infoAssetCount = gameState?.companies[0].assets.filter(
+    (ownedAsset: OwnedAsset) => {
+      const assetData = ASSETS.find(a => a.id === ownedAsset.assetId)
+      return assetData?.sector === 'information'
+    }
+  ).length ?? 0
+
+  const researchCount = gameState?.companies[0].actionsThisTurn.filter(
+    (action) => action.type === 'research'
+  ).length ?? 0
+
+  const remainingResearch = Math.max(0, infoAssetCount - researchCount)
+  const hasInfoAssets = infoAssetCount > 0
+  const canResearch = hasInfoAssets && remainingResearch > 0
 
   // 조사 종류 선택
   const handleSelectTarget = (target: 'market' | 'sector' | 'event') => {
@@ -90,14 +110,38 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
         {step === 'select' && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-100">시장 조사</h2>
-            <p className="text-sm text-slate-400">
-              비용: <span className="text-money-400">무료 (정보 기업 보유)</span>
-            </p>
+            
+            {!hasInfoAssets ? (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-start gap-2">
+                <AlertTriangle size={18} className="text-red-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-red-400">정보 자산 필요</p>
+                  <p className="text-xs text-red-300/80 mt-1">
+                    시장 조사를 하려면 정보 섹터 자산을 보유해야 합니다
+                  </p>
+                </div>
+              </div>
+            ) : remainingResearch <= 0 ? (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
+                <AlertCircle size={18} className="text-amber-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-amber-400">조사 횟수 소진</p>
+                  <p className="text-xs text-amber-300/80 mt-1">
+                    이번 턴 조사 가능 횟수를 모두 사용했습니다
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">남은 조사 횟수:</span>
+                <span className="text-blue-400 font-bold">{remainingResearch}/{infoAssetCount}</span>
+              </div>
+            )}
 
             <div className="space-y-3">
               <button
                 className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={false}
+                disabled={!canResearch}
                 onClick={() => handleSelectTarget('market')}
               >
                 <div className="flex items-center gap-3">
@@ -111,7 +155,7 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
 
               <button
                 className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={false}
+                disabled={!canResearch}
                 onClick={() => handleSelectTarget('sector')}
               >
                 <div className="flex items-center gap-3">
@@ -125,7 +169,7 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
 
               <button
                 className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={false}
+                disabled={!canResearch}
                 onClick={() => handleSelectTarget('event')}
               >
                 <div className="flex items-center gap-3">
@@ -221,7 +265,7 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
             )}
 
             <div className="flex gap-2">
-              <Button variant="secondary" className="flex-1" onClick={handleRetry} disabled={false}>
+              <Button variant="secondary" className="flex-1" onClick={handleRetry} disabled={!canResearch}>
                 다른 조사
               </Button>
               <Button variant="primary" className="flex-1" onClick={onClose}>

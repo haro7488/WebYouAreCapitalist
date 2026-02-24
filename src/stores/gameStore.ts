@@ -46,6 +46,8 @@ interface GameStoreActions {
   resolvePhase: () => void
   /** Result Phase: 다음 턴으로 진행 */
   advanceTurn: () => void
+  /** 목표 선택 */
+  selectGoal: (goal: any) => void
   /** 스토어 초기화 */
   reset: () => void
 }
@@ -136,6 +138,12 @@ export const useGameStore = create<GameStore>()(
         if (newState.isGameOver) {
           get().endCurrentRun()
         }
+      },
+
+      selectGoal: (goal: any) => {
+        const { gameState } = get()
+        if (!gameState) return
+        set({ gameState: { ...gameState, selectedGoal: goal } })
       },
 
       reset: () => {
