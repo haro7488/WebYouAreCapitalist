@@ -5,7 +5,7 @@
 
 import { startNewRun } from '../src/game/run'
 import { createInitialMeta } from '../src/game/meta'
-import { submitAction, submitEventChoice, resolvePhase, advanceTurn } from '../src/game/engine'
+import { submitAction, submitEventChoice, submitGovernmentChoice, processGovernmentPhase, resolvePhase, advanceTurn } from '../src/game/engine'
 import { calculateCompanyNetWorth, calculateCompanyTotalIncome, calculateCompanyNetIncome } from '../src/game/economy'
 import { ASSETS, DEFAULT_GAME_CONFIG } from '../src/game/constants'
 import type { GameState, Asset } from '../src/game/types'
@@ -95,7 +95,11 @@ function simulate(strategy: Strategy): { turnLog: TurnLog[], finalState: GameSta
       // 이전 턴이 제대로 안 끝남 — 강제 복구
       let recovery = 0
       while (state.phase !== 'planning' && !state.isGameOver && recovery++ < 20) {
-        if (state.phase === 'event') {
+        if (state.phase === 'government') {
+          state = state.governmentEvent?.choices
+            ? submitGovernmentChoice(state, state.governmentEvent.choices[0].id)
+            : processGovernmentPhase(state)
+        } else if (state.phase === 'event') {
           state = state.currentEvent
             ? submitEventChoice(state, state.currentEvent.choices[0].id)
             : resolvePhase(state)
@@ -162,11 +166,17 @@ function simulate(strategy: Strategy): { turnLog: TurnLog[], finalState: GameSta
       state = submitAction(state, { type: 'endTurn' })
     }
 
-    // Phase 순차 진행
+    // Phase 순차 진행: planning → government → event → resolution → result
     let safety = 0
     while (state.phase !== 'result' && !state.isGameOver && safety++ < 10) {
       if (state.phase === 'planning') {
         state = submitAction(state, { type: 'endTurn' })
+      } else if (state.phase === 'government') {
+        if (state.governmentEvent?.choices) {
+          state = submitGovernmentChoice(state, state.governmentEvent.choices[0].id)
+        } else {
+          state = processGovernmentPhase(state)
+        }
       } else if (state.phase === 'event') {
         if (state.currentEvent) {
           state = submitEventChoice(state, state.currentEvent.choices[0].id)

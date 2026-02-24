@@ -35,6 +35,8 @@ import { getAIActions, getAIEventChoice } from './competitor/ai'
 import { applyInflation } from './logic/inflation'
 import { getCompanyTraitEffects } from './logic/traitEngine'
 import { checkGoalCompletion, calculateGoalBonus } from './logic/goalEngine'
+import { GOVERNMENT_EVENTS } from './schema/governmentEvents.schema'
+import { checkEventConditions } from './logic/eventConditions'
 
 // === 편의 함수 ===
 
@@ -800,8 +802,6 @@ function rollAndSetEvents(state: GameState): GameState {
 export function processGovernmentPhase(state: GameState): GameState {
   if (state.phase !== 'government') return state
 
-  const { GOVERNMENT_EVENTS } = require('./schema/governmentEvents.schema')
-  const { checkEventConditions } = require('./logic/eventConditions')
   const rng = createRng(state.rngState)
 
   // 조건 충족하는 정부 이벤트 필터링
