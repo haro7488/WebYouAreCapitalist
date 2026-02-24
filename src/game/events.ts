@@ -2,15 +2,17 @@ import type { GameEvent, GameState } from './types'
 import type { Rng } from './utils'
 import { VOLATILITY_EVENT_BONUS } from './constants'
 import { EVENT_REGISTRY } from './schema/events.schema'
+import { checkEventConditions } from './logic/eventConditions'
 
 export { EVENT_REGISTRY }
 
 /** 조건을 충족하는 이벤트 필터링 */
 function getEligibleEvents(state: GameState, excludeIds: string[] = []): GameEvent[] {
+  const player = state.companies[0]
   const recentEvents = state.eventHistory.slice(-5)
   return EVENT_REGISTRY.filter((e) => {
     if (state.turn < e.minTurn) return false
-    if (e.condition && !e.condition(state)) return false
+    if (!checkEventConditions(e.conditions, state, player)) return false
     if (recentEvents.includes(e.id)) return false
     if (excludeIds.includes(e.id)) return false
     return true

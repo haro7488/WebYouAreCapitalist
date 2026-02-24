@@ -134,8 +134,7 @@ export const useGameStore = create<GameStore>()(
         gameState: state.gameState,
         isRunActive: state.isRunActive,
       }),
-      // 복원 후 currentEvent를 EVENT_REGISTRY에서 재구성
-      // (GameEvent.condition 함수는 JSON 직렬화 불가 → id로 레지스트리 재조회)
+      // 복원 후 currentEvent를 EVENT_REGISTRY에서 재구성 (id로 레지스트리 재조회)
       onRehydrateStorage: () => (state) => {
         if (!state?.gameState) return
         const eventId = state.gameState.currentEvent?.id ?? null

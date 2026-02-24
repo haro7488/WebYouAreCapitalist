@@ -84,6 +84,31 @@ export interface EventChoice {
   effect: EventEffect
 }
 
+/** 선언형 이벤트 조건 (JSON 기반, AND 평가) */
+export interface EventConditions {
+  minTurn?: number
+  maxTurn?: number
+  marketIs?: MarketCondition
+  marketNot?: MarketCondition
+  minInfluence?: number
+  maxInfluence?: number
+  minAssets?: number
+  minNetWorth?: number
+  minCash?: number
+  maxCash?: number
+  hasTrait?: string
+  notTrait?: string
+  dominatesSector?: Sector
+  dominatesCount?: number
+  rank?: number // 최소 순위 (3 = 3위 이하)
+  hasSector?: Sector // 해당 섹터 자산 보유 여부
+  minInflation?: number
+  // 하위 호환
+  sectorTrendNot?: { sector: Sector; trend: SectorTrend }
+  hasDominance?: boolean
+  minRank?: number // rank와 동일
+}
+
 export interface GameEvent {
   id: string
   title: string
@@ -91,7 +116,7 @@ export interface GameEvent {
   choices: [EventChoice, EventChoice] // 기본 2개 선택지
   minTurn: number // 이 이벤트가 나올 수 있는 최소 턴
   weight: number // 등장 확률 가중치
-  condition?: (state: GameState) => boolean // 조건부 이벤트
+  conditions?: EventConditions // 선언형 조건
   dominanceChoice?: {
     sector: Sector
     choice: EventChoice // 지배자 등급 시 활성화되는 제3 선택지

@@ -25,6 +25,7 @@ export type {
   RunResult,
   GovernmentEvent,
   Goal,
+  EventConditions,
 } from './types'
 
 // Constants
@@ -82,6 +83,7 @@ export { createInitialMarket, updateMarket, createInitialSectorStates, updateSec
 
 // Events
 export { EVENT_REGISTRY, rollForEvent, findEventById } from './events'
+export { checkEventConditions } from './logic/eventConditions'
 
 // Run
 export { startNewRun, endRun } from './run'
