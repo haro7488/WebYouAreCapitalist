@@ -174,7 +174,7 @@
 | `reckless` | 무모함 | 매각 시 가치 -15% | `{ "sellPenalty": 0.15 }` |
 | `notorious` | 악명 | 압박형 이벤트 확률 증가 | `{ "pressureWeightBonus": 0.15 }` |
 | `wasteful` | 낭비벽 | 기본 지출 +25% | `{ "expenseMultiplier": 1.25 }` |
-| `paranoid` | 의심병 | 조사 비용 2배 | `{ "investigateCostMultiplier": 2.0 }` |
+| `paranoid` | 의심병 | 조사 결과 정확도 50% 하락 | `{ "investigateAccuracyPenalty": 0.5 }` |
 | `slow` | 우유부단 | 이벤트 선택지 하나 잠금 | `{ "lockRandomChoice": true }` |
 
 ### 특성 효과 구현
@@ -191,7 +191,7 @@ interface TraitEffect {
   opportunityWeightBonus?: number  // 기회형 가중치 보너스
   pressureWeightBonus?: number     // 압박형 가중치 보너스
   trendForesight?: number          // 트렌드 사전 확인 턴 수
-  investigateCostMultiplier?: number // 조사 비용 배율
+  investigateAccuracyPenalty?: number // 조사 정확도 하락률 (0~1)
   lockRandomChoice?: boolean       // 선택지 잠금
 }
 ```
@@ -639,13 +639,11 @@ interface TraitEffect {
 
 ### 정보 섹터
 
-6번째 섹터인 **정보(information)** 섹터의 기업을 통해 이벤트를 예측할 수 있다.
+7번째 섹터인 **정보(information)** 섹터의 기업을 통해 이벤트를 예측할 수 있다.
 
-| Tier | 기업 | 가격 | 조사 능력 |
-|------|------|------|----------|
-| 1 | 데이터 분석 스타트업 | $160 | 다음 턴 일반 이벤트 카테고리 공개 |
-| 2 | 리서치 펌 | $480 | 다음 턴 일반 이벤트 제목 + 카테고리 공개 |
-| 3 | 정보 네트워크 | $1,400 | 다음 턴 일반 이벤트 전체 공개 (선택지 포함) |
+> 전체 섹터: 외식(food) · 기술(tech) · 부동산(realEstate) · 물류(logistics) · 에너지(energy) · 금융(finance) · 정보(information)
+
+정보 기업은 **1종류**만 존재한다. 보유한 정보 기업 1개당 **1회/턴** 조사를 수행할 수 있으며, 다음 턴 이벤트 정보를 공개한다.
 
 ### 조사 메커니즘
 
@@ -654,9 +652,9 @@ interface TraitEffect {
 | 기업 종류 | 정보 섹터 기업만 가능 |
 | 횟수 제한 | 기업 1개당 **1회/턴** |
 | 대상 선택 | 조사 대상(일반 이벤트 / 정부 이벤트)을 선택 |
-| 비용 | 현금 소모 (AP 없음, 현금 = 행동력) |
+| 비용 | **무료** (정보 기업 보유 자체가 비용) |
 | 특성 영향 | `visionary` 특성: 조사 없이도 섹터 트렌드 1턴 먼저 확인 |
-| 특성 영향 | `paranoid` 특성: 조사 비용 2배 |
+| 특성 영향 | `paranoid` 특성: 조사 결과 정확도 50% 하락 (잘못된 정보가 섞일 수 있음) |
 
 ### 예측 활용 전략
 
