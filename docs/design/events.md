@@ -1,310 +1,768 @@
 # 이벤트 시스템 상세 기획
 
-> 12개 이벤트의 디자인 의도, 발생 메커니즘, 선택지 분석, 전략 가이드.
+> Phase 2 리워크 기준. 일반 이벤트 + 정부 이벤트, 조건 태그, 특성 부여/제거, JSON 선언형 데이터.
 
 ---
 
 ## 디자인 철학
 
-### 리스크/리워드 선택의 긴장감
+### 매 턴 일어나는 사건
 
-이벤트는 게임의 **핵심 드라마 장치**다. 매 턴 40%+α 확률로 발생하며, 플레이어에게 2~3개의 선택지를 강제한다.
+이벤트는 게임의 **핵심 드라마 장치**다. 매 턴 **반드시 1개 발생**(보장) + 추가 확률 판정으로 최대 2개까지 발생한다. "아무 일도 없는 턴"은 존재하지 않는다.
 
 이벤트가 만드는 플레이어 경험:
-1. **예측 불가능한 상황** → 적응력 시험
-2. **선택의 트레이드오프** → "완벽한 선택지"가 없음
-3. **지배력 보상** → 섹터 집중 투자의 인센티브
-4. **서사적 몰입** → 투자자로서의 롤플레이
+1. **분류별 긴장감** — 기회형(50%), 선택형(30%), 압박형(20%)으로 체감이 다름
+2. **특성 누적** — 선택에 따라 영구 특성이 부여/제거되어 플레이어 고유 빌드 형성
+3. **조사 인센티브** — 정보 기업을 통해 다음 턴 이벤트를 미리 파악 가능
+4. **정부의 개입** — 정부 이벤트가 매 턴 별도로 1개 발생하여 거시 환경이 변화
 
 ### 선택지 설계 원칙
 
-- **A 선택지**: 보통 자원(돈)을 써서 상황을 통제하는 "능동적" 선택
-- **B 선택지**: 자원을 아끼되 부정적 효과를 감수하는 "수동적" 선택
-- **C 선택지 (지배자)**: 해당 섹터 지배 시에만 해금. 가장 유리하지만 접근 비용 높음
+- **모든 이벤트에 최소 2개 선택지** — "강제 1택" 없음
+- **특성(trait) 연계** — 특정 특성 보유 시 숨겨진 선택지 해금 (`requireTrait`)
+- **JSON 선언형** — 효과는 데이터로, 로직은 엔진에서 분리
+
+---
+
+## 이벤트 분류
+
+### 일반 이벤트 (매 턴 보장 1개 + 추가 확률)
+
+| 분류 | 비율 | 성격 | 예시 |
+|------|------|------|------|
+| **기회형** (opportunity) | 50% | 선택하면 이득, 안 하면 손해 없음 | 파트너십 제안, 경기 부양책 |
+| **선택형** (choice) | 30% | 양쪽 다 트레이드오프 | 기술 혁신, 소비 트렌드 변화 |
+| **압박형** (pressure) | 20% | 어떤 선택이든 비용 발생 | 세무 조사, 금융 위기 |
+
+- 기회형이 50%로 가장 많아 플레이어가 "이벤트 = 귀찮음"이 아닌 **기대감**을 느끼게 설계
+- 압박형은 20%로 드물지만 등장 시 임팩트가 큼
+
+### 정부 이벤트 (매 턴 별도 보장 1개)
+
+일반 이벤트와 **별도 풀**에서 매 턴 1개 자동 발생. 정부 탭에서 확인.
+
+| 분류 | 성격 | 예시 |
+|------|------|------|
+| 금리 조정 | 인플레이션/디플레이션 영향 | 기준금리 인상/인하 |
+| 규제 | 특정 섹터 압박/완화 | 부동산 규제 강화, 기술 규제 완화 |
+| 재정 정책 | 세금/보조금 | 법인세 인상, 스타트업 지원금 |
+| 무역 정책 | 글로벌 시장 영향 | 무역 협정, 관세 부과 |
 
 ---
 
 ## 발생 메커니즘
 
-### 확률 공식
+### 턴 구조에서의 위치
 
 ```
-이벤트 발생 확률 = EVENT_BASE_PROBABILITY + volatility × VOLATILITY_EVENT_BONUS
+자유 행동 → 정부 이벤트 → 일반 이벤트 → 정산 → 결과
+              (보장 1개)     (보장 1개 + 추가 확률)
+```
+
+### 일반 이벤트 발생
+
+1. **보장 이벤트 (1개)**: 조건 충족하는 이벤트 풀에서 가중치 기반 선택
+2. **추가 이벤트 판정**: 아래 확률로 2번째 이벤트 발생 여부 결정
+
+```
+추가 이벤트 확률 = EVENT_BASE_PROBABILITY + volatility × VOLATILITY_EVENT_BONUS
                 = 0.4 + 변동성 × 0.3
 ```
 
-| 시장 상태 | 변동성 범위 | 이벤트 확률 |
-|----------|-----------|-----------|
+| 시장 상태 | 변동성 범위 | 추가 이벤트 확률 |
+|----------|-----------|---------------|
 | boom | 0.2~0.5 | 46~55% |
 | stable | 0.3~0.7 | 49~61% |
 | recession | 0.5~0.9 | 55~67% |
 
-30턴 게임에서 평균 약 **15~18회 이벤트** 발생 예상.
+30턴 게임에서 일반 이벤트 평균 약 **46~50회** (보장 30 + 추가 16~20).
+
+### 정부 이벤트 발생
+
+- 매 턴 **보장 1개**, 추가 판정 없음
+- 30턴 = 정부 이벤트 정확히 **30회**
+- 일반 이벤트와 별도 풀, 중복 불가
 
 ### 이벤트 선택 과정
 
-1. 확률 판정 통과 → 이벤트 풀 필터링
-2. **조건 필터**: `minTurn` 충족, `condition` 함수 통과
-3. **중복 방지**: 최근 5턴 내 발생한 이벤트 제외
-4. **가중치 선택**: weight 기반 랜덤 (weight 높을수록 자주 등장)
-
-### 가중치 분포
-
-```
-경제: 금리(10) + 부양책(8) + 위기(5) + 무역(7)  = 30
-섹터: 혁신(9) + 규제(8) + 트렌드(9)              = 26
-개인: 세무(6) + 파트너십(7) + 스캔들(7)           = 20
-기회: 인수(4) + IPO(4)                            = 8
-                                          총합 = 84
-```
-
-경제/섹터 이벤트가 약 67% 확률로 등장. 기회 이벤트는 약 10%로 희귀.
+1. 풀 필터링: `minTurn` 충족 + `condition` 태그 통과
+2. 중복 방지: 최근 5턴 내 발생한 이벤트 ID 제외
+3. 분류 결정: 기회(50%) / 선택(30%) / 압박(20%) 비율로 카테고리 먼저 선택
+4. 가중치 선택: 해당 카테고리 내에서 weight 기반 랜덤
 
 ---
 
-## 12개 이벤트 상세
+## 조건 태그 시스템
 
-### 경제 이벤트 (4개)
+이벤트 발생 조건은 JSON으로 선언한다. 엔진은 조건 태그를 읽어 판정만 수행.
 
-#### 1. 금리 인상 (interest-rate-hike)
+### 조건 태그 종류
+
+| 태그 | 타입 | 설명 | 예시 |
+|------|------|------|------|
+| `minTurn` | `number` | 최소 턴 | `"minTurn": 10` |
+| `maxTurn` | `number` | 최대 턴 (이후 미발생) | `"maxTurn": 25` |
+| `minCash` | `number` | 최소 보유 현금 | `"minCash": 300` |
+| `maxCash` | `number` | 최대 보유 현금 (가난할 때만) | `"maxCash": 200` |
+| `minInfluence` | `number` | 최소 영향력 | `"minInfluence": 40` |
+| `minAssets` | `number` | 최소 보유 자산 수 | `"minAssets": 3` |
+| `marketCondition` | `MarketCondition` | 특정 시장 상태일 때만 | `"marketCondition": "boom"` |
+| `notMarketCondition` | `MarketCondition` | 특정 시장 상태가 아닐 때 | `"notMarketCondition": "recession"` |
+| `hasSector` | `Sector` | 해당 섹터 자산 1개 이상 보유 | `"hasSector": "tech"` |
+| `dominatesSector` | `Sector` | 해당 섹터 지배 중 | `"dominatesSector": "finance"` |
+| `requireTrait` | `string` | 특정 특성 보유 시에만 발생 | `"requireTrait": "lucky"` |
+| `forbidTrait` | `string` | 특정 특성 미보유 시에만 발생 | `"forbidTrait": "notorious"` |
+| `minRank` | `number` | 최소 순위 (꼴찌 지원) | `"minRank": 3` |
+
+### 조건 태그 JSON 예시
+
+```json
+{
+  "id": "financial-crisis",
+  "conditions": {
+    "minTurn": 10,
+    "notMarketCondition": "recession",
+    "minAssets": 2
+  }
+}
+```
+
+```json
+{
+  "id": "lucky-investment",
+  "conditions": {
+    "minTurn": 6,
+    "requireTrait": "lucky"
+  }
+}
+```
+
+조건 태그는 **AND 결합** — 모든 조건을 동시에 충족해야 이벤트 풀에 진입.
+
+---
+
+## 특성 (Trait) 시스템
+
+### 개요
+
+특성은 **이벤트 선택의 결과**로만 부여/제거되는 영구 태그. 플레이어의 선택이 누적되어 고유한 빌드를 형성한다.
+
+| 규칙 | 설명 |
+|------|------|
+| 획득 경로 | 이벤트 선택지의 `traitGrant` 효과로만 부여 |
+| 제거 경로 | 이벤트 선택지의 `traitRemove` 효과로만 제거 |
+| 지속 시간 | **영구** (런 종료까지) |
+| 중복 | 같은 특성 중복 부여 불가 |
+| 선택권 | 특성 부여/제거는 항상 **선택지 안에** 포함 — 강제 부여 없음 |
+
+### 특성 목록
+
+#### 긍정 특성
+
+| ID | 이름 | 효과 | 구현 (JSON 선언) |
+|----|------|------|-----------------|
+| `sharp-eye` | 투자 안목 | 자산 매입 시 10% 할인 | `{ "purchaseDiscount": 0.1 }` |
+| `networker` | 인맥왕 | 영향력 획득량 +20% | `{ "influenceGainMultiplier": 1.2 }` |
+| `efficient` | 효율 경영 | 기본 지출 -30% | `{ "expenseMultiplier": 0.7 }` |
+| `lucky` | 행운아 | 기회형 이벤트 확률 증가 | `{ "opportunityWeightBonus": 0.15 }` |
+| `visionary` | 선구안 | 섹터 트렌드 1턴 미리 확인 | `{ "trendForesight": 1 }` |
+
+#### 부정 특성
+
+| ID | 이름 | 효과 | 구현 (JSON 선언) |
+|----|------|------|-----------------|
+| `reckless` | 무모함 | 매각 시 가치 -15% | `{ "sellPenalty": 0.15 }` |
+| `notorious` | 악명 | 압박형 이벤트 확률 증가 | `{ "pressureWeightBonus": 0.15 }` |
+| `wasteful` | 낭비벽 | 기본 지출 +25% | `{ "expenseMultiplier": 1.25 }` |
+| `paranoid` | 의심병 | 조사 결과 정확도 50% 하락 | `{ "investigateAccuracyPenalty": 0.5 }` |
+| `slow` | 우유부단 | 이벤트 선택지 하나 잠금 | `{ "lockRandomChoice": true }` |
+
+### 특성 효과 구현
+
+특성 효과는 **JSON 선언형**으로 정의하고, 엔진이 해석한다.
+
+```typescript
+// schema 레이어가 JSON → 런타임 효과 매핑
+interface TraitEffect {
+  purchaseDiscount?: number        // 매입 할인율
+  sellPenalty?: number             // 매각 패널티
+  expenseMultiplier?: number       // 지출 배율
+  influenceGainMultiplier?: number // 영향력 획득 배율
+  opportunityWeightBonus?: number  // 기회형 가중치 보너스
+  pressureWeightBonus?: number     // 압박형 가중치 보너스
+  trendForesight?: number          // 트렌드 사전 확인 턴 수
+  investigateAccuracyPenalty?: number // 조사 정확도 하락률 (0~1)
+  lockRandomChoice?: boolean       // 선택지 잠금
+}
+```
+
+---
+
+## 이벤트 데이터 구조 (JSON Schema)
+
+### 데이터/로직 분리 원칙
+
+| 레이어 | 역할 | 파일 |
+|--------|------|------|
+| **데이터** | 이벤트 정의 (JSON) | `data/events/*.json` |
+| **스키마** | JSON → TypeScript 타입 변환, 검증 | `src/game/schema/` |
+| **로직** | 이벤트 선택·적용·특성 처리 | `src/game/events.ts`, `engine.ts` |
+
+### 이벤트 JSON 구조
+
+```json
+{
+  "id": "tech-innovation",
+  "title": "기술 혁신",
+  "description": "새로운 기술 혁신이 IT 산업을 뒤흔들고 있습니다.",
+  "category": "choice",
+  "weight": 9,
+  "conditions": {
+    "minTurn": 4
+  },
+  "choices": [
+    {
+      "id": "invest",
+      "text": "신기술에 투자한다",
+      "effect": {
+        "money": -150,
+        "influence": 5,
+        "sectorShift": { "sector": "tech", "trend": "hot" },
+        "traitGrant": "visionary"
+      }
+    },
+    {
+      "id": "observe",
+      "text": "시장을 관망한다",
+      "effect": {
+        "sectorShift": { "sector": "tech", "trend": "hot" }
+      }
+    },
+    {
+      "id": "dominate",
+      "text": "기술 지배력을 활용한다",
+      "effect": {
+        "money": 200,
+        "influence": 12,
+        "sectorShift": { "sector": "tech", "trend": "hot" }
+      },
+      "requireTrait": null,
+      "requireDominance": "tech"
+    }
+  ]
+}
+```
+
+### 선택지 조건 필드
+
+| 필드 | 설명 |
+|------|------|
+| `requireDominance` | 해당 섹터 지배 시에만 해금 |
+| `requireTrait` | 특정 특성 보유 시에만 해금 |
+| `requireMinCash` | 최소 현금 보유 시에만 선택 가능 |
+
+---
+
+## 일반 이벤트 예시
+
+### 1. 금리 인상 (interest-rate-hike) — 압박형
 
 > 중앙은행이 기준금리를 인상했습니다. 대출 비용이 증가합니다.
 
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 3 |
-| 가중치 | 10 (최고, 가장 자주 등장) |
-| 조건 | 없음 |
+```json
+{
+  "id": "interest-rate-hike",
+  "category": "pressure",
+  "weight": 10,
+  "conditions": { "minTurn": 3 },
+  "choices": [
+    {
+      "id": "rebalance",
+      "text": "포트폴리오 재조정 (-$100)",
+      "effect": { "money": -100, "influence": 5 }
+    },
+    {
+      "id": "hold",
+      "text": "현 포지션 유지",
+      "effect": { "expenseMultiplier": 1.3 }
+    },
+    {
+      "id": "exploit",
+      "text": "금융 지배력으로 수익 창출",
+      "effect": { "money": 150, "influence": 8 },
+      "requireDominance": "finance"
+    }
+  ]
+}
+```
 
 | 선택지 | 효과 | 전략 |
 |--------|------|------|
-| A: 포트폴리오 재조정 | -$100, 영향력 +5 | 현금 여유 있을 때. 영향력 확보. |
-| B: 현 포지션 유지 | 지출 ×1.3 (이번 턴) | 현금 부족 시. 지출 $15→$20. |
-| C: 금융 지배력 활용 | +$150, 영향력 +8 | 금융 지배 시. 순이익 $250 차이. |
-
-**디자인 의도**: 게임 초반부터 등장하는 기본 경제 이벤트. A는 영향력을 위한 투자, B는 소극적 대응. 금융 지배 시 C로 오히려 돈을 벌 수 있어 금융 섹터 집중의 인센티브.
-
-#### 2. 경기 부양책 (economic-stimulus)
-
-> 정부가 대규모 경기 부양책을 발표했습니다!
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 5 |
-| 가중치 | 8 |
-| 조건 | 없음 |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: 공격적 투자 | 다음 매입 -20%, 영향력 +3 | 곧 자산 매입 예정일 때 유리 |
-| B: 현금 비축 | +$200 | 현금이 부족하거나 매입 계획 없을 때 |
-
-**디자인 의도**: 순수한 "좋은 이벤트". 둘 다 이득이지만 상황에 따라 최적이 다름. 지배자 선택지 없음 — 모든 플레이어에게 공평한 보너스.
-
-#### 3. 금융 위기 (financial-crisis)
-
-> 글로벌 금융 시장에 위기 조짐이 보입니다.
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 10 |
-| 가중치 | 5 (낮음, 희귀) |
-| 조건 | 현재 시장 ≠ recession |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: 안전 자산 대피 | -$200, 시장→recession | 현금 소모하지만 준비된 recession |
-| B: 포지션 유지 | 시장→recession, 영향력 -10 | 현금 보존하지만 영향력 큰 타격 |
-| C: 공매도 | +$500, 시장→recession, 영향력 +15 | 금융 지배 시. 위기를 기회로 전환 |
-
-**디자인 의도**: 게임 중반 이후 등장하는 **최고 드라마 이벤트**. 어떤 선택지든 recession이 온다. C는 금융 지배의 최고 보상 — $500 + 영향력 +15. "자본가가 위기에서 돈을 번다"는 게임 테마의 핵심.
-
-#### 4. 무역 호황 (trade-boom)
-
-> 국제 무역이 활발해지면서 시장이 활기를 띱니다.
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 6 |
-| 가중치 | 7 |
-| 조건 | 현재 시장 ≠ boom |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: 해외 투자 | 수익 ×1.4, 시장→boom, 영향력 +5 | 자산이 많을 때 극대화 |
-| B: 국내 집중 | 수익 ×1.2, 영향력 +2 | 시장 전환 없이 안정적 |
-| C: 유통 네트워크 | +$300, 수익 ×1.3, boom, 영향력 +10 | 유통 지배 시. 현금+수익+boom |
-
-**디자인 의도**: 금융 위기의 반대. boom으로 전환하면서 이득을 주는 "좋은 이벤트". 유통 지배 시 C가 가장 균형 잡힌 보상.
+| A: 포트폴리오 재조정 | -$100, 영향력 +5 | 현금 여유 있을 때. 영향력 확보 |
+| B: 현 포지션 유지 | 지출 ×1.3 (이번 턴) | 현금 부족 시 소극적 대응 |
+| C: 금융 지배력 활용 | +$150, 영향력 +8 | 금융 지배 시 위기를 수익으로 전환 |
 
 ---
 
-### 섹터 이벤트 (3개)
-
-#### 5. 기술 혁신 (tech-innovation)
-
-> 새로운 기술 혁신이 IT 산업을 뒤흔들고 있습니다.
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 4 |
-| 가중치 | 9 |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: 신기술 투자 | -$150, 기술→hot, 영향력 +5 | 기술 자산 보유 시 소득 증가 효과 |
-| B: 시장 관망 | 기술→hot | 돈 안 쓰고 기술 트렌드 혜택만 |
-| C: 기술 지배 | +$200, 기술→hot, 영향력 +12 | 기술 3개 보유 시. 최대 이득 |
-
-**디자인 의도**: B도 기술→hot이라 기술 자산 보유자는 둘 다 이득. A는 추가로 영향력을 얻는 적극적 대응. 기술 지배 시 C는 돈+영향력 모두 제공.
-
-#### 6. 부동산 규제 (real-estate-regulation)
-
-> 정부가 부동산 시장에 강력한 규제를 도입합니다.
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 5 |
-| 가중치 | 8 |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: 규제 준수 | -$100, 부동산→cold, 영향력 +3 | 부동산 없을 때 영향력 확보 |
-| B: 로비 시도 | -$250, 영향력 +8 | 비싸지만 부동산 cold 방지 + 높은 영향력 |
-| C: 부동산 지배 | 영향력 +10 | 비용 없이 영향력만 획득 |
-
-**디자인 의도**: 부동산 투자자에게 불리한 이벤트. A는 cold 전환을 감수, B는 돈으로 막음. 부동산 지배 시 C로 무비용 영향력. 부동산의 "안정적이지만 규제 리스크" 서사.
-
-#### 7. 소비 트렌드 변화 (consumer-trend)
-
-> 소비자들의 소비 패턴이 크게 변화하고 있습니다.
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 3 |
-| 가중치 | 9 |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: 트렌드 적응 | -$120, 유통→hot, 영향력 +5 | 유통 자산 보유 시 수익 극대화 |
-| B: 기존 전략 고수 | 외식→cold | 무비용이지만 외식 섹터 피해 |
-
-**디자인 의도**: 유통 vs 외식의 제로섬. A를 선택하면 유통 수혜, B를 선택하면 외식 피해. 지배자 선택지 없음.
-
----
-
-### 개인 이벤트 (3개)
-
-#### 8. 세무 조사 (tax-audit)
-
-> 국세청에서 세무 조사 통보가 왔습니다.
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 8 |
-| 가중치 | 6 |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: 회계사 고용 | -$150, 영향력 +2 | 적은 비용 + 소량 영향력 |
-| B: 직접 대응 | -$300, 영향력 -5 | 비용 2배 + 영향력 손실 |
-
-**디자인 의도**: 순수한 "나쁜 이벤트". A가 B보다 항상 유리 → **합리적 선택 학습**. $150 차이 + 영향력 7 차이.
-
-#### 9. 파트너십 제안 (partnership-offer)
+### 2. 파트너십 제안 (partnership-offer) — 기회형
 
 > 유력 투자자가 파트너십을 제안합니다.
 
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 6 |
-| 가중치 | 7 |
+```json
+{
+  "id": "partnership-offer",
+  "category": "opportunity",
+  "weight": 7,
+  "conditions": { "minTurn": 6, "minInfluence": 20 },
+  "choices": [
+    {
+      "id": "accept",
+      "text": "파트너십을 수락한다",
+      "effect": {
+        "revenueMultiplier": 1.3,
+        "influence": 10,
+        "traitGrant": "networker"
+      }
+    },
+    {
+      "id": "decline",
+      "text": "정중히 거절한다",
+      "effect": { "influence": -3 }
+    }
+  ]
+}
+```
 
 | 선택지 | 효과 | 전략 |
 |--------|------|------|
-| A: 수락 | 수익 ×1.3, 영향력 +10 | 자산이 많을 때 수익 30% 증가 극대화 |
-| B: 거절 | 영향력 -3 | 보통 A가 유리하지만, 자산 0일 때는 무의미 |
+| A: 수락 | 수익 ×1.3, 영향력 +10, **'인맥왕' 특성 부여** | 자산 많을수록 극대화. 이후 영향력 획득량 +20% |
+| B: 거절 | 영향력 -3 | 자산 0이면 수익 배율 무의미 |
 
-**디자인 의도**: "좋은 제안"이지만 수락 시 의존 관계 형성이라는 서사. 게임 메커니즘상 A가 거의 항상 유리. 자산이 많을수록 A의 가치가 급증.
-
-#### 10. 미디어 스캔들 (media-scandal)
-
-> 언론에서 당신의 투자에 대한 부정적 기사가 나왔습니다.
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 7 |
-| 가중치 | 7 |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: PR 캠페인 | -$200, 영향력 +5 | 현금 소모하지만 영향력 회복 |
-| B: 침묵 | 영향력 -15 | 비용 없지만 영향력 대량 손실 |
-
-**디자인 의도**: 영향력 관리의 핵심 이벤트. B의 -15는 영향력 티어 하락을 유발할 수 있어 치명적. 영향력이 중요한 후반부일수록 A가 필수.
+**특성 연계**: A 선택 시 `networker` 특성 영구 부여 → 이후 영향력 획득에 +20% 적용.
 
 ---
 
-### 기회 이벤트 (2개)
+### 3. 금융 위기 (financial-crisis) — 압박형
 
-#### 11. 인수 기회 (acquisition-opportunity)
+> 글로벌 금융 시장에 위기 조짐이 보입니다.
 
-> 경쟁사를 인수할 수 있는 기회가 왔습니다!
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 12 |
-| 가중치 | 4 (희귀) |
-| 조건 | 보유 자산 ≥ 3개 |
+```json
+{
+  "id": "financial-crisis",
+  "category": "pressure",
+  "weight": 5,
+  "conditions": {
+    "minTurn": 10,
+    "notMarketCondition": "recession",
+    "minAssets": 2
+  },
+  "choices": [
+    {
+      "id": "hedge",
+      "text": "안전 자산으로 대피 (-$200)",
+      "effect": {
+        "money": -200,
+        "marketShift": "recession",
+        "traitGrant": "sharp-eye"
+      }
+    },
+    {
+      "id": "hold",
+      "text": "포지션 유지",
+      "effect": {
+        "marketShift": "recession",
+        "influence": -10,
+        "traitGrant": "reckless"
+      }
+    },
+    {
+      "id": "short",
+      "text": "공매도로 수익 창출",
+      "effect": {
+        "money": 500,
+        "marketShift": "recession",
+        "influence": 15
+      },
+      "requireDominance": "finance"
+    }
+  ]
+}
+```
 
 | 선택지 | 효과 | 전략 |
 |--------|------|------|
-| A: 인수 진행 | -$300, **레스토랑** 무료 획득, 영향력 +15 | 레스토랑($400 가치) 무료 → 순이익 $100 + 영향력 |
-| B: 이번은 넘김 | 영향력 -2 | 현금 부족 시 어쩔 수 없이 |
+| A: 안전 대피 | -$200, recession, **'투자 안목' 부여** | 현금 소모하지만 이후 매입 10% 할인 |
+| B: 포지션 유지 | recession, 영향력 -10, **'무모함' 부여** | 현금 보존하지만 이후 매각 -15% 패널티 |
+| C: 공매도 | +$500, recession, 영향력 +15 | 금융 지배 시. 최고 보상 |
 
-**디자인 의도**: 중반 이후 보상 이벤트. 레스토랑(외식 Tier 2, $400)을 $300에 획득 → 실질 $100 이득 + $28/턴 소득 추가 + 영향력 +15. 외식 지배에 한 걸음 더.
-
-#### 12. IPO 참여 (ipo-participation)
-
-> 유망 기업의 IPO에 참여할 기회입니다!
-
-| 항목 | 값 |
-|------|-----|
-| 최소 턴 | 10 |
-| 가중치 | 4 (희귀) |
-| 조건 | 영향력 ≥ 40 |
-
-| 선택지 | 효과 | 전략 |
-|--------|------|------|
-| A: IPO 투자 | -$400, **앱 스타트업** 획득, 영향력 +20 | 앱 스타트업($150 가치) + 높은 appreciation(3%) |
-| B: 건너뜀 | 영향력 -5 | |
-
-**디자인 의도**: 영향력 게이트(40+) 이벤트. A는 비용 대비 자산 가치는 낮지만(-$250), 영향력 +20이 핵심 보상. 기술 섹터 포트폴리오 확장 + 영향력 티어 업.
+**특성 분기**: A는 긍정 특성, B는 부정 특성 부여 → 같은 이벤트에서도 선택에 따라 빌드가 갈림.
 
 ---
 
-## 이벤트 카테고리별 역할
+### 4. 행운의 투자 (lucky-investment) — 기회형, requireTrait
 
-| 카테고리 | 핵심 역할 | 빈도 | 주요 효과 |
-|---------|----------|------|----------|
-| **경제** | 시장 조작 | 35.7% | marketShift, 수익 배율, 현금 변동 |
-| **섹터** | 트렌드 전환 | 30.9% | sectorShift, 특정 섹터 부스트/냉각 |
-| **개인** | 자원 관리 | 23.8% | 현금/영향력 직접 증감 |
-| **기회** | 도약 기회 | 9.5% | 무료 자산 획득, 대량 영향력 |
+> 우연히 저평가된 자산을 발견했습니다!
+
+```json
+{
+  "id": "lucky-investment",
+  "category": "opportunity",
+  "weight": 4,
+  "conditions": {
+    "minTurn": 6,
+    "requireTrait": "lucky"
+  },
+  "choices": [
+    {
+      "id": "invest",
+      "text": "즉시 투자한다",
+      "effect": {
+        "money": 300,
+        "influence": 5
+      }
+    },
+    {
+      "id": "share",
+      "text": "정보를 공유하고 인맥을 쌓는다",
+      "effect": {
+        "influence": 15,
+        "traitGrant": "networker"
+      }
+    }
+  ]
+}
+```
+
+| 선택지 | 효과 | 전략 |
+|--------|------|------|
+| A: 즉시 투자 | +$300, 영향력 +5 | 현금이 필요한 상황 |
+| B: 정보 공유 | 영향력 +15, **'인맥왕' 부여** | 영향력 빌드 강화 |
+
+**특성 게이트**: `requireTrait: "lucky"` — '행운아' 특성이 없으면 이벤트 풀에 포함되지 않음. 이전 이벤트에서 '행운아'를 획득한 플레이어만 접근 가능.
+
+---
+
+### 5. 독점 조사 (monopoly-investigation) — 압박형, requireTrait 제거
+
+> 공정거래위원회가 독점 조사에 착수했습니다.
+
+```json
+{
+  "id": "monopoly-investigation",
+  "category": "pressure",
+  "weight": 5,
+  "conditions": {
+    "minTurn": 12,
+    "minAssets": 3
+  },
+  "choices": [
+    {
+      "id": "cooperate",
+      "text": "조사에 협조한다 (-$300)",
+      "effect": {
+        "money": -300,
+        "influence": 5,
+        "traitRemove": "notorious"
+      }
+    },
+    {
+      "id": "resist",
+      "text": "법적 대응한다 (-$500)",
+      "effect": {
+        "money": -500,
+        "influence": -5,
+        "traitGrant": "notorious"
+      }
+    }
+  ]
+}
+```
+
+| 선택지 | 효과 | 전략 |
+|--------|------|------|
+| A: 조사 협조 | -$300, 영향력 +5, **'악명' 제거** | 비용 적고 악명 해소 기회 |
+| B: 법적 대응 | -$500, 영향력 -5, **'악명' 부여** | 비용 크고 부정 특성 추가 |
+
+**특성 제거**: A 선택 시 `traitRemove: "notorious"` — 이전에 획득한 '악명' 특성을 제거할 수 있는 유일한 기회.
+
+---
+
+### 6. 내부자 정보 (insider-info) — 기회형
+
+> 신뢰할 수 있는 소스에서 내부 정보가 흘러왔습니다.
+
+```json
+{
+  "id": "insider-info",
+  "category": "opportunity",
+  "weight": 6,
+  "conditions": {
+    "minTurn": 8,
+    "minInfluence": 60
+  },
+  "choices": [
+    {
+      "id": "use",
+      "text": "정보를 활용한다",
+      "effect": {
+        "money": 400,
+        "influence": -10,
+        "traitGrant": "notorious"
+      }
+    },
+    {
+      "id": "ignore",
+      "text": "정보를 무시한다",
+      "effect": {
+        "influence": 5,
+        "traitGrant": "efficient"
+      }
+    }
+  ]
+}
+```
+
+| 선택지 | 효과 | 전략 |
+|--------|------|------|
+| A: 정보 활용 | +$400, 영향력 -10, **'악명' 부여** | 단기 이익 vs 장기 리스크 (압박형 이벤트 확률 증가) |
+| B: 정보 무시 | 영향력 +5, **'효율 경영' 부여** | 도덕적 선택 → 지출 -30% 보상 |
+
+**트레이드오프**: 단기 현금($400) vs 장기 효율(-30% 지출). 두 특성의 가치가 런 진행도에 따라 달라짐.
+
+---
+
+## 정부 이벤트
+
+### 개요
+
+정부 이벤트는 일반 이벤트와 **별도 시스템**이다.
+
+| 항목 | 일반 이벤트 | 정부 이벤트 |
+|------|-----------|-----------|
+| 발생 빈도 | 보장 1 + 추가 확률 | 보장 1 (정확히 매 턴) |
+| 표시 위치 | 이벤트 페이즈 | 정부 페이즈 (이벤트 전) |
+| 선택지 | 2~3개 (플레이어 선택) | 0~2개 (일부는 자동 적용) |
+| 주요 효과 | 플레이어 자원, 특성 | 인플레이션, 시장 상태, 섹터 규제 |
+| 특성 부여 | 가능 | 불가 |
+
+### 정부 이벤트 예시
+
+#### 기준금리 인상 (gov-rate-hike) — 자동 적용
+
+> 중앙은행이 기준금리를 0.5%p 인상했습니다.
+
+```json
+{
+  "id": "gov-rate-hike",
+  "title": "기준금리 인상",
+  "description": "중앙은행이 기준금리를 0.5%p 인상했습니다.",
+  "type": "government",
+  "autoApply": true,
+  "conditions": { "minTurn": 3 },
+  "effect": {
+    "inflationDelta": -0.005,
+    "expenseMultiplier": 1.05
+  }
+}
+```
+
+- 인플레이션 감소 → 물가 상승 둔화
+- 지출 비용 소폭 증가
+- 플레이어 선택지 없음 (자동 적용)
+
+#### 스타트업 지원금 (gov-startup-subsidy) — 선택 가능
+
+> 정부가 기술 스타트업 지원 정책을 발표했습니다.
+
+```json
+{
+  "id": "gov-startup-subsidy",
+  "title": "스타트업 지원금",
+  "description": "정부가 기술 스타트업 지원 정책을 발표했습니다.",
+  "type": "government",
+  "autoApply": false,
+  "conditions": { "minTurn": 5 },
+  "choices": [
+    {
+      "id": "apply",
+      "text": "지원금을 신청한다",
+      "effect": {
+        "money": 200,
+        "sectorShift": { "sector": "tech", "trend": "hot" }
+      },
+      "requireMinCash": 0
+    },
+    {
+      "id": "skip",
+      "text": "이번은 넘긴다",
+      "effect": {}
+    }
+  ]
+}
+```
+
+#### 부동산 규제 강화 (gov-realestate-crackdown) — 자동 적용
+
+> 정부가 부동산 투기 억제를 위한 강력한 규제를 도입합니다.
+
+```json
+{
+  "id": "gov-realestate-crackdown",
+  "title": "부동산 규제 강화",
+  "description": "정부가 부동산 투기 억제를 위한 강력한 규제를 도입합니다.",
+  "type": "government",
+  "autoApply": true,
+  "conditions": { "minTurn": 8 },
+  "effect": {
+    "sectorShift": { "sector": "realEstate", "trend": "cold" },
+    "inflationDelta": -0.003
+  }
+}
+```
+
+### 인플레이션 연계
+
+정부 이벤트의 `inflationDelta`는 글로벌 인플레이션율에 누적 반영된다.
+
+```
+인플레이션율 += inflationDelta (매 턴 정부 이벤트에서 조정)
+
+가격 영향 = 자산 가격 × (1 + 인플레이션율)^경과턴
+소득 영향 = 자산 소득 × (1 + 인플레이션율)^경과턴
+```
+
+인플레이션은 **가격과 소득 모두에 복리**로 적용 — 인플레이션이 높으면 자산 가격도 오르지만 소득도 증가.
+
+---
+
+## 조사와 이벤트 예측
+
+### 정보 섹터
+
+7번째 섹터인 **정보(information)** 섹터의 기업을 통해 이벤트를 예측할 수 있다.
+
+> 전체 섹터: 외식(food) · 기술(tech) · 부동산(realEstate) · 물류(logistics) · 에너지(energy) · 금융(finance) · 정보(information)
+
+정보 기업은 **1종류**만 존재한다. 보유한 정보 기업 1개당 **1회/턴** 조사를 수행할 수 있으며, 다음 턴 이벤트 정보를 공개한다.
+
+### 조사 메커니즘
+
+| 규칙 | 설명 |
+|------|------|
+| 기업 종류 | 정보 섹터 기업만 가능 |
+| 횟수 제한 | 기업 1개당 **1회/턴** |
+| 대상 선택 | 조사 대상(일반 이벤트 / 정부 이벤트)을 선택 |
+| 비용 | **무료** (정보 기업 보유 자체가 비용) |
+| 특성 영향 | `visionary` 특성: 조사 없이도 섹터 트렌드 1턴 먼저 확인 |
+| 특성 영향 | `paranoid` 특성: 조사 결과 정확도 50% 하락 (잘못된 정보가 섞일 수 있음) |
+
+### 예측 활용 전략
+
+```
+조사 결과: "다음 턴 압박형 이벤트 — 금융 위기"
+→ 대비 가능:
+  1. 현금 확보 (A 선택지 비용 대비)
+  2. 금융 섹터 지배 달성 (C 선택지 해금)
+  3. 자산 매각으로 리스크 축소
+```
 
 ---
 
 ## 이벤트 효과 타입 요약
 
-| 효과 필드 | 타입 | 지속 | 사용 이벤트 수 |
-|----------|------|------|-------------|
-| `money` | 즉시 | - | 10/12 |
-| `influence` | 즉시 | - | 11/12 |
-| `revenueMultiplier` | 1턴 | resolution | 2/12 |
-| `expenseMultiplier` | 1턴 | resolution | 1/12 |
-| `marketShift` | 영구 | 다음 전환까지 | 3/12 |
-| `sectorShift` | 영구 | 다음 전환까지 | 4/12 |
-| `freeAsset` | 즉시 | - | 2/12 |
-| `nextPurchaseDiscount` | 1회 | 다음 매입 | 1/12 |
+| 효과 필드 | 타입 | 지속 | 설명 |
+|----------|------|------|------|
+| `money` | `number` | 즉시 | 직접 현금 증감 |
+| `influence` | `number` | 즉시 | 영향력 증감 (0~100 클램핑) |
+| `revenueMultiplier` | `number` | 1턴 | 소득에 배율 적용 |
+| `expenseMultiplier` | `number` | 1턴 | 지출에 배율 적용 |
+| `marketShift` | `MarketCondition` | 영구 | 글로벌 시장 상태 강제 전환 |
+| `sectorShift` | `{ sector, trend }` | 영구 | 섹터 트렌드 강제 전환 |
+| `freeAsset` | `string` | 즉시 | 무료 자산 획득 (자산 ID) |
+| `nextPurchaseDiscount` | `number` | 1회 | 다음 매입 할인율 (0~1) |
+| `traitGrant` | `string` | 영구 | 특성 부여 (trait ID) |
+| `traitRemove` | `string` | 영구 | 특성 제거 (trait ID) |
+| `inflationDelta` | `number` | 영구 | 인플레이션율 변화 (정부 이벤트 전용) |
+
+---
+
+## 가중치 분포 (일반 이벤트)
+
+```
+기회형 (opportunity, 50%):
+  경기 부양책(8) + 파트너십 제안(7) + 행운의 투자(4)
+  + 내부자 정보(6) + 인수 기회(4) + IPO 참여(4)     = 33
+
+선택형 (choice, 30%):
+  기술 혁신(9) + 소비 트렌드(9) + 무역 호황(7)
+  + 시장 붕괴 경고(5)                               = 30
+
+압박형 (pressure, 20%):
+  금리 인상(10) + 부동산 규제(8) + 세무 조사(6)
+  + 미디어 스캔들(7) + 금융 위기(5) + 독점 조사(5)
+  + 정부 보조금(7)                                   = 48
+```
+
+카테고리가 먼저 결정(50/30/20)되고, 카테고리 내에서 가중치 기반 선택.
+
+---
+
+## TypeScript 인터페이스 참조
+
+```typescript
+// src/game/types.ts
+interface GameEvent {
+  id: string
+  title: string
+  description: string
+  category: 'opportunity' | 'choice' | 'pressure'
+  choices: EventChoice[]
+  minTurn: number
+  weight: number
+  conditions: EventConditions
+  dominanceChoice?: { sector: Sector; choice: EventChoice }
+}
+
+interface EventConditions {
+  minTurn?: number
+  maxTurn?: number
+  minCash?: number
+  maxCash?: number
+  minInfluence?: number
+  minAssets?: number
+  marketCondition?: MarketCondition
+  notMarketCondition?: MarketCondition
+  hasSector?: Sector
+  dominatesSector?: Sector
+  requireTrait?: string
+  forbidTrait?: string
+  minRank?: number
+}
+
+interface EventEffect {
+  money?: number
+  revenueMultiplier?: number
+  expenseMultiplier?: number
+  influence?: number
+  marketShift?: MarketCondition
+  sectorShift?: { sector: Sector; trend: SectorTrend }
+  freeAsset?: string
+  nextPurchaseDiscount?: number
+  traitGrant?: string
+  traitRemove?: string
+  inflationDelta?: number
+}
+
+interface GovernmentEvent {
+  id: string
+  title: string
+  description: string
+  type: 'government'
+  autoApply: boolean
+  conditions: EventConditions
+  effect?: EventEffect           // autoApply: true일 때
+  choices?: EventChoice[]        // autoApply: false일 때
+}
+```
 
 > 시스템 개요: [GDD.md](../GDD.md#8-이벤트-시스템) · 밸런스: [balance.md](./balance.md)
