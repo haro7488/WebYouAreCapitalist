@@ -6,6 +6,8 @@ import {
   endRun,
   submitAction as engineSubmitAction,
   submitEventChoice as engineSubmitEventChoice,
+  submitGovernmentChoice as engineSubmitGovernmentChoice,
+  processGovernmentPhase as engineProcessGovernmentPhase,
   resolvePhase as engineResolvePhase,
   advanceTurn as engineAdvanceTurn,
   findEventById,
@@ -36,6 +38,10 @@ interface GameStoreActions {
   submitAction: (action: TurnAction) => void
   /** Event Phase: 이벤트 선택지 제출 */
   submitEventChoice: (choiceId: string) => void
+  /** Government Phase: 정부 이벤트 처리 */
+  processGovernmentPhase: () => void
+  /** Government Phase: 정부 이벤트 선택지 제출 */
+  submitGovernmentChoice: (choiceId: string) => void
   /** Resolution Phase: 경제 계산 실행 */
   resolvePhase: () => void
   /** Result Phase: 다음 턴으로 진행 */
@@ -100,6 +106,18 @@ export const useGameStore = create<GameStore>()(
         const { gameState } = get()
         if (!gameState) return
         set({ gameState: engineSubmitEventChoice(gameState, choiceId) })
+      },
+
+      processGovernmentPhase: () => {
+        const { gameState } = get()
+        if (!gameState) return
+        set({ gameState: engineProcessGovernmentPhase(gameState) })
+      },
+
+      submitGovernmentChoice: (choiceId: string) => {
+        const { gameState } = get()
+        if (!gameState) return
+        set({ gameState: engineSubmitGovernmentChoice(gameState, choiceId) })
       },
 
       resolvePhase: () => {

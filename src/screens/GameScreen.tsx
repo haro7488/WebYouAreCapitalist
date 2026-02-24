@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
-import { GameHeader, AssetMarket, Portfolio, EventCard, TurnResult, ActionBar, ResearchPanel, Leaderboard } from '@components/game'
+import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, Leaderboard } from '@components/game'
 import { calculateDominance, calculateCompanyNetIncome } from '@game/index'
 import { formatMoney } from '@game/utils'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
@@ -203,6 +203,9 @@ export function GameScreen() {
             </div>
           </div>
         )}
+
+        {/* Government 페이즈 */}
+        {phase === 'government' && <GovernmentCard />}
 
         {/* Event 페이즈 */}
         {phase === 'event' && <EventCard />}
