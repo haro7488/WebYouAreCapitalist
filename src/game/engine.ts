@@ -9,6 +9,7 @@ import {
   INFLUENCE_DECAY_PER_TURN,
   INFLUENCE_PER_PURCHASE,
   RANK_FIRST_INFLUENCE_BONUS,
+  BANKRUPTCY_INTEREST_RATE,
 } from './constants'
 import { createRng, clamp } from './utils'
 import {
@@ -560,6 +561,8 @@ function resolveEconomy(state: GameState): GameState {
   // 1단계: 시장 풀 비례 축소 적용한 소득 계산
   const { scaledIncomes } = calculatePoolScaledIncomes(state)
 
+  let totalInterestCollected = 0
+
   let updatedCompanies = state.companies.map((company, idx) => {
     const income = calculateCompanyNetIncome(company, state, scaledIncomes[idx])
 
@@ -572,9 +575,19 @@ function resolveEconomy(state: GameState): GameState {
     // 영향력 자연 감소
     const newInfluence = clamp(company.influence - INFLUENCE_DECAY_PER_TURN, 0, 100)
 
+    let newCash = company.cash + income.net
+
+    // 파산 이자 페널티: cash < 0이면 마이너스가 증폭
+    let interestPenalty = 0
+    if (newCash < 0) {
+      interestPenalty = Math.abs(newCash) * BANKRUPTCY_INTEREST_RATE
+      newCash = newCash - interestPenalty
+      totalInterestCollected += interestPenalty
+    }
+
     const updatedCompany: Company = {
       ...company,
-      cash: company.cash + income.net,
+      cash: newCash,
       revenue: income.revenue,
       expenses: income.expenses,
       influence: newInfluence,
@@ -658,10 +671,10 @@ function resolveEconomy(state: GameState): GameState {
     rngState: rng.getState(),
   }
 
-  // 화폐 보존: 풀 재계산
+  // 화폐 보존: 풀 재계산 + 이자 페널티 추가
   const updatedState: GameState = {
     ...newState,
-    marketPool: recalculateMarketPool(newState),
+    marketPool: recalculateMarketPool(newState) + totalInterestCollected,
   }
 
   // 화폐 보존 검증
@@ -670,12 +683,8 @@ function resolveEconomy(state: GameState): GameState {
   return updatedState
 }
 
-/** 승패 판정 (파산: 현금 < 0 이고 매각 가능 자산 없음) */
+/** 승패 판정 (게임 오버는 maxTurns 도달 시에만) */
 function checkGameOver(state: GameState): GameState {
-  const player = getPlayerCompany(state)
-  if (player.cash < 0 && player.assets.length === 0) {
-    return { ...state, isGameOver: true, gameOverReason: 'bankrupt' }
-  }
   if (state.turn >= state.maxTurns) {
     return { ...state, isGameOver: true, gameOverReason: 'completed' }
   }

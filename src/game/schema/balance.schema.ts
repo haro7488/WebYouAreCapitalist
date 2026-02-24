@@ -30,6 +30,8 @@ export const ASSET_MAX_UPGRADE_LEVEL: number = raw.ASSET_MAX_UPGRADE_LEVEL
 export const SELL_BASE_RATIO: number = raw.SELL_BASE_RATIO
 export const SELL_MARKET_RATIO: number = raw.SELL_MARKET_RATIO
 
+export const BANKRUPTCY_INTEREST_RATE: number = raw.BANKRUPTCY_INTEREST_RATE
+
 export const SCORE_NETWORTH_WEIGHT: number = raw.SCORE_NETWORTH_WEIGHT
 export const SCORE_INFLUENCE_WEIGHT: number = raw.SCORE_INFLUENCE_WEIGHT
 export const SCORE_TURN_BONUS: number = raw.SCORE_TURN_BONUS

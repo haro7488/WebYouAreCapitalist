@@ -170,5 +170,6 @@
       "stable": 0.5,
       "recession": 0.2
     }
-  }
+  },
+  "BANKRUPTCY_INTEREST_RATE": 0.1
 }
