@@ -4,11 +4,14 @@ import { GLOSSARY, GLOSSARY_CATEGORIES } from '@game/glossary'
 
 // === Context ===
 
+interface StackItem {
+  termId: string
+  anchorRect: DOMRect
+}
+
 interface GlossaryState {
-  termId: string | null
-  anchorRect: DOMRect | null
-  clickCount: number
   openTerm: (termId: string, rect: DOMRect) => void
+  dismiss: () => void
   close: () => void
   openHelp: (termId: string) => void
 }
@@ -29,51 +32,50 @@ interface Props {
 }
 
 export function GlossaryProvider({ children, onOpenHelp }: Props) {
-  const [termId, setTermId] = useState<string | null>(null)
-  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
-  const [clickCount, setClickCount] = useState(0)
-
-  const close = useCallback(() => {
-    setTermId(null)
-    setAnchorRect(null)
-    setClickCount(0)
-  }, [])
+  const [stack, setStack] = useState<StackItem[]>([])
 
   const openTerm = useCallback((id: string, rect: DOMRect) => {
-    if (termId === id && clickCount >= 1) {
-      // 같은 용어 재클릭 → 도움말로 이동
-      onOpenHelp?.(id)
-      close()
-      return
-    }
-    setTermId(id)
-    setAnchorRect(rect)
-    setClickCount(1)
-  }, [termId, clickCount, onOpenHelp, close])
+    setStack((prev) => [...prev, { termId: id, anchorRect: rect }])
+  }, [])
+
+  const dismiss = useCallback(() => {
+    setStack((prev) => prev.slice(0, -1))
+  }, [])
+
+  const close = useCallback(() => {
+    setStack([])
+  }, [])
 
   const openHelp = useCallback((id: string) => {
     onOpenHelp?.(id)
     close()
   }, [onOpenHelp, close])
 
-  // 다른 곳 클릭 시 닫기 (mousedown + capture로 확실하게)
+  // 다른 곳 클릭 시 마지막 팝오버 하나 닫기
   useEffect(() => {
-    if (!termId) return
+    if (stack.length === 0) return
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement
       if (target.closest('[data-glossary-popover]')) return
-      // 다른 GlossaryTerm 클릭은 openTerm에서 처리하므로 여기서 닫기
       if (target.closest('[data-glossary-term]')) return
-      close()
+      dismiss()
     }
     document.addEventListener('mousedown', handler, true)
     return () => document.removeEventListener('mousedown', handler, true)
-  }, [termId, close])
+  }, [stack.length, dismiss])
 
   return (
-    <GlossaryContext.Provider value={{ termId, anchorRect, clickCount, openTerm, close, openHelp }}>
+    <GlossaryContext.Provider value={{ openTerm, dismiss, close, openHelp }}>
       {children}
-      {termId && anchorRect && <GlossaryPopover termId={termId} anchorRect={anchorRect} onNavigate={() => openHelp(termId)} />}
+      {stack.map((item, i) => (
+        <GlossaryPopover
+          key={`${item.termId}-${i}`}
+          termId={item.termId}
+          anchorRect={item.anchorRect}
+          zIndex={100 + i}
+          onNavigate={() => openHelp(item.termId)}
+        />
+      ))}
     </GlossaryContext.Provider>
   )
 }
@@ -83,10 +85,12 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
 function GlossaryPopover({
   termId,
   anchorRect,
+  zIndex,
   onNavigate,
 }: {
   termId: string
   anchorRect: DOMRect
+  zIndex: number
   onNavigate: () => void
 }) {
   const entry = GLOSSARY.find((e) => e.id === termId)
@@ -114,8 +118,8 @@ function GlossaryPopover({
   return createPortal(
     <div
       data-glossary-popover
-      className="fixed z-[100] animate-in fade-in duration-150"
-      style={{ top: top - window.scrollY, left, width: popoverWidth }}
+      className="fixed animate-in fade-in duration-150"
+      style={{ top: top - window.scrollY, left, width: popoverWidth, zIndex }}
     >
       <div className="bg-slate-900 border border-slate-600 rounded-lg shadow-2xl overflow-hidden">
         {/* 카테고리 + 용어명 */}
