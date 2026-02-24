@@ -193,39 +193,76 @@ function applyResearch(
   sector?: Sector,
   targetCompanyId?: string,
 ): GameState {
-  const rng = createRng(state.rngState)
   const player = getPlayerCompany(state)
 
+  // 정보 섹터 자산 수 = 조사 가능 횟수
+  const infoAssets = player.assets.filter((a) => {
+    const asset = ASSETS.find((x) => x.id === a.assetId)
+    return asset?.sector === 'information'
+  })
+  const maxResearches = infoAssets.length
+
+  // 정보 자산이 없으면 조사 불가
+  if (maxResearches === 0) return state
+
+  // 이번 턴에 이미 사용한 조사 횟수 체크
+  const researchesUsed = player.actionsThisTurn.filter((a) => a.type === 'research').length
+
+  // 조사 횟수 초과 시 불가
+  if (researchesUsed >= maxResearches) return state
+
+  const rng = createRng(state.rngState)
+
+  // 특성 효과 (paranoid: investigateAccuracyPenalty)
+  const traitEffects = getCompanyTraitEffects(player)
+  const accuracyPenalty = traitEffects.investigateAccuracyPenalty
+
   let result: ResearchResult
+
+  // accuracyPenalty가 있으면 정확도 왜곡 확률 적용
+  const isAccurate = rng.random() > accuracyPenalty
+
   switch (target) {
     case 'market':
       result = {
         type: 'market',
         turnsToChange: state.market.turnsRemaining,
-        likelyNext: rng.pick(['boom', 'stable', 'recession'] as MarketCondition[]),
+        likelyNext: isAccurate
+          ? rng.pick(['boom', 'stable', 'recession'] as MarketCondition[])
+          : rng.pick(['boom', 'stable', 'recession'] as MarketCondition[]),
       }
       break
     case 'sector': {
       const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information'] as Sector[])
       const sectorState = state.sectorStates[targetSector]
+      const actualTrend = sectorState.turnsRemaining <= 2
+        ? rng.pick(['hot', 'neutral', 'cold'] as const)
+        : sectorState.trend
       result = {
         type: 'sector',
         sector: targetSector,
-        nextTrend: sectorState.turnsRemaining <= 2
-          ? rng.pick(['hot', 'neutral', 'cold'] as const)
-          : sectorState.trend,
+        nextTrend: isAccurate
+          ? actualTrend
+          : rng.pick(['hot', 'neutral', 'cold'] as const),
       }
       break
     }
     case 'event': {
-      const hints = [
+      const accurateHints = [
         '경제 관련 이벤트가 예상됩니다',
         '섹터 변동 이벤트가 올 수 있습니다',
         '개인적인 사건이 발생할 수 있습니다',
         '특별한 기회가 올 수 있습니다',
-        '당분간 큰 이벤트는 없을 것 같습니다',
       ]
-      result = { type: 'event', hint: rng.pick(hints) }
+      const vagueHints = [
+        '무언가 일어날 것 같습니다',
+        '확실하지 않습니다',
+        '정보가 불확실합니다',
+      ]
+      result = {
+        type: 'event',
+        hint: isAccurate ? rng.pick(accurateHints) : rng.pick(vagueHints),
+      }
       break
     }
     case 'competitor': {
@@ -235,11 +272,17 @@ function applyResearch(
         ? state.companies.find((c) => c.id === targetCompanyId)
         : rng.pick(aiCompanies)
       if (!targetCompany) return state
+
+      // accuracyPenalty가 있으면 일부 자산만 보여주기
+      const visibleAssets = isAccurate
+        ? [...targetCompany.assets]
+        : targetCompany.assets.slice(0, Math.ceil(targetCompany.assets.length / 2))
+
       result = {
         type: 'competitor',
         companyId: targetCompany.id,
         companyName: targetCompany.name,
-        assets: [...targetCompany.assets],
+        assets: visibleAssets,
       }
       break
     }
@@ -251,21 +294,34 @@ function applyResearch(
         : rng.pick(aiCompanies2)
       if (!targetCompany2) return state
       const strategyId = state.aiStrategies[targetCompany2.id] ?? 'unknown'
+
+      // accuracyPenalty가 있으면 랜덤 전략 반환
+      const strategies = ['growth', 'conservative', 'volatile', 'sector-focused', 'balanced']
       result = {
         type: 'strategy',
         companyId: targetCompany2.id,
         companyName: targetCompany2.name,
-        strategyId,
+        strategyId: isAccurate ? strategyId : rng.pick(strategies),
       }
       break
     }
     case 'share': {
       // 섹터 내 점유율 공개
       const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information'] as Sector[])
+      const actualShares = calculateSectorShares(state.companies, targetSector)
+
+      // accuracyPenalty가 있으면 점유율을 왜곡
+      const shares = isAccurate
+        ? actualShares
+        : actualShares.map((s) => ({
+            ...s,
+            share: Math.max(0, Math.min(1, s.share + (rng.random() - 0.5) * accuracyPenalty)),
+          }))
+
       result = {
         type: 'share',
         sector: targetSector,
-        shares: calculateSectorShares(state.companies, targetSector),
+        shares,
       }
       break
     }

@@ -193,5 +193,18 @@
     "riskLevel": "high",
     "marketMultiplier": { "boom": 2.0, "stable": 0.9, "recession": 0.1 },
     "maxUpgradeLevel": 3
+  },
+  {
+    "id": "info-agency",
+    "name": "정보분석원",
+    "description": "기업 조사 능력을 제공하는 정보 기관 (1개 보유 = 1회/턴 조사 가능)",
+    "sector": "information",
+    "tier": 1,
+    "cost": 250,
+    "baseIncome": 8,
+    "appreciation": 0.01,
+    "riskLevel": "low",
+    "marketMultiplier": { "boom": 1.1, "stable": 1.0, "recession": 0.95 },
+    "maxUpgradeLevel": 3
   }
 ]
