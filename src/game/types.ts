@@ -1,5 +1,5 @@
 // === 턴 페이즈 ===
-export type TurnPhase = 'planning' | 'event' | 'resolution' | 'result'
+export type TurnPhase = 'planning' | 'government' | 'event' | 'resolution' | 'result'
 
 // === 시장 ===
 export type MarketCondition = 'boom' | 'stable' | 'recession'
@@ -11,7 +11,7 @@ export interface MarketState {
 }
 
 // === 섹터 ===
-export type Sector = 'food' | 'tech' | 'realEstate' | 'retail' | 'finance'
+export type Sector = 'food' | 'tech' | 'realEstate' | 'logistics' | 'energy' | 'finance' | 'information'
 export type AssetTier = 1 | 2 | 3
 export type SectorTrend = 'hot' | 'neutral' | 'cold'
 
@@ -75,6 +75,7 @@ export interface EventEffect {
   nextPurchaseDiscount?: number // 다음 매입 할인율 (0-1)
   traitGrant?: string // 특성 부여
   traitRemove?: string // 특성 제거
+  inflationDelta?: number // 인플레이션율 변동
 }
 
 export interface EventChoice {
@@ -102,7 +103,7 @@ export type TurnAction =
   | { type: 'buy'; assetId: string }
   | { type: 'sell'; ownedIndex: number }
   | { type: 'upgrade'; ownedIndex: number }
-  | { type: 'research'; target: 'market' | 'sector' | 'event' | 'competitor' | 'strategy' | 'share'; sector?: Sector; targetCompanyId?: string }
+  | { type: 'research'; target: 'market' | 'sector' | 'event' | 'competitor' | 'strategy' | 'share' | 'government'; sector?: Sector; targetCompanyId?: string }
   | { type: 'endTurn' }
 
 // === 기업 엔티티 (플레이어/AI 공통) ===
@@ -112,8 +113,7 @@ export interface Company {
   cash: number // 보유 현금
   assets: OwnedAsset[] // 보유 자산
   influence: number // 0-100, 영향력
-  ap: number // 이번 턴 남은 AP
-  maxAp: number // 이번 턴 최대 AP
+  debt: number // 파산 시 부채
   traits: string[] // 보유 특성 id 목록
 
   // 턴별 계산 결과
@@ -154,6 +154,16 @@ export interface GameState {
   currentEventIndex: number // 현재 처리 중인 이벤트 인덱스
   eventHistory: string[] // 발생한 이벤트 ID 목록
 
+  // 인플레이션
+  inflation: number // 현재 인플레이션율
+  cumulativeInflation: number // 누적 인플레이션 배율
+
+  // 정부 이벤트
+  governmentEvent: GovernmentEvent | null
+
+  // 목표
+  selectedGoal: Goal | null
+
   // AI 경쟁사 전략 매핑 (companyId → strategyId)
   aiStrategies: Record<string, string>
 
@@ -171,6 +181,26 @@ export interface GameState {
   gameOverReason: 'bankrupt' | 'completed' | null
 }
 
+// === 정부 이벤트 ===
+export interface GovernmentEvent {
+  id: string
+  title: string
+  description: string
+  autoApply: boolean // true면 자동 적용, false면 선택지 표시
+  effect?: EventEffect
+  choices?: EventChoice[]
+}
+
+// === 목표 ===
+export interface Goal {
+  id: string
+  name: string
+  description: string
+  type: string // 'domination' | 'asset' | 'collection' | 'influence' | 'survival' | 'trait'
+  condition: Record<string, any>
+  bonus: number // 달성 시 순자산에 가산
+}
+
 // === 메타 진행 ===
 export interface MetaEffect {
   startingMoneyBonus: number
@@ -178,7 +208,6 @@ export interface MetaEffect {
   incomeMultiplier: number // 소득 배율
   purchaseCostDiscount: number // 매입 비용 할인율 (0-1)
   eventRerollChance: number // 이벤트 리롤 확률 (0-1)
-  extraActionPoints: number // 추가 AP
   startingInfluence: number // 시작 영향력
 }
 
@@ -204,7 +233,6 @@ export interface GameConfig {
   marketPool: number
   competitorCount: number
   maxTurns: number
-  baseAP: number
   baseExpenses: number
   sectorFlowRate: number // 섹터 유입률 배율 (1.0 = 기본)
   eventProbability: number // 이벤트 기본 발생 확률
@@ -228,4 +256,6 @@ export interface RunResult {
   dominatedSectors: Sector[]
   maxInfluence: number
   rankings: RunResultRanking[] // 순자산 내림차순 정렬된 전체 기업 순위
+  goalAchieved?: boolean
+  goalBonus?: number
 }

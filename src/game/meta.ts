@@ -8,7 +8,6 @@ const DEFAULT_META_EFFECT: MetaEffect = {
   incomeMultiplier: 1,
   purchaseCostDiscount: 0,
   eventRerollChance: 0,
-  extraActionPoints: 0,
   startingInfluence: 0,
 }
 
@@ -26,7 +25,6 @@ export function getMetaEffects(meta: MetaState): MetaEffect {
     combined.incomeMultiplier *= effect.incomeMultiplier // 배율은 곱셈
     combined.purchaseCostDiscount += effect.purchaseCostDiscount
     combined.eventRerollChance += effect.eventRerollChance
-    combined.extraActionPoints += effect.extraActionPoints
     combined.startingInfluence += effect.startingInfluence
   }
 

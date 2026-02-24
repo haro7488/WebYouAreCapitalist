@@ -75,7 +75,7 @@ export function GameHeader({ onHome }: GameHeaderProps) {
 
   const player = gameState.companies[0]
   const { turn, maxTurns, market } = gameState
-  const { ap: actionPoints, maxAp: maxActionPoints, influence, cash } = player
+  const { influence, cash } = player
   const netWorth = calculateCompanyNetWorth(player)
   const expectedIncome = calculateCompanyTotalIncome(player, gameState)
 
@@ -128,27 +128,10 @@ export function GameHeader({ onHome }: GameHeaderProps) {
         </span>
       </div>
 
-      {/* Row 2: AP | 특성 | 경기 */}
+      {/* Row 2: 특성 | 경기 */}
       <div className="flex items-center justify-between px-3 pb-2">
-        {/* AP */}
-        <div className="flex items-center gap-1.5 min-w-[60px]">
-          <span className="text-xs text-slate-400">AP</span>
-          <div className="flex gap-0.5">
-            {Array.from({ length: maxActionPoints }).map((_, i) => (
-              <div
-                key={i}
-                className={`w-4 h-4 rounded-sm border ${
-                  i < actionPoints
-                    ? 'bg-amber-500 border-amber-400'
-                    : 'bg-slate-700 border-slate-600'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* 특성 (가운데) */}
-        <div className="flex-1 flex justify-center">
+        {/* 특성 */}
+        <div className="flex-1">
           <TraitBar traits={activeTraits} />
         </div>
 

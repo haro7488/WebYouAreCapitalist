@@ -4,7 +4,6 @@ import {
   INITIAL_MARKET_POOL,
   DEFAULT_COMPETITOR_COUNT,
   MAX_TURNS,
-  BASE_ACTION_POINTS,
   BASE_EXPENSES,
   EVENT_BASE_PROBABILITY,
 } from './schema/balance.schema'
@@ -15,7 +14,6 @@ export {
   MAX_TURNS,
   BASE_EXPENSES,
   STARTING_INFLUENCE,
-  BASE_ACTION_POINTS,
   INITIAL_MARKET_POOL,
   DEFAULT_COMPETITOR_COUNT,
   SECTOR_FLOW_RATE,
@@ -69,7 +67,7 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
-      extraActionPoints: 0,
+
       startingInfluence: 0,
     }),
   },
@@ -85,7 +83,7 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
-      extraActionPoints: 0,
+
       startingInfluence: 0,
     }),
   },
@@ -101,7 +99,7 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1 + level * 0.08,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
-      extraActionPoints: 0,
+
       startingInfluence: 0,
     }),
   },
@@ -117,7 +115,7 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: level * 0.08,
       eventRerollChance: 0,
-      extraActionPoints: 0,
+
       startingInfluence: 0,
     }),
   },
@@ -133,23 +131,7 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: 0,
       eventRerollChance: level * 0.15,
-      extraActionPoints: 0,
-      startingInfluence: 0,
-    }),
-  },
-  {
-    id: 'multitasking',
-    name: '멀티태스킹',
-    description: '턴당 액션 포인트 +1',
-    cost: 20,
-    maxLevel: 1,
-    effect: (level) => ({
-      startingMoneyBonus: 0,
-      extraTurns: 0,
-      incomeMultiplier: 1,
-      purchaseCostDiscount: 0,
-      eventRerollChance: 0,
-      extraActionPoints: level,
+
       startingInfluence: 0,
     }),
   },
@@ -165,7 +147,7 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
-      extraActionPoints: 0,
+
       startingInfluence: level * 15,
     }),
   },
@@ -177,7 +159,6 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
   marketPool: INITIAL_MARKET_POOL,
   competitorCount: DEFAULT_COMPETITOR_COUNT,
   maxTurns: MAX_TURNS,
-  baseAP: BASE_ACTION_POINTS,
   baseExpenses: BASE_EXPENSES,
   sectorFlowRate: 1.0,
   eventProbability: EVENT_BASE_PROBABILITY,

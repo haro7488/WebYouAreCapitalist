@@ -3,90 +3,172 @@
   "MAX_TURNS": 30,
   "BASE_EXPENSES": 10,
   "STARTING_INFLUENCE": 0,
-  "BASE_ACTION_POINTS": 3,
-
   "INITIAL_MARKET_POOL": 50000,
   "DEFAULT_COMPETITOR_COUNT": 3,
-
   "SECTOR_FLOW_RATE": {
     "food": 0.002,
     "tech": 0.0025,
     "realEstate": 0.002,
-    "retail": 0.002,
-    "finance": 0.0025
+    "logistics": 0.002,
+    "finance": 0.0025,
+    "energy": 0.002,
+    "information": 0.001
   },
-
   "SECTOR_MARKET_MULTIPLIER": {
-    "food": { "boom": 1.3, "stable": 1.0, "recession": 0.8 },
-    "tech": { "boom": 1.7, "stable": 0.9, "recession": 0.4 },
-    "realEstate": { "boom": 1.2, "stable": 1.05, "recession": 0.9 },
-    "retail": { "boom": 1.4, "stable": 1.0, "recession": 0.6 },
-    "finance": { "boom": 1.8, "stable": 0.9, "recession": 0.2 }
+    "food": {
+      "boom": 1.3,
+      "stable": 1.0,
+      "recession": 0.8
+    },
+    "tech": {
+      "boom": 1.7,
+      "stable": 0.9,
+      "recession": 0.4
+    },
+    "realEstate": {
+      "boom": 1.2,
+      "stable": 1.05,
+      "recession": 0.9
+    },
+    "logistics": {
+      "boom": 1.4,
+      "stable": 1.0,
+      "recession": 0.6
+    },
+    "finance": {
+      "boom": 1.8,
+      "stable": 0.9,
+      "recession": 0.2
+    },
+    "energy": {
+      "boom": 1.5,
+      "stable": 1.0,
+      "recession": 0.5
+    },
+    "information": {
+      "boom": 1.1,
+      "stable": 1.0,
+      "recession": 0.9
+    }
   },
-
   "SECTOR_DEMAND_PREMIUM": {
     "0": 0,
-    "1": 0.10,
+    "1": 0.1,
     "2": 0.15,
-    "3": 0.20
+    "3": 0.2
   },
-
   "RANK_FIRST_INFLUENCE_BONUS": 2,
-
   "MARKET_CHANGE_MIN_TURNS": 4,
   "MARKET_CHANGE_MAX_TURNS": 8,
   "EVENT_BASE_PROBABILITY": 0.4,
   "VOLATILITY_EVENT_BONUS": 0.3,
-
   "SECTOR_TREND_MIN_TURNS": 2,
   "SECTOR_TREND_MAX_TURNS": 6,
-
   "SECTOR_TREND_MULTIPLIER": {
     "hot": 1.3,
     "neutral": 1.0,
     "cold": 0.7
   },
-
   "SECTOR_TREND_TRANSITION": {
-    "hot": { "hot": 0.15, "neutral": 0.55, "cold": 0.30 },
-    "neutral": { "hot": 0.25, "neutral": 0.50, "cold": 0.25 },
-    "cold": { "hot": 0.30, "neutral": 0.55, "cold": 0.15 }
+    "hot": {
+      "hot": 0.15,
+      "neutral": 0.55,
+      "cold": 0.3
+    },
+    "neutral": {
+      "hot": 0.25,
+      "neutral": 0.5,
+      "cold": 0.25
+    },
+    "cold": {
+      "hot": 0.3,
+      "neutral": 0.55,
+      "cold": 0.15
+    }
   },
-
   "DOMINANCE_THRESHOLDS": {
-    "entrant": { "count": 1, "incomeBonus": 1.0 },
-    "competitor": { "count": 2, "incomeBonus": 1.1 },
-    "dominant": { "count": 3, "incomeBonus": 1.25 }
+    "entrant": {
+      "count": 1,
+      "incomeBonus": 1.0
+    },
+    "competitor": {
+      "count": 2,
+      "incomeBonus": 1.1
+    },
+    "dominant": {
+      "count": 3,
+      "incomeBonus": 1.25
+    }
   },
-
   "INFLUENCE_TIERS": [
-    { "minInfluence": 0, "title": "무명 투자자", "purchaseDiscount": 0, "eventBonus": 0, "freeResearch": false },
-    { "minInfluence": 20, "title": "주목받는 투자자", "purchaseDiscount": 0, "eventBonus": 0.05, "freeResearch": false },
-    { "minInfluence": 40, "title": "영향력 있는 투자자", "purchaseDiscount": 0.05, "eventBonus": 0.10, "freeResearch": true },
-    { "minInfluence": 60, "title": "시장의 큰 손", "purchaseDiscount": 0.10, "eventBonus": 0.15, "freeResearch": true },
-    { "minInfluence": 80, "title": "자본가", "purchaseDiscount": 0.15, "eventBonus": 0.20, "freeResearch": true }
+    {
+      "minInfluence": 0,
+      "title": "무명 투자자",
+      "purchaseDiscount": 0,
+      "eventBonus": 0,
+      "freeResearch": false
+    },
+    {
+      "minInfluence": 20,
+      "title": "주목받는 투자자",
+      "purchaseDiscount": 0,
+      "eventBonus": 0.05,
+      "freeResearch": false
+    },
+    {
+      "minInfluence": 40,
+      "title": "영향력 있는 투자자",
+      "purchaseDiscount": 0.05,
+      "eventBonus": 0.1,
+      "freeResearch": true
+    },
+    {
+      "minInfluence": 60,
+      "title": "시장의 큰 손",
+      "purchaseDiscount": 0.1,
+      "eventBonus": 0.15,
+      "freeResearch": true
+    },
+    {
+      "minInfluence": 80,
+      "title": "자본가",
+      "purchaseDiscount": 0.15,
+      "eventBonus": 0.2,
+      "freeResearch": true
+    }
   ],
-
   "INFLUENCE_DECAY_PER_TURN": 1,
-  "INFLUENCE_PER_PURCHASE": { "1": 2, "2": 3, "3": 5 },
+  "INFLUENCE_PER_PURCHASE": {
+    "1": 2,
+    "2": 3,
+    "3": 5
+  },
   "INFLUENCE_DOMINANCE_BONUS": 10,
-
   "ASSET_UPGRADE_COST_RATIO": 0.3,
   "ASSET_UPGRADE_INCOME_MULTIPLIER": 1.25,
   "ASSET_MAX_UPGRADE_LEVEL": 3,
-
   "SELL_BASE_RATIO": 0.85,
   "SELL_MARKET_RATIO": 0.15,
-
   "SCORE_NETWORTH_WEIGHT": 1,
   "SCORE_INFLUENCE_WEIGHT": 20,
   "SCORE_TURN_BONUS": 5,
   "SCORE_DOMINANCE_BONUS": 500,
   "META_CURRENCY_RATE": 0.008,
-
   "MARKET_TRANSITION": {
-    "boom": { "boom": 0.2, "stable": 0.5, "recession": 0.3 },
-    "stable": { "boom": 0.3, "stable": 0.4, "recession": 0.3 },
-    "recession": { "boom": 0.3, "stable": 0.5, "recession": 0.2 }
+    "boom": {
+      "boom": 0.2,
+      "stable": 0.5,
+      "recession": 0.3
+    },
+    "stable": {
+      "boom": 0.3,
+      "stable": 0.4,
+      "recession": 0.3
+    },
+    "recession": {
+      "boom": 0.3,
+      "stable": 0.5,
+      "recession": 0.2
+    }
   }
 }

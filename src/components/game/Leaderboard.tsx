@@ -19,7 +19,9 @@ const SECTOR_ICONS: Record<Sector, string> = {
   food: '🍔',
   tech: '💻',
   realEstate: '🏢',
-  retail: '🛒',
+  logistics: '🚛',
+  energy: '⚡',
+  information: '🔍',
   finance: '💰',
 }
 

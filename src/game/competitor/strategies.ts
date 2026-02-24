@@ -6,7 +6,7 @@ import { createRng } from '../utils'
 
 // === 공용 헬퍼 ===
 
-const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'retail', 'finance']
+const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information']
 
 /** 기업이 구매 가능한 자산 필터 (보유 중 제외) */
 function getAffordableAssets(company: Company, cash: number, maxTier?: number) {
@@ -54,7 +54,6 @@ function getOwnedSectors(company: Company): Set<Sector> {
 export const conservativeStrategy: CompetitorStrategy = {
   decide(state: GameState, company: Company): TurnAction[] {
     const actions: TurnAction[] = []
-    let ap = company.ap
     let cash = company.cash
 
     // 불황 시 현금 비축
@@ -73,9 +72,8 @@ export const conservativeStrategy: CompetitorStrategy = {
       })
 
     for (const asset of affordable) {
-      if (ap <= 0 || cash < asset.cost) break
+      if (cash < asset.cost) break
       actions.push({ type: 'buy', assetId: asset.id })
-      ap--
       cash -= asset.cost
     }
 
@@ -93,7 +91,6 @@ export const conservativeStrategy: CompetitorStrategy = {
 export const aggressiveStrategy: CompetitorStrategy = {
   decide(state: GameState, company: Company): TurnAction[] {
     const actions: TurnAction[] = []
-    let ap = company.ap
     let cash = company.cash
 
     // Tier 2~3 집중 (호황 시 Tier 2+, 평시 Tier 1+)
@@ -103,9 +100,8 @@ export const aggressiveStrategy: CompetitorStrategy = {
       .sort((a, b) => b.cost - a.cost) // 비싼 것부터
 
     for (const asset of affordable) {
-      if (ap <= 0 || cash < asset.cost) break
+      if (cash < asset.cost) break
       actions.push({ type: 'buy', assetId: asset.id })
-      ap--
       cash -= asset.cost
     }
 
@@ -136,7 +132,6 @@ export const aggressiveStrategy: CompetitorStrategy = {
 export const dominationStrategy: CompetitorStrategy = {
   decide(state: GameState, company: Company): TurnAction[] {
     const actions: TurnAction[] = []
-    let ap = company.ap
     let cash = company.cash
 
     // 타겟 섹터: 가장 많은 자산을 보유한 섹터 (없으면 시드 RNG로 선택)
@@ -156,25 +151,20 @@ export const dominationStrategy: CompetitorStrategy = {
       .sort((a, b) => b.cost - a.cost)
 
     for (const asset of affordable) {
-      if (ap <= 0 || cash < asset.cost) break
+      if (cash < asset.cost) break
       actions.push({ type: 'buy', assetId: asset.id })
-      ap--
       cash -= asset.cost
     }
 
-    // 남은 AP로 타겟 섹터 기존 자산 업그레이드
-    if (ap > 0) {
-      for (let i = 0; i < company.assets.length; i++) {
-        if (ap <= 0) break
-        const owned = company.assets[i]
-        const asset = ASSETS.find(a => a.id === owned.assetId)
-        if (asset?.sector === targetSector && owned.upgradeLevel < 3) {
-          const upgradeCost = Math.floor(asset.cost * 0.3 * (owned.upgradeLevel + 1))
-          if (cash >= upgradeCost) {
-            actions.push({ type: 'upgrade', ownedIndex: i })
-            ap--
-            cash -= upgradeCost
-          }
+    // 타겟 섹터 기존 자산 업그레이드
+    for (let i = 0; i < company.assets.length; i++) {
+      const owned = company.assets[i]
+      const asset = ASSETS.find(a => a.id === owned.assetId)
+      if (asset?.sector === targetSector && owned.upgradeLevel < 3) {
+        const upgradeCost = Math.floor(asset.cost * 0.3 * (owned.upgradeLevel + 1))
+        if (cash >= upgradeCost) {
+          actions.push({ type: 'upgrade', ownedIndex: i })
+          cash -= upgradeCost
         }
       }
     }
@@ -193,17 +183,14 @@ export const dominationStrategy: CompetitorStrategy = {
 export const opportunistStrategy: CompetitorStrategy = {
   decide(state: GameState, company: Company): TurnAction[] {
     const actions: TurnAction[] = []
-    let ap = company.ap
     let cash = company.cash
 
     // cold 섹터 자산 매각 (역순으로 처리해 인덱스 안정성 확보)
     for (let i = company.assets.length - 1; i >= 0; i--) {
-      if (ap <= 0) break
       const owned = company.assets[i]
       const asset = ASSETS.find(a => a.id === owned.assetId)
       if (asset && state.sectorStates[asset.sector].trend === 'cold') {
         actions.push({ type: 'sell', ownedIndex: i })
-        ap--
         cash += Math.floor(owned.currentValue * 0.85) // 대략적 매각 대금 추정
       }
     }
@@ -219,9 +206,8 @@ export const opportunistStrategy: CompetitorStrategy = {
       .sort((a, b) => b.cost - a.cost)
 
     for (const asset of affordable) {
-      if (ap <= 0 || cash < asset.cost) break
+      if (cash < asset.cost) break
       actions.push({ type: 'buy', assetId: asset.id })
-      ap--
       cash -= asset.cost
     }
 

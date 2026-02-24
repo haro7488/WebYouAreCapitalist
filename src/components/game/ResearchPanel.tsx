@@ -5,10 +5,12 @@ import type { ResearchResult, Sector, SectorTrend } from '@game/index'
 
 // 섹터 한국어 이름
 const SECTOR_NAMES: Record<Sector, string> = {
-  food: '식품',
-  tech: '테크',
+  food: '외식',
+  tech: '기술',
   realEstate: '부동산',
-  retail: '유통',
+  logistics: '물류',
+  energy: '에너지',
+  information: '정보',
   finance: '금융',
 }
 
@@ -32,22 +34,16 @@ interface ResearchPanelProps {
   researchResult: ResearchResult | null
   onResearch: (target: 'market' | 'sector' | 'event', sector?: Sector) => void
   onClose: () => void
-  actionPoints: number
-  isFreeResearch: boolean
 }
 
 /** 조사 오버레이 패널: 3단계 (종류 선택 → 섹터 선택 → 결과 표시) */
-export function ResearchPanel({ researchResult, onResearch, onClose, actionPoints, isFreeResearch }: ResearchPanelProps) {
+export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchPanelProps) {
   // researchResult가 있으면 result 단계부터 시작
   const [step, setStep] = useState<ResearchStep>(researchResult ? 'result' : 'select')
   const [result, setResult] = useState<ResearchResult | null>(researchResult)
 
-  const canAfford = actionPoints > 0 || isFreeResearch
-  const costLabel = isFreeResearch ? '무료' : '1 AP'
-
   // 조사 종류 선택
   const handleSelectTarget = (target: 'market' | 'sector' | 'event') => {
-    if (!canAfford) return
     if (target === 'sector') {
       setStep('sector')
     } else {
@@ -95,13 +91,13 @@ export function ResearchPanel({ researchResult, onResearch, onClose, actionPoint
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-100">시장 조사</h2>
             <p className="text-sm text-slate-400">
-              비용: <span className={isFreeResearch ? 'text-money-400' : 'text-slate-200'}>{costLabel}</span>
+              비용: <span className="text-money-400">무료 (정보 기업 보유)</span>
             </p>
 
             <div className="space-y-3">
               <button
                 className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!canAfford}
+                disabled={false}
                 onClick={() => handleSelectTarget('market')}
               >
                 <div className="flex items-center gap-3">
@@ -115,7 +111,7 @@ export function ResearchPanel({ researchResult, onResearch, onClose, actionPoint
 
               <button
                 className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!canAfford}
+                disabled={false}
                 onClick={() => handleSelectTarget('sector')}
               >
                 <div className="flex items-center gap-3">
@@ -129,7 +125,7 @@ export function ResearchPanel({ researchResult, onResearch, onClose, actionPoint
 
               <button
                 className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!canAfford}
+                disabled={false}
                 onClick={() => handleSelectTarget('event')}
               >
                 <div className="flex items-center gap-3">
@@ -225,7 +221,7 @@ export function ResearchPanel({ researchResult, onResearch, onClose, actionPoint
             )}
 
             <div className="flex gap-2">
-              <Button variant="secondary" className="flex-1" onClick={handleRetry} disabled={!canAfford}>
+              <Button variant="secondary" className="flex-1" onClick={handleRetry} disabled={false}>
                 다른 조사
               </Button>
               <Button variant="primary" className="flex-1" onClick={onClose}>

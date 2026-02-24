@@ -78,7 +78,6 @@ function getEffectLabel(effect: MetaEffect): string | null {
     return `매입 할인 ${(effect.purchaseCostDiscount * 100).toFixed(0)}%`
   if (effect.eventRerollChance > 0)
     return `리롤 확률 ${(effect.eventRerollChance * 100).toFixed(0)}%`
-  if (effect.extraActionPoints > 0) return `AP +${effect.extraActionPoints}`
   if (effect.startingInfluence > 0)
     return `시작 영향력 +${effect.startingInfluence}`
   return null

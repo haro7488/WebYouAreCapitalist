@@ -3,16 +3,18 @@ import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
 import { GameHeader, AssetMarket, Portfolio, EventCard, TurnResult, ActionBar, ResearchPanel, Leaderboard } from '@components/game'
-import { calculateDominance, getInfluenceTier, calculateCompanyNetIncome } from '@game/index'
+import { calculateDominance, calculateCompanyNetIncome } from '@game/index'
 import { formatMoney } from '@game/utils'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
 
 // 섹터 한국어 이름
 const SECTOR_NAMES: Record<Sector, string> = {
-  food: '식품',
-  tech: '테크',
+  food: '외식',
+  tech: '기술',
   realEstate: '부동산',
-  retail: '유통',
+  logistics: '물류',
+  energy: '에너지',
+  information: '정보',
   finance: '금융',
 }
 
@@ -88,12 +90,11 @@ export function GameScreen() {
 
   const { phase } = gameState
   const player = gameState.companies[0]
-  const { assets: ownedAssets, cash: money, activeEffects, ap: actionPoints, influence } = player
+  const { assets: ownedAssets, cash: money, activeEffects } = player
 
   // planning 페이즈: 요약 대시보드용 계산
   const totalAssetValue = ownedAssets.reduce((sum, a) => sum + a.currentValue, 0)
   const dominanceMap = calculateDominance(ownedAssets)
-  const isFreeResearch = getInfluenceTier(influence).freeResearch
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-900">
@@ -236,8 +237,6 @@ export function GameScreen() {
             onSummary={() => setPlanningView('summary')}
             onResearch={() => setShowResearchPanel(true)}
             onEndTurn={() => submitAction({ type: 'endTurn' })}
-            actionPoints={actionPoints}
-            isFreeResearch={isFreeResearch}
           />
 
           {showResearchPanel && (
@@ -245,8 +244,6 @@ export function GameScreen() {
               researchResult={player.researchResult}
               onResearch={(target, sector) => submitAction({ type: 'research', target, sector })}
               onClose={() => setShowResearchPanel(false)}
-              actionPoints={actionPoints}
-              isFreeResearch={isFreeResearch}
             />
           )}
         </>

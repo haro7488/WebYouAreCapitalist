@@ -73,7 +73,9 @@ export function TurnResult() {
             .map((a) => {
               const asset = assetMap.get(a.assetId)
               const sectorLabels: Record<string, string> = {
-                food: '식품', tech: '기술', realEstate: '부동산', retail: '유통', finance: '금융',
+                food: '식품', tech: '기술', realEstate: '부동산', logistics: '물류', finance: '금융',
+  energy: '에너지',
+  information: '정보',
               }
               return asset
                 ? `${c.name}이(가) ${sectorLabels[asset.sector] ?? asset.sector} 섹터에 투자했습니다`

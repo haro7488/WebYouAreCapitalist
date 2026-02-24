@@ -33,7 +33,7 @@ export function updateCompany(state: GameState, index: number, updated: Company)
 
 // === 섹터 수요 프리미엄 ===
 
-const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'retail', 'finance']
+const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information']
 
 /** 해당 섹터에 투자 중인 경쟁사 수 (매입자 제외) */
 function countCompetitorsInSector(companies: Company[], buyerIndex: number, sector: Sector): number {
@@ -67,7 +67,7 @@ export function calculateSectorDemandPremium(
 /** 섹터별 보유 자산 수 계산 → 지배력 판정 */
 export function calculateDominance(assets: OwnedAsset[]): Record<Sector, DominanceInfo> {
   const counts: Record<Sector, number> = {
-    food: 0, tech: 0, realEstate: 0, retail: 0, finance: 0,
+    food: 0, tech: 0, realEstate: 0, logistics: 0, energy: 0, finance: 0, information: 0,
   }
 
   for (const owned of assets) {

@@ -60,7 +60,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
       { id: 'domestic', text: '국내 시장에 집중한다', effect: { revenueMultiplier: 1.2, influence: 2 } },
     ],
     dominanceChoice: {
-      sector: 'retail',
+      sector: 'logistics',
       choice: { id: 'trade-network', text: '유통 네트워크로 무역 이익 극대화', effect: { money: 300, revenueMultiplier: 1.3, marketShift: 'boom', influence: 10 } },
     },
   },
@@ -104,7 +104,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
     minTurn: 3,
     weight: 9,
     choices: [
-      { id: 'adapt', text: '트렌드에 빠르게 적응한다 (-$120)', effect: { money: -120, sectorShift: { sector: 'retail', trend: 'hot' }, influence: 5 } },
+      { id: 'adapt', text: '트렌드에 빠르게 적응한다 (-$120)', effect: { money: -120, sectorShift: { sector: 'logistics', trend: 'hot' }, influence: 5 } },
       { id: 'steady', text: '기존 전략을 고수한다', effect: { sectorShift: { sector: 'food', trend: 'cold' } } },
     ],
   },

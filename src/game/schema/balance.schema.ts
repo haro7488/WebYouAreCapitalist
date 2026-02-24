@@ -6,7 +6,6 @@ export const STARTING_MONEY: number = raw.STARTING_MONEY
 export const MAX_TURNS: number = raw.MAX_TURNS
 export const BASE_EXPENSES: number = raw.BASE_EXPENSES
 export const STARTING_INFLUENCE: number = raw.STARTING_INFLUENCE
-export const BASE_ACTION_POINTS: number = raw.BASE_ACTION_POINTS
 
 export const INITIAL_MARKET_POOL: number = raw.INITIAL_MARKET_POOL
 export const DEFAULT_COMPETITOR_COUNT: number = raw.DEFAULT_COMPETITOR_COUNT

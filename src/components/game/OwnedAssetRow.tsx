@@ -14,7 +14,6 @@ interface OwnedAssetRowProps {
   asset: Asset
   index: number
   marketCondition: MarketCondition
-  hasAP: boolean
   onSell: (index: number) => void
   onUpgrade: (index: number) => void
 }
@@ -25,7 +24,6 @@ export function OwnedAssetRow({
   asset,
   index,
   marketCondition,
-  hasAP,
   onSell,
   onUpgrade,
 }: OwnedAssetRowProps) {
@@ -67,11 +65,11 @@ export function OwnedAssetRow({
           </div>
         )}
         {!isMaxLevel && (
-          <Button variant="secondary" size="sm" disabled={!hasAP} onClick={() => onUpgrade(index)}>
+          <Button variant="secondary" size="sm" onClick={() => onUpgrade(index)}>
             강화
           </Button>
         )}
-        <Button variant="danger" size="sm" disabled={!hasAP} onClick={() => onSell(index)}>
+        <Button variant="danger" size="sm" onClick={() => onSell(index)}>
           매각
         </Button>
       </div>

@@ -19,7 +19,6 @@ const PARAMS: {
   { key: 'marketPool', label: '시장 풀', min: 5000, max: 100000, step: 1000 },
   { key: 'competitorCount', label: '경쟁사 수', min: 0, max: 6, step: 1 },
   { key: 'maxTurns', label: '최대 턴', min: 5, max: 100, step: 5 },
-  { key: 'baseAP', label: '기본 AP', min: 1, max: 5, step: 1 },
   { key: 'baseExpenses', label: '기본 지출', min: 0, max: 100, step: 5 },
   { key: 'sectorFlowRate', label: '섹터 유입 배율', min: 0.1, max: 5.0, step: 0.1 },
   { key: 'eventProbability', label: '이벤트 확률', min: 0, max: 1.0, step: 0.05 },

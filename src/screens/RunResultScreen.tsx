@@ -9,7 +9,9 @@ const SECTOR_LABELS: Record<Sector, string> = {
   food: '식품',
   tech: '기술',
   realEstate: '부동산',
-  retail: '유통',
+  logistics: '물류',
+  energy: '에너지',
+  information: '정보',
   finance: '금융',
 }
 

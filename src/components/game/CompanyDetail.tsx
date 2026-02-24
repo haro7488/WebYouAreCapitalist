@@ -14,7 +14,9 @@ const SECTOR_NAMES: Record<Sector, string> = {
   food: '🍔 식품',
   tech: '💻 테크',
   realEstate: '🏢 부동산',
-  retail: '🛒 유통',
+  logistics: '🚛 물류',
+  energy: '⚡ 에너지',
+  information: '🔍 정보',
   finance: '💰 금융',
 }
 

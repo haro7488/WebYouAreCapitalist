@@ -14,7 +14,6 @@ function describeEffect(effect: MetaEffect): string {
   if (effect.incomeMultiplier > 1) parts.push(`소득 x${effect.incomeMultiplier.toFixed(2)}`)
   if (effect.purchaseCostDiscount > 0) parts.push(`매입 할인 ${Math.round(effect.purchaseCostDiscount * 100)}%`)
   if (effect.eventRerollChance > 0) parts.push(`이벤트 리롤 ${Math.round(effect.eventRerollChance * 100)}%`)
-  if (effect.extraActionPoints > 0) parts.push(`추가 AP +${effect.extraActionPoints}`)
   if (effect.startingInfluence > 0) parts.push(`시작 영향력 +${effect.startingInfluence}`)
 
   return parts.length > 0 ? parts.join(', ') : '효과 없음'

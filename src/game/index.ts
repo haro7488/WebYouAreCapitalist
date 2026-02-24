@@ -23,6 +23,8 @@ export type {
   MetaEffect,
   MetaState,
   RunResult,
+  GovernmentEvent,
+  Goal,
 } from './types'
 
 // Constants
@@ -32,7 +34,6 @@ export {
   MAX_TURNS,
   BASE_EXPENSES,
   STARTING_INFLUENCE,
-  BASE_ACTION_POINTS,
   ASSETS,
   META_UPGRADES,
   MARKET_TRANSITION,

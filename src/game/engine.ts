@@ -54,9 +54,6 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
   const company = state.companies[companyIndex]
   if (!company) return state
 
-  // AP 체크
-  if (company.ap <= 0) return state
-
   // 중복 자산 체크
   if (company.assets.some((a) => a.assetId === assetId)) return state
 
@@ -91,7 +88,6 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
     cash: company.cash - cost,
     assets: [...company.assets, newOwned],
     influence: clamp(company.influence + influenceGain, 0, 100),
-    ap: company.ap - 1,
     actionsThisTurn: [...company.actionsThisTurn, { type: 'buy', assetId }],
     activeEffects: updatedEffects,
   }
@@ -106,7 +102,6 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
 function applySellFor(state: GameState, companyIndex: number, ownedIndex: number): GameState {
   const company = state.companies[companyIndex]
   if (!company) return state
-  if (company.ap <= 0) return state
   const owned = company.assets[ownedIndex]
   if (!owned) return state
 
@@ -123,7 +118,6 @@ function applySellFor(state: GameState, companyIndex: number, ownedIndex: number
     ...company,
     cash: company.cash + sellValue,
     assets: newAssets,
-    ap: company.ap - 1,
     actionsThisTurn: [...company.actionsThisTurn, { type: 'sell', ownedIndex }],
   }
 
@@ -139,7 +133,6 @@ function applySellFor(state: GameState, companyIndex: number, ownedIndex: number
 function applyUpgradeFor(state: GameState, companyIndex: number, ownedIndex: number): GameState {
   const company = state.companies[companyIndex]
   if (!company) return state
-  if (company.ap <= 0) return state
   const owned = company.assets[ownedIndex]
   if (!owned) return state
   if (owned.upgradeLevel >= ASSET_MAX_UPGRADE_LEVEL) return state
@@ -162,7 +155,6 @@ function applyUpgradeFor(state: GameState, companyIndex: number, ownedIndex: num
     ...company,
     cash: company.cash - upgradeCost,
     assets: newAssets,
-    ap: company.ap - 1,
     actionsThisTurn: [...company.actionsThisTurn, { type: 'upgrade', ownedIndex }],
   }
 
@@ -192,14 +184,12 @@ function applyUpgrade(state: GameState, ownedIndex: number): GameState {
 /** 시장 조사 (기존 market/sector/event + 신규 competitor/strategy/share) */
 function applyResearch(
   state: GameState,
-  target: 'market' | 'sector' | 'event' | 'competitor' | 'strategy' | 'share',
+  target: 'market' | 'sector' | 'event' | 'competitor' | 'strategy' | 'share' | 'government',
   sector?: Sector,
   targetCompanyId?: string,
 ): GameState {
   const rng = createRng(state.rngState)
   const player = getPlayerCompany(state)
-  const influenceTier = getInfluenceTier(player.influence)
-  const apCost = influenceTier.freeResearch ? 0 : 1
 
   let result: ResearchResult
   switch (target) {
@@ -211,7 +201,7 @@ function applyResearch(
       }
       break
     case 'sector': {
-      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'retail', 'finance'] as Sector[])
+      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information'] as Sector[])
       const sectorState = state.sectorStates[targetSector]
       result = {
         type: 'sector',
@@ -266,7 +256,7 @@ function applyResearch(
     }
     case 'share': {
       // 섹터 내 점유율 공개
-      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'retail', 'finance'] as Sector[])
+      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information'] as Sector[])
       result = {
         type: 'share',
         sector: targetSector,
@@ -274,12 +264,15 @@ function applyResearch(
       }
       break
     }
+    case 'government': {
+      result = { type: 'event', hint: '정부 정책 조사 결과 (미구현)' }
+      break
+    }
   }
 
   const updatedPlayer: Company = {
     ...player,
-    researchResult: result,
-    ap: player.ap - apCost,
+    researchResult: result!,
     actionsThisTurn: [...player.actionsThisTurn, { type: 'research', target, sector }],
   }
 
@@ -597,28 +590,15 @@ function checkGameOver(state: GameState): GameState {
 
 /**
  * Planning Phase: 플레이어 액션 처리
- * AP가 남으면 planning 유지, endTurn 또는 AP 소진 시 → event/resolution
+ * 현금이 행동력 — endTurn 시에만 다음 페이즈로 전환
  */
 export function submitAction(state: GameState, action: TurnAction): GameState {
   if (state.phase !== 'planning' || state.isGameOver) return state
 
-  const player = getPlayerCompany(state)
-
-  // endTurn이 아닌 액션은 AP 필요
-  if (action.type !== 'endTurn' && player.ap <= 0) {
-    if (action.type === 'research' && getInfluenceTier(player.influence).freeResearch) {
-      // 무료 조사 허용
-    } else {
-      return state
-    }
-  }
-
   const newState = applyAction(state, action)
-  const newPlayer = getPlayerCompany(newState)
 
-  // endTurn이거나 AP 소진 → AI 턴 처리 → 이벤트 체크 → 다음 페이즈
-  // 단, 조사 결과가 있으면 플레이어가 확인할 수 있도록 planning 유지
-  if (action.type === 'endTurn' || (newPlayer.ap <= 0 && !newPlayer.researchResult)) {
+  // endTurn → AI 턴 처리 → 이벤트 체크 → 다음 페이즈
+  if (action.type === 'endTurn') {
     // AI 경쟁사 행동 처리
     let afterAI = processAICompanies(newState)
 
@@ -651,7 +631,7 @@ export function submitAction(state: GameState, action: TurnAction): GameState {
     }
   }
 
-  // AP 남음 → planning 유지
+  // endTurn이 아님 → planning 유지
   return newState
 }
 
@@ -729,10 +709,9 @@ export function advanceTurn(state: GameState): GameState {
   const currentRanks = checked.companies.map((_, i) => getCompanyRank(checked.companies, i))
   const newRankingHistory = [...checked.rankingHistory, currentRanks]
 
-  // 모든 기업의 AP 리셋 + 턴 상태 초기화
+  // 턴 상태 초기화
   const resetCompanies = checked.companies.map((company) => ({
     ...company,
-    ap: company.maxAp,
     actionsThisTurn: [] as TurnAction[],
     researchResult: null,
   }))

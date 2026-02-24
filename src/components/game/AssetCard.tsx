@@ -27,21 +27,22 @@ const SECTOR_LABEL: Record<string, string> = {
   food: '외식',
   tech: '기술',
   realEstate: '부동산',
-  retail: '유통',
+  logistics: '물류',
+  energy: '에너지',
+  information: '정보',
   finance: '금융',
 }
 
 interface AssetCardProps {
   asset: Asset
   canAfford: boolean
-  hasAP: boolean
   onBuy: () => void
 }
 
 /** 개별 자산 카드 */
-export function AssetCard({ asset, canAfford, hasAP, onBuy }: AssetCardProps) {
+export function AssetCard({ asset, canAfford, onBuy }: AssetCardProps) {
   const { name, description, cost, riskLevel, baseIncome, sector, tier, marketMultiplier } = asset
-  const disabled = !canAfford || !hasAP
+  const disabled = !canAfford
 
   return (
     <Card header={name}>
@@ -91,7 +92,7 @@ export function AssetCard({ asset, canAfford, hasAP, onBuy }: AssetCardProps) {
         disabled={disabled}
         onClick={onBuy}
       >
-        {!hasAP ? 'AP 부족' : canAfford ? '매입하기' : '자금 부족'}
+        {canAfford ? '매입하기' : '자금 부족'}
       </Button>
     </Card>
   )

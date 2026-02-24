@@ -9,7 +9,9 @@ const SECTOR_LABEL: Record<Sector, string> = {
   food: '외식',
   tech: '기술',
   realEstate: '부동산',
-  retail: '유통',
+  logistics: '물류',
+  energy: '에너지',
+  information: '정보',
   finance: '금융',
 }
 
@@ -23,7 +25,6 @@ export function Portfolio() {
   const player = gameState.companies[0]
   const { assets: ownedAssets } = player
   const { market } = gameState
-  const hasAP = player.ap > 0
 
   // 자산 ID → 정의 매핑
   const assetMap = new Map(ASSETS.map((a) => [a.id, a]))
@@ -69,7 +70,6 @@ export function Portfolio() {
                     asset={def}
                     index={index}
                     marketCondition={market.condition}
-                    hasAP={hasAP}
                     onSell={(idx) => submitAction({ type: 'sell', ownedIndex: idx })}
                     onUpgrade={(idx) => submitAction({ type: 'upgrade', ownedIndex: idx })}
                   />

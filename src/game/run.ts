@@ -20,7 +20,6 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
   const rng = createRng(seed)
   const metaEffects = getMetaEffects(meta)
 
-  const maxAp = cfg.baseAP + metaEffects.extraActionPoints
   const startingCash = cfg.startingMoney + metaEffects.startingMoneyBonus
 
   const playerCompany: Company = {
@@ -29,8 +28,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     cash: startingCash,
     assets: [],
     influence: STARTING_INFLUENCE + metaEffects.startingInfluence,
-    ap: maxAp,
-    maxAp,
+    debt: 0,
     revenue: 0,
     expenses: 0,
     actionsThisTurn: [],
@@ -54,8 +52,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
       cash: startingCash,
       assets: [],
       influence: STARTING_INFLUENCE,
-      ap: cfg.baseAP,
-      maxAp: cfg.baseAP,
+      debt: 0,
       revenue: 0,
       expenses: 0,
       actionsThisTurn: [],
@@ -93,6 +90,11 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     pendingEvents: [],
     currentEventIndex: 0,
     eventHistory: [],
+
+    inflation: 0,
+    cumulativeInflation: 1,
+    governmentEvent: null,
+    selectedGoal: null,
 
     aiStrategies,
     config: cfg,

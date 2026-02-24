@@ -7,15 +7,10 @@ interface ActionBarProps {
   onSummary: () => void
   onResearch: () => void
   onEndTurn: () => void
-  actionPoints: number
-  isFreeResearch?: boolean
 }
 
 /** 하단 고정 액션 바: 현황 / 포트폴리오 / 시장 / 조사 / 다음턴 */
-export function ActionBar({ onSummary, onPortfolio, onMarket, onResearch, onEndTurn, actionPoints, isFreeResearch = false }: ActionBarProps) {
-  const hasAP = actionPoints > 0
-  const canResearch = hasAP || isFreeResearch
-
+export function ActionBar({ onSummary, onPortfolio, onMarket, onResearch, onEndTurn }: ActionBarProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-700 p-3">
       <div className="flex gap-2">
@@ -31,9 +26,9 @@ export function ActionBar({ onSummary, onPortfolio, onMarket, onResearch, onEndT
           <Store size={16} />
           <span>시장</span>
         </Button>
-        <Button variant="secondary" className="flex-1" onClick={onResearch} disabled={!canResearch}>
+        <Button variant="secondary" className="flex-1" onClick={onResearch}>
           <Search size={16} />
-          <span>{isFreeResearch && !hasAP ? '무료' : '조사'}</span>
+          <span>조사</span>
         </Button>
         <Button variant="secondary" className="flex-1" onClick={onEndTurn}>
           <SkipForward size={16} />

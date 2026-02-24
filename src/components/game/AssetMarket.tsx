@@ -5,7 +5,6 @@ import { AssetCard } from './AssetCard'
 /** 구매 가능한 자산 목록 그리드 */
 export function AssetMarket() {
   const money = useGameStore((s) => s.gameState?.companies[0].cash ?? 0)
-  const actionPoints = useGameStore((s) => s.gameState?.companies[0].ap ?? 0)
   const submitAction = useGameStore((s) => s.submitAction)
 
   return (
@@ -15,7 +14,6 @@ export function AssetMarket() {
           key={asset.id}
           asset={asset}
           canAfford={money >= asset.cost}
-          hasAP={actionPoints > 0}
           onBuy={() => submitAction({ type: 'buy', assetId: asset.id })}
         />
       ))}
