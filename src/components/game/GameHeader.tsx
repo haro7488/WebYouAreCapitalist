@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
+import { GlossaryText } from '@components/glossary'
 import { MarketIndicator } from './MarketIndicator'
 import { Home, HelpCircle, Target, CheckCircle } from 'lucide-react'
 import { TRAIT_REGISTRY, type Trait } from '@game/traits'
@@ -34,9 +35,11 @@ function TraitIcon({ trait }: { trait: Trait }) {
       {showTooltip && (
         <div className="absolute z-50 top-full mt-1 left-1/2 -translate-x-1/2 w-48 bg-slate-900 border border-slate-600 rounded-lg shadow-xl px-3 py-2 pointer-events-none">
           <p className={`text-xs font-bold ${trait.type === 'positive' ? 'text-emerald-400' : 'text-red-400'}`}>
-            {trait.name}
+            <GlossaryText>{trait.name}</GlossaryText>
           </p>
-          <p className="text-[11px] text-slate-300 mt-0.5">{trait.description}</p>
+          <p className="text-[11px] text-slate-300 mt-0.5">
+            <GlossaryText>{trait.description}</GlossaryText>
+          </p>
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0">
             <div className="w-2 h-2 bg-slate-900 border-l border-t border-slate-600 rotate-45 translate-y-1" />
           </div>

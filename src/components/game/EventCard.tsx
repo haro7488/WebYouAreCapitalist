@@ -1,5 +1,6 @@
 import { useGameStore } from '@stores/gameStore'
 import { Card, Button, Badge, MoneyDisplay } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 import { calculateDominance } from '@game/index'
 
 // 섹터 한국어 매핑
@@ -56,7 +57,9 @@ export function EventCard() {
   return (
     <Card header={`\u26A1 ${currentEvent.title}`}>
       {/* 이벤트 설명 */}
-      <p className="text-sm text-slate-300 mb-4">{currentEvent.description}</p>
+      <p className="text-sm text-slate-300 mb-4">
+        <GlossaryText>{currentEvent.description}</GlossaryText>
+      </p>
 
       {/* 선택지 */}
       <div className="flex flex-col gap-3">
@@ -71,7 +74,9 @@ export function EventCard() {
             >
               <div className="text-left w-full">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{choice.text}</span>
+                  <span className="text-sm">
+                    <GlossaryText>{choice.text}</GlossaryText>
+                  </span>
                   {isDominanceChoice && (
                     <Badge variant="info" label={`${SECTOR_LABEL[dominanceSector!]} 지배`} />
                   )}

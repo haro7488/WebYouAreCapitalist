@@ -1,5 +1,6 @@
 import { useGameStore } from '@stores/gameStore'
 import { Card, StatRow, MoneyDisplay, Button } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 import { MarketIndicator } from './MarketIndicator'
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react'
 import { ASSETS } from '@game/index'
@@ -89,7 +90,7 @@ export function TurnResult() {
             <span className="text-xs font-medium text-slate-400">경쟁사 동향</span>
             {actions.map((msg, i) => (
               <div key={i} className="text-xs text-slate-300 bg-slate-700/50 rounded px-2 py-1">
-                {msg}
+                <GlossaryText>{msg as string}</GlossaryText>
               </div>
             ))}
           </div>

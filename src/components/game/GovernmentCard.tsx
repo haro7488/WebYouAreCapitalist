@@ -1,5 +1,6 @@
 import { useGameStore } from '@stores/gameStore'
 import { Card, Button, MoneyDisplay } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 
 /** 정부 이벤트 효과 미리보기 */
 function EffectPreview({ effect }: { effect: { money?: number; influence?: number; inflationDelta?: number } }) {
@@ -56,7 +57,9 @@ export function GovernmentCard() {
       {/* 정부 정책 카드 */}
       <Card header={`🏛️ ${governmentEvent.title}`}>
         {/* 정책 설명 */}
-        <p className="text-sm text-slate-300 mb-4">{governmentEvent.description}</p>
+        <p className="text-sm text-slate-300 mb-4">
+          <GlossaryText>{governmentEvent.description}</GlossaryText>
+        </p>
 
         {/* 자동 적용 이벤트: 결과만 표시 + 확인 버튼 */}
         {isAutoApply && (

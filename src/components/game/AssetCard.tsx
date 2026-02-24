@@ -1,12 +1,13 @@
 import type { Asset } from '@game/index'
 import { Button, Card, Badge, MoneyDisplay } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 import { formatMoney } from '@game/index'
 
 // 리스크 레벨 한국어 매핑
 const RISK_LABEL: Record<string, string> = {
-  low: '낮음',
-  medium: '보통',
-  high: '높음',
+  low: '안정',
+  medium: '변동',
+  high: '고위험',
 }
 
 const RISK_VARIANT: Record<string, 'low' | 'medium' | 'high'> = {
@@ -56,14 +57,16 @@ export function AssetCard({ asset, canAfford, onBuy }: AssetCardProps) {
       </div>
       {/* 리스크 설명 + 시장 배율 요약 */}
       <p className="text-xs text-slate-500 mb-2">
-        {RISK_DESC[riskLevel]}
+        <GlossaryText>{RISK_DESC[riskLevel]}</GlossaryText>
         <span className="text-slate-600 ml-1">
           — 호황 ×{marketMultiplier.boom} / 불황 ×{marketMultiplier.recession}
         </span>
       </p>
 
       {/* 설명 */}
-      <p className="text-sm text-slate-400 mb-3">{description}</p>
+      <p className="text-sm text-slate-400 mb-3">
+        <GlossaryText>{description}</GlossaryText>
+      </p>
 
       {/* 비용 및 기본 소득 */}
       <div className="flex items-center justify-between mb-2">

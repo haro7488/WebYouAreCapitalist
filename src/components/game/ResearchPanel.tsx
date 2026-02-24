@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card, Button, Badge } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 import { TrendingUp, BarChart3, AlertCircle, X, AlertTriangle } from 'lucide-react'
 import { useGameStore } from '@stores/gameStore'
 import { ASSETS } from '@game/constants'
@@ -147,8 +148,12 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
                 <div className="flex items-center gap-3">
                   <TrendingUp size={20} className="text-money-400 shrink-0" />
                   <div>
-                    <div className="font-medium text-slate-100">시장 동향</div>
-                    <div className="text-sm text-slate-400">글로벌 시장 변화 예측</div>
+                    <div className="font-medium text-slate-100">
+                      <GlossaryText>시장 동향</GlossaryText>
+                    </div>
+                    <div className="text-sm text-slate-400">
+                      <GlossaryText>글로벌 시장 변화 예측</GlossaryText>
+                    </div>
                   </div>
                 </div>
               </button>
@@ -161,8 +166,12 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
                 <div className="flex items-center gap-3">
                   <BarChart3 size={20} className="text-amber-400 shrink-0" />
                   <div>
-                    <div className="font-medium text-slate-100">섹터 분석</div>
-                    <div className="text-sm text-slate-400">특정 섹터의 트렌드 예측</div>
+                    <div className="font-medium text-slate-100">
+                      <GlossaryText>섹터 분석</GlossaryText>
+                    </div>
+                    <div className="text-sm text-slate-400">
+                      <GlossaryText>특정 섹터의 트렌드 예측</GlossaryText>
+                    </div>
                   </div>
                 </div>
               </button>
@@ -175,8 +184,12 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
                 <div className="flex items-center gap-3">
                   <AlertCircle size={20} className="text-sky-400 shrink-0" />
                   <div>
-                    <div className="font-medium text-slate-100">이벤트 예측</div>
-                    <div className="text-sm text-slate-400">다가올 이벤트 힌트</div>
+                    <div className="font-medium text-slate-100">
+                      <GlossaryText>이벤트 예측</GlossaryText>
+                    </div>
+                    <div className="text-sm text-slate-400">
+                      <GlossaryText>다가올 이벤트 힌트</GlossaryText>
+                    </div>
                   </div>
                 </div>
               </button>
@@ -219,13 +232,17 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <TrendingUp size={18} className="text-money-400" />
-                      <span className="font-medium text-slate-200">시장 동향</span>
+                      <span className="font-medium text-slate-200">
+                        <GlossaryText>시장 동향</GlossaryText>
+                      </span>
                     </div>
                     <p className="text-sm text-slate-300">
                       시장 전환까지 약 <span className="text-slate-100 font-medium">{displayResult.turnsToChange}턴</span> 남았으며,
                     </p>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-400">예상 다음 상태:</span>
+                      <span className="text-sm text-slate-400">
+                        <GlossaryText>예상 다음 상태:</GlossaryText>
+                      </span>
                       <Badge
                         variant={displayResult.likelyNext}
                         label={displayResult.likelyNext === 'boom' ? '호황' : displayResult.likelyNext === 'stable' ? '안정' : '불황'}
@@ -238,10 +255,14 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <BarChart3 size={18} className="text-amber-400" />
-                      <span className="font-medium text-slate-200">섹터 분석</span>
+                      <span className="font-medium text-slate-200">
+                        <GlossaryText>섹터 분석</GlossaryText>
+                      </span>
                     </div>
                     <p className="text-sm text-slate-300">
-                      <span className="text-slate-100 font-medium">{SECTOR_NAMES[displayResult.sector]}</span> 섹터의 다음 트렌드:
+                      <GlossaryText>
+                        {`${SECTOR_NAMES[displayResult.sector]} 섹터의 다음 트렌드:`}
+                      </GlossaryText>
                     </p>
                     <Badge
                       variant={TREND_BADGE_VARIANT[displayResult.nextTrend]}
@@ -254,14 +275,20 @@ export function ResearchPanel({ researchResult, onResearch, onClose }: ResearchP
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <AlertCircle size={18} className="text-sky-400" />
-                      <span className="font-medium text-slate-200">이벤트 예측</span>
+                      <span className="font-medium text-slate-200">
+                        <GlossaryText>이벤트 예측</GlossaryText>
+                      </span>
                     </div>
-                    <p className="text-sm text-slate-300">{displayResult.hint}</p>
+                    <p className="text-sm text-slate-300">
+                      <GlossaryText>{displayResult.hint}</GlossaryText>
+                    </p>
                   </div>
                 )}
               </Card>
             ) : (
-              <div className="text-center text-slate-400 py-4">조사 결과를 불러오는 중...</div>
+              <div className="text-center text-slate-400 py-4">
+                <GlossaryText>조사 결과를 불러오는 중...</GlossaryText>
+              </div>
             )}
 
             <div className="flex gap-2">
