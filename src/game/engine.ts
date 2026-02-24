@@ -811,7 +811,20 @@ export function processGovernmentPhase(state: GameState): GameState {
   )
 
   if (eligible.length === 0) {
-    return rollAndSetEvents({ ...state, governmentEvent: null, rngState: rng.getState() })
+    // eligible 0일 때도 기본 메시지 표시
+    const defaultEvent: GovernmentEvent = {
+      id: 'gov-none',
+      title: '안정적 경제',
+      description: '이번 턴은 특별한 정부 정책이 없습니다.',
+      autoApply: true,
+      effect: {},
+    }
+    return {
+      ...state,
+      governmentEvent: defaultEvent,
+      phase: 'government',
+      rngState: rng.getState(),
+    }
   }
 
   const govEvent = rng.pick(eligible) as GovernmentEvent
