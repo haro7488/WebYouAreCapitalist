@@ -30,10 +30,13 @@ export function GlossaryText({ children, className = '', highlightAll = false }:
       terms.forEach(term => {
         // 특수문자 이스케이프 처리
         const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        // 한글이 포함된 경우 word boundary(\b) 제거 (한글에서 동작 안 함)
+        const hasKorean = /[가-힣]/.test(term)
+        const regexStr = hasKorean ? escaped : `\\b${escaped}\\b`
         patterns.push({
           id: entry.id,
           pattern: term,
-          regex: new RegExp(`\\b${escaped}\\b`, 'gi')
+          regex: new RegExp(regexStr, 'gi')
         })
       })
     })
