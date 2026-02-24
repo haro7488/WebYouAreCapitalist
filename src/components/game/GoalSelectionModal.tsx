@@ -1,5 +1,6 @@
 import { Target, TrendingUp, Crown } from 'lucide-react'
 import type { Goal } from '@game/types'
+import { GlossaryText } from '@components/glossary'
 
 interface GoalSelectionModalProps {
   goals: Goal[]
@@ -27,7 +28,7 @@ export function GoalSelectionModal({ goals, onSelect }: GoalSelectionModalProps)
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-100 mb-2">🎯 목표 선택</h2>
           <p className="text-slate-400 text-sm">
-            이번 런에서 달성할 목표를 선택하세요. 달성 시 보너스를 받습니다.
+            <GlossaryText>이번 런에서 달성할 목표를 선택하세요. 달성 시 보너스를 받습니다.</GlossaryText>
           </p>
         </div>
 
@@ -47,8 +48,8 @@ export function GoalSelectionModal({ goals, onSelect }: GoalSelectionModalProps)
                     <Icon size={24} />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-100 mb-1">{goal.name}</h3>
-                    <p className="text-sm text-slate-300 mb-2">{goal.description}</p>
+                    <h3 className="text-lg font-semibold text-slate-100 mb-1"><GlossaryText>{goal.name}</GlossaryText></h3>
+                    <p className="text-sm text-slate-300 mb-2"><GlossaryText>{goal.description}</GlossaryText></p>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-500">보너스:</span>
                       <span className="text-sm font-bold text-money-400">+${goal.bonus.toLocaleString()}</span>

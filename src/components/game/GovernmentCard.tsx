@@ -87,7 +87,7 @@ export function GovernmentCard() {
                 onClick={() => submitGovernmentChoice(choice.id)}
               >
                 <div className="text-left w-full">
-                  <span className="text-sm">{choice.text}</span>
+                  <span className="text-sm"><GlossaryText>{choice.text}</GlossaryText></span>
                   <EffectPreview effect={choice.effect} />
                 </div>
               </Button>
