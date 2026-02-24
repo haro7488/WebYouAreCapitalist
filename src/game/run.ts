@@ -91,7 +91,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     currentEventIndex: 0,
     eventHistory: [],
 
-    inflation: 0,
+    inflation: 0.02,
     cumulativeInflation: 1,
     governmentEvent: null,
     selectedGoal: null,

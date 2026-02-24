@@ -31,6 +31,7 @@ import {
 import { updateMarket, updateSectorTrends } from './market'
 import { rollForEvents } from './events'
 import { getAIActions, getAIEventChoice } from './competitor/ai'
+import { applyInflation } from './logic/inflation'
 
 // === 편의 함수 ===
 
@@ -550,13 +551,15 @@ function resolveEconomy(state: GameState): GameState {
     return company
   })
 
+  // 인플레이션 누적 업데이트
+  const inflatedState = applyInflation({ ...state, companies: updatedCompanies })
+
   // 시장 + 섹터 트렌드 업데이트
   const newMarket = updateMarket(state.market, rng)
   const newSectorStates = updateSectorTrends(state.sectorStates, newMarket.condition, rng)
 
   const newState: GameState = {
-    ...state,
-    companies: updatedCompanies,
+    ...inflatedState,
     market: newMarket,
     sectorStates: newSectorStates,
     rngState: rng.getState(),

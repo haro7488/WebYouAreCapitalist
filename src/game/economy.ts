@@ -222,8 +222,10 @@ export function calculateAssetValue(owned: OwnedAsset, state: GameState): number
   // hot: +2%/턴 추가, cold: -1%/턴 감소
   const trendAppreciation = sectorTrend === 'hot' ? 0.02 : sectorTrend === 'cold' ? -0.01 : 0
   const totalAppreciation = asset.appreciation + trendAppreciation
+  // 인플레이션만큼 자산 가치 추가 상승
+  const inflationAppreciation = Math.max(0, state.inflation)
 
-  return owned.currentValue * (1 + totalAppreciation)
+  return owned.currentValue * (1 + totalAppreciation + inflationAppreciation)
 }
 
 /** 기업의 순자산 계산 (현금 + 모든 보유 자산 현재 가치) */
@@ -267,8 +269,9 @@ export function calculateCompanyNetIncome(
 
   const totalIncome = precomputedIncome ?? calculateCompanyTotalIncome(company, state)
 
-  const revenue = Math.floor(totalIncome * effects.revenueMultiplier!)
-  const expenses = Math.floor(state.config.baseExpenses * effects.expenseMultiplier!)
+  const inflationMult = state.cumulativeInflation
+  const revenue = Math.floor(totalIncome * effects.revenueMultiplier! * inflationMult)
+  const expenses = Math.floor(state.config.baseExpenses * effects.expenseMultiplier! * inflationMult)
   const directMoney = effects.money ?? 0
 
   return {
