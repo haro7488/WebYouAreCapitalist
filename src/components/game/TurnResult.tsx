@@ -36,7 +36,7 @@ export function TurnResult() {
         />
         <div className="border-t border-slate-700 pt-2">
           <StatRow
-            label="순수익"
+            label={<GlossaryText>순수익</GlossaryText>}
             value={<MoneyDisplay amount={netIncome} size="sm" showSign />}
           />
         </div>
@@ -46,7 +46,7 @@ export function TurnResult() {
           icon={Wallet}
         />
         <StatRow
-          label="순자산"
+          label={<GlossaryText>순자산</GlossaryText>}
           value={<MoneyDisplay amount={netWorth} size="sm" />}
           icon={TrendingUp}
         />

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, Leaderboard, GoalSelectionModal } from '@components/game'
 import { calculateDominance, calculateCompanyNetIncome } from '@game/index'
 import { formatMoney } from '@game/utils'
@@ -132,23 +133,23 @@ export function GameScreen() {
               {planningView === 'summary' && (
                 <div className="space-y-4">
                   {/* 시장 상세 */}
-                  <Card header="시장 상황">
+                  <Card header={<GlossaryText>시장 상황</GlossaryText>}>
                     <StatRow
-                      label="경기"
-                      value={<span className={MARKET_COLORS[gameState.market.condition]}>{MARKET_LABELS[gameState.market.condition]}</span>}
+                      label={<GlossaryText>경기</GlossaryText>}
+                      value={<span className={MARKET_COLORS[gameState.market.condition]}><GlossaryText>{MARKET_LABELS[gameState.market.condition]}</GlossaryText></span>}
                     />
-                    <StatRow label="남은 턴" value={`${gameState.market.turnsRemaining}턴`} />
-                    <StatRow label="변동성" value={`${Math.round(gameState.market.volatility * 100)}%`} />
+                    <StatRow label={<GlossaryText>남은 턴</GlossaryText>} value={`${gameState.market.turnsRemaining}턴`} />
+                    <StatRow label={<GlossaryText>변동성</GlossaryText>} value={`${Math.round(gameState.market.volatility * 100)}%`} />
                   </Card>
 
                   {/* 수익/지출 */}
                   {(() => {
                     const income = calculateCompanyNetIncome(player, gameState)
                     return (
-                      <Card header="수익 구조">
-                        <StatRow label="총 수익" value={<span className="text-emerald-400">+{formatMoney(income.revenue)}</span>} />
-                        <StatRow label="기본 지출" value={<span className="text-red-400">-{formatMoney(income.expenses)}</span>} />
-                        <StatRow label="순수익" value={
+                      <Card header={<GlossaryText>수익 구조</GlossaryText>}>
+                        <StatRow label={<GlossaryText>총 수익</GlossaryText>} value={<span className="text-emerald-400">+{formatMoney(income.revenue)}</span>} />
+                        <StatRow label={<GlossaryText>기본 지출</GlossaryText>} value={<span className="text-red-400">-{formatMoney(income.expenses)}</span>} />
+                        <StatRow label={<GlossaryText>순수익</GlossaryText>} value={
                           <span className={income.net >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                             {income.net >= 0 ? '+' : ''}{formatMoney(income.net)}/턴
                           </span>
@@ -158,29 +159,29 @@ export function GameScreen() {
                   })()}
 
                   {/* 자산 현황 */}
-                  <Card header="자산 현황">
-                    <StatRow label="현금" value={<MoneyDisplay amount={money} />} />
-                    <StatRow label="보유 자산" value={`${ownedAssets.length}개`} />
-                    <StatRow label="자산 가치" value={<MoneyDisplay amount={totalAssetValue} />} />
-                    <StatRow label="순자산" value={<MoneyDisplay amount={money + totalAssetValue} />} />
+                  <Card header={<GlossaryText>자산 현황</GlossaryText>}>
+                    <StatRow label={<GlossaryText>현금</GlossaryText>} value={<MoneyDisplay amount={money} />} />
+                    <StatRow label={<GlossaryText>보유 자산</GlossaryText>} value={`${ownedAssets.length}개`} />
+                    <StatRow label={<GlossaryText>자산 가치</GlossaryText>} value={<MoneyDisplay amount={totalAssetValue} />} />
+                    <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={money + totalAssetValue} />} />
                   </Card>
 
                   {/* 섹터 트렌드 + 지배력 통합 */}
-                  <Card header="섹터 현황">
+                  <Card header={<GlossaryText>섹터 현황</GlossaryText>}>
                     {(Object.keys(SECTOR_NAMES) as Sector[]).map((sector) => {
                       const info = dominanceMap[sector]
                       const isActive = info.count > 0
                       const sectorState = gameState.sectorStates[sector]
                       return (
                         <div key={sector} className="flex items-center justify-between py-1.5">
-                          <span className="text-slate-300 font-medium text-sm">{SECTOR_NAMES[sector]}</span>
+                          <span className="text-slate-300 font-medium text-sm"><GlossaryText>{SECTOR_NAMES[sector]}</GlossaryText></span>
                           <div className="flex items-center gap-3 text-xs">
                             <span className={TREND_COLORS[sectorState.trend]}>
-                              {TREND_LABELS[sectorState.trend]}
+                              <GlossaryText>{TREND_LABELS[sectorState.trend]}</GlossaryText>
                               <span className="text-slate-500 ml-1">({sectorState.turnsRemaining}턴)</span>
                             </span>
                             <span className={`min-w-[3rem] text-right ${isActive ? DOMINANCE_COLORS[info.level] : 'text-slate-600'}`}>
-                              {isActive ? DOMINANCE_LABELS[info.level] : '미진출'}
+                              <GlossaryText>{isActive ? DOMINANCE_LABELS[info.level] : '미진출'}</GlossaryText>
                             </span>
                           </div>
                         </div>
@@ -190,7 +191,7 @@ export function GameScreen() {
 
                   {/* 활성 효과 */}
                   {activeEffects.length > 0 && (
-                    <Card header="활성 효과">
+                    <Card header={<GlossaryText>활성 효과</GlossaryText>}>
                       {activeEffects.map((effect, i) => (
                         <div key={i} className="py-1 text-sm text-slate-300">
                           {effect.money != null && effect.money !== 0 && (
