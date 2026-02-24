@@ -1,8 +1,9 @@
 import { useGameStore } from '@stores/gameStore'
 import { Card, Button, Badge, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import { calculateDominance } from '@game/index'
+import { calculateDominance, ASSETS, findTrait } from '@game/index'
 import { getCompanyTraitEffects } from '@game/logic/traitEngine'
+import type { EventEffect } from '@game/types'
 
 // 섹터 한국어 매핑
 const SECTOR_LABEL: Record<string, string> = {
@@ -15,18 +16,119 @@ const SECTOR_LABEL: Record<string, string> = {
   finance: '금융',
 }
 
+// 시장 상태 한국어 매핑
+const MARKET_LABEL: Record<string, string> = {
+  boom: '호황',
+  stable: '안정',
+  recession: '불황',
+}
+
+// 트렌드 한국어 매핑
+const TREND_LABEL: Record<string, string> = {
+  hot: '상승',
+  neutral: '보합',
+  cold: '하락',
+}
+
 /** 이벤트 선택지 효과 미리보기 */
-function EffectPreview({ effect }: { effect: { money?: number; influence?: number } }) {
-  return (
-    <div className="flex gap-3 text-xs text-slate-400 mt-1">
-      {effect.money != null && effect.money !== 0 && (
-        <MoneyDisplay amount={effect.money} size="sm" showSign />
-      )}
-      {effect.influence != null && effect.influence !== 0 && (
-        <span className={effect.influence > 0 ? 'text-money-400' : 'text-danger-400'}>
-          영향력 {effect.influence > 0 ? '+' : ''}{effect.influence}
+function EffectPreview({ effect }: { effect: EventEffect }) {
+  const items: React.ReactNode[] = []
+
+  if (effect.money != null && effect.money !== 0) {
+    items.push(
+      <MoneyDisplay key="money" amount={effect.money} size="sm" showSign />
+    )
+  }
+
+  if (effect.influence != null && effect.influence !== 0) {
+    items.push(
+      <span key="influence" className={effect.influence > 0 ? 'text-money-400' : 'text-danger-400'}>
+        영향력 {effect.influence > 0 ? '+' : ''}{effect.influence}
+      </span>
+    )
+  }
+
+  if (effect.traitGrant) {
+    const trait = findTrait(effect.traitGrant)
+    if (trait) {
+      const isPositive = trait.type === 'positive'
+      items.push(
+        <span key="traitGrant" className={isPositive ? 'text-emerald-400' : 'text-danger-400'}>
+          {trait.icon} {trait.name} 획득
         </span>
-      )}
+      )
+    }
+  }
+
+  if (effect.traitRemove) {
+    const trait = findTrait(effect.traitRemove)
+    const name = trait ? trait.name : effect.traitRemove
+    items.push(
+      <span key="traitRemove" className="text-slate-400">
+        ❌ {name} 제거
+      </span>
+    )
+  }
+
+  if (effect.freeAsset) {
+    const asset = ASSETS.find((a) => a.id === effect.freeAsset)
+    const assetName = asset ? asset.name : effect.freeAsset
+    items.push(
+      <span key="freeAsset" className="text-emerald-400">
+        🎁 {assetName} 획득
+      </span>
+    )
+  }
+
+  if (effect.nextPurchaseDiscount != null && effect.nextPurchaseDiscount !== 0) {
+    const pct = Math.round(effect.nextPurchaseDiscount * 100)
+    items.push(
+      <span key="discount" className="text-sky-400">
+        🏷️ 다음 매입 {pct}% 할인
+      </span>
+    )
+  }
+
+  if (effect.revenueMultiplier != null) {
+    items.push(
+      <span key="revMul" className="text-money-400">
+        📈 수익 ×{effect.revenueMultiplier}
+      </span>
+    )
+  }
+
+  if (effect.expenseMultiplier != null) {
+    items.push(
+      <span key="expMul" className="text-danger-400">
+        💸 지출 ×{effect.expenseMultiplier}
+      </span>
+    )
+  }
+
+  if (effect.marketShift) {
+    const label = MARKET_LABEL[effect.marketShift] ?? effect.marketShift
+    items.push(
+      <span key="marketShift" className="text-slate-300">
+        🌐 시장→{label}
+      </span>
+    )
+  }
+
+  if (effect.sectorShift) {
+    const sectorLabel = SECTOR_LABEL[effect.sectorShift.sector] ?? effect.sectorShift.sector
+    const trendLabel = TREND_LABEL[effect.sectorShift.trend] ?? effect.sectorShift.trend
+    items.push(
+      <span key="sectorShift" className="text-slate-300">
+        📊 {sectorLabel}→{trendLabel}
+      </span>
+    )
+  }
+
+  if (items.length === 0) return null
+
+  return (
+    <div className="flex flex-wrap gap-3 text-xs text-slate-400 mt-1">
+      {items}
     </div>
   )
 }
