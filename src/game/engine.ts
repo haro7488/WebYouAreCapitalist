@@ -915,7 +915,7 @@ export function advanceTurn(state: GameState): GameState {
 }
 
 /**
- * 편의 함수: 턴을 한번에 처리 (planning → result)
+ * 편의 함수: 턴을 한번에 처리 (planning → government → event → resolution → result)
  */
 export function processFullTurn(state: GameState, actions: TurnAction[], eventChoiceId?: string): GameState {
   let current = state
@@ -929,6 +929,19 @@ export function processFullTurn(state: GameState, actions: TurnAction[], eventCh
   // 마지막 액션 후에도 planning이면 endTurn
   if (current.phase === 'planning') {
     current = submitAction(current, { type: 'endTurn' })
+  }
+
+  // Government phase 처리
+  if (current.phase === 'government') {
+    current = processGovernmentPhase(current)
+    
+    // 선택지가 있는 정부 이벤트면 첫 번째 선택지 자동 선택
+    if (current.phase === 'government' && current.governmentEvent?.choices) {
+      const firstChoice = current.governmentEvent.choices[0]
+      if (firstChoice) {
+        current = submitGovernmentChoice(current, firstChoice.id)
+      }
+    }
   }
 
   // 이벤트가 여러 개일 수 있으므로 모든 이벤트에 동일한 선택지 ID 적용
