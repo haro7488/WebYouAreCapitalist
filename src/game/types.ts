@@ -212,6 +212,7 @@ export interface GovernmentEvent {
   title: string
   description: string
   autoApply: boolean // true면 자동 적용, false면 선택지 표시
+  conditions?: EventConditions
   effect?: EventEffect
   choices?: EventChoice[]
 }

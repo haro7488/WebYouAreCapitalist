@@ -62,7 +62,7 @@ export { createRng, generateRunId, generateSeed, formatMoney, clamp } from './ut
 export type { Rng } from './utils'
 
 // Engine
-export { submitAction, submitEventChoice, resolvePhase, advanceTurn, processFullTurn } from './engine'
+export { submitAction, submitEventChoice, processGovernmentPhase, submitGovernmentChoice, resolvePhase, advanceTurn, processFullTurn } from './engine'
 
 // Economy
 export {

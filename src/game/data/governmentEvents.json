@@ -1,0 +1,85 @@
+[
+  {
+    "id": "gov-rate-hike",
+    "title": "기준금리 인상",
+    "description": "중앙은행이 기준금리를 인상했습니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 3 },
+    "effect": { "inflationDelta": -0.005, "expenseMultiplier": 1.05 }
+  },
+  {
+    "id": "gov-rate-cut",
+    "title": "기준금리 인하",
+    "description": "중앙은행이 기준금리를 인하했습니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 3 },
+    "effect": { "inflationDelta": 0.01 }
+  },
+  {
+    "id": "gov-qe",
+    "title": "양적 완화",
+    "description": "중앙은행이 양적 완화 정책을 시행합니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 5, "marketIs": "recession" },
+    "effect": { "inflationDelta": 0.02, "revenueMultiplier": 1.1 }
+  },
+  {
+    "id": "gov-austerity",
+    "title": "긴축 재정",
+    "description": "정부가 재정 긴축 정책을 발표했습니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 5, "marketIs": "boom" },
+    "effect": { "inflationDelta": -0.01, "expenseMultiplier": 1.1 }
+  },
+  {
+    "id": "gov-tech-regulation",
+    "title": "기술 산업 규제 강화",
+    "description": "정부가 기술 산업에 대한 규제를 강화합니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 8 },
+    "effect": { "sectorShift": { "sector": "tech", "trend": "cold" } }
+  },
+  {
+    "id": "gov-realestate-crackdown",
+    "title": "부동산 규제 강화",
+    "description": "정부가 부동산 투기 억제 정책을 도입합니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 8 },
+    "effect": { "sectorShift": { "sector": "realEstate", "trend": "cold" }, "inflationDelta": -0.003 }
+  },
+  {
+    "id": "gov-startup-subsidy",
+    "title": "스타트업 지원금",
+    "description": "정부가 기술 스타트업 지원 정책을 발표했습니다.",
+    "autoApply": false,
+    "conditions": { "minTurn": 5 },
+    "choices": [
+      { "id": "apply", "text": "지원금을 신청한다 (+$200)", "effect": { "money": 200, "sectorShift": { "sector": "tech", "trend": "hot" } } },
+      { "id": "skip", "text": "이번은 넘긴다", "effect": {} }
+    ]
+  },
+  {
+    "id": "gov-tax-hike",
+    "title": "법인세 인상",
+    "description": "정부가 법인세를 인상했습니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 10 },
+    "effect": { "expenseMultiplier": 1.2 }
+  },
+  {
+    "id": "gov-tax-cut",
+    "title": "법인세 감면",
+    "description": "정부가 법인세 감면 정책을 시행합니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 10 },
+    "effect": { "expenseMultiplier": 0.85, "inflationDelta": 0.005 }
+  },
+  {
+    "id": "gov-energy-subsidy",
+    "title": "에너지 보조금",
+    "description": "정부가 에너지 산업에 보조금을 지급합니다.",
+    "autoApply": true,
+    "conditions": { "minTurn": 6 },
+    "effect": { "sectorShift": { "sector": "energy", "trend": "hot" } }
+  }
+]

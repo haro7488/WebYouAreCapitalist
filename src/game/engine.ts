@@ -1,4 +1,4 @@
-import type { GameState, Company, TurnAction, EventChoice, EventEffect, GameEvent, OwnedAsset, Sector, ResearchResult, MarketCondition } from './types'
+import type { GameState, Company, TurnAction, EventChoice, EventEffect, GameEvent, GovernmentEvent, OwnedAsset, Sector, ResearchResult, MarketCondition } from './types'
 import {
   ASSETS,
   ASSET_UPGRADE_COST_RATIO,
@@ -600,37 +600,15 @@ export function submitAction(state: GameState, action: TurnAction): GameState {
 
   const newState = applyAction(state, action)
 
-  // endTurn → AI 턴 처리 → 이벤트 체크 → 다음 페이즈
+  // endTurn → AI 턴 처리 → 정부 → 이벤트 → 정산
   if (action.type === 'endTurn') {
     // AI 경쟁사 행동 처리
-    let afterAI = processAICompanies(newState)
+    const afterAI = processAICompanies(newState)
 
-    const rng = createRng(afterAI.rngState)
-    const events = rollForEvents(afterAI, rng)
-
-    if (events.length > 0) {
-      const firstEvent = events[0]
-      // AI도 모든 이벤트에 대응
-      let afterAIEvent = { ...afterAI, rngState: rng.getState() }
-      for (const evt of events) {
-        afterAIEvent = processAIEventChoices(
-          { ...afterAIEvent, currentEvent: evt },
-          evt,
-        )
-      }
-      return {
-        ...afterAIEvent,
-        phase: 'event',
-        currentEvent: firstEvent,
-        pendingEvents: events,
-        currentEventIndex: 0,
-      }
-    }
-
+    // 정부 phase로 전환 (정부 이벤트 처리 후 이벤트 phase로)
     return {
       ...afterAI,
-      phase: 'resolution',
-      rngState: rng.getState(),
+      phase: 'government',
     }
   }
 
@@ -688,13 +666,119 @@ export function submitEventChoice(state: GameState, choiceId: string): GameState
 }
 
 /**
+ * Government Phase: 정부 이벤트 처리
+ * government → event
+ */
+/** 이벤트 롤링 후 event phase 또는 resolution으로 전환 */
+function rollAndSetEvents(state: GameState): GameState {
+  const rng = createRng(state.rngState)
+  const events = rollForEvents(state, rng)
+
+  if (events.length > 0) {
+    const firstEvent = events[0]
+    let afterAIEvent = { ...state, rngState: rng.getState() }
+    for (const evt of events) {
+      afterAIEvent = processAIEventChoices(
+        { ...afterAIEvent, currentEvent: evt },
+        evt,
+      )
+    }
+    return {
+      ...afterAIEvent,
+      phase: 'event' as const,
+      currentEvent: firstEvent,
+      pendingEvents: events,
+      currentEventIndex: 0,
+    }
+  }
+
+  return { ...state, phase: 'resolution' as const, rngState: rng.getState() }
+}
+
+export function processGovernmentPhase(state: GameState): GameState {
+  if (state.phase !== 'government') return state
+
+  const { GOVERNMENT_EVENTS } = require('./schema/governmentEvents.schema')
+  const { checkEventConditions } = require('./logic/eventConditions')
+  const rng = createRng(state.rngState)
+
+  // 조건 충족하는 정부 이벤트 필터링
+  const player = state.companies[0]
+  const eligible = (GOVERNMENT_EVENTS as GovernmentEvent[]).filter((e: GovernmentEvent) =>
+    !e.conditions || checkEventConditions(e.conditions, state, player),
+  )
+
+  if (eligible.length === 0) {
+    return rollAndSetEvents({ ...state, governmentEvent: null, rngState: rng.getState() })
+  }
+
+  const govEvent = rng.pick(eligible) as GovernmentEvent
+
+  if (govEvent.autoApply && govEvent.effect) {
+    let newInflation = state.inflation
+    if (govEvent.effect.inflationDelta) {
+      newInflation = Math.max(0, state.inflation + govEvent.effect.inflationDelta)
+    }
+    return rollAndSetEvents({
+      ...state,
+      inflation: newInflation,
+      governmentEvent: govEvent,
+      rngState: rng.getState(),
+    })
+  }
+
+  // 선택지가 있는 정부 이벤트 → government phase 유지
+  if (govEvent.choices) {
+    return {
+      ...state,
+      governmentEvent: govEvent,
+      phase: 'government',
+      rngState: rng.getState(),
+    }
+  }
+
+  return rollAndSetEvents({ ...state, governmentEvent: govEvent, rngState: rng.getState() })
+}
+
+/**
+ * Government Phase: 정부 이벤트 선택지 처리
+ */
+export function submitGovernmentChoice(state: GameState, choiceId: string): GameState {
+  if (state.phase !== 'government' || !state.governmentEvent?.choices) return state
+
+  const choice = state.governmentEvent.choices.find((c) => c.id === choiceId)
+  if (!choice) return state
+
+  let newInflation = state.inflation
+  if (choice.effect.inflationDelta) {
+    newInflation = Math.max(0, state.inflation + choice.effect.inflationDelta)
+  }
+
+  // 플레이어에게 효과 적용
+  const player = state.companies[0]
+  const updatedPlayer: Company = {
+    ...player,
+    cash: player.cash + (choice.effect.money ?? 0),
+    influence: Math.min(100, Math.max(0, player.influence + (choice.effect.influence ?? 0))),
+  }
+
+  return rollAndSetEvents({
+    ...withPlayer(state, updatedPlayer),
+    inflation: newInflation,
+  })
+}
+
+/**
  * Resolution Phase: 경제 계산 실행
  * resolution → result
  */
 export function resolvePhase(state: GameState): GameState {
   if (state.phase !== 'resolution') return state
 
-  const resolved = resolveEconomy(state)
+  // 인플레이션 누적 적용
+  const newCumulativeInflation = state.cumulativeInflation * (1 + state.inflation)
+
+  const resolved = resolveEconomy({ ...state, cumulativeInflation: newCumulativeInflation })
   return { ...resolved, phase: 'result' }
 }
 
