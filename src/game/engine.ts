@@ -16,6 +16,7 @@ import {
   calculateCompanyNetIncome,
   calculatePoolScaledIncomes,
   calculateAssetValue,
+  calculateAssetIncome,
   calculateDominance,
   calculateGlobalDominance,
   calculateSectorDemandPremium,
@@ -80,6 +81,7 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
     upgradeLevel: 0,
     currentValue: asset.cost,
     valueHistory: [],
+    incomeHistory: [],
   }
 
   const influenceGain = Math.round((INFLUENCE_PER_PURCHASE[asset.tier] ?? 0) * traitEffects.influenceGainMultiplier)
@@ -496,6 +498,7 @@ function processAIEventChoices(state: GameState, event: GameEvent): GameState {
           upgradeLevel: 0,
           currentValue: asset.cost,
           valueHistory: [],
+          incomeHistory: [],
         }]
       }
     }
@@ -573,6 +576,7 @@ function applyEventChoice(state: GameState, choice: EventChoice): GameState {
         upgradeLevel: 0,
         currentValue: asset.cost,
         valueHistory: [],
+        incomeHistory: [],
       }
       updatedPlayer = {
         ...updatedPlayer,
@@ -1005,16 +1009,20 @@ export function advanceTurn(state: GameState): GameState {
   const newRankingHistory = [...checked.rankingHistory, currentRanks]
 
   // 기업별 수치 히스토리 기록
-  const historiedCompanies = checked.companies.map(c => ({
-    ...c,
-    netWorthHistory: [...(c.netWorthHistory ?? []), c.netWorth],
-    revenueHistory: [...(c.revenueHistory ?? []), c.revenue],
-    cashHistory: [...(c.cashHistory ?? []), c.cash],
-    assets: c.assets.map(a => ({
-      ...a,
-      valueHistory: [...(a.valueHistory ?? []), a.currentValue],
-    })),
-  }))
+  const historiedCompanies = checked.companies.map(c => {
+    const dominance = calculateGlobalDominance(c, checked.companies)
+    return {
+      ...c,
+      netWorthHistory: [...(c.netWorthHistory ?? []), c.netWorth],
+      revenueHistory: [...(c.revenueHistory ?? []), c.revenue],
+      cashHistory: [...(c.cashHistory ?? []), c.cash],
+      assets: c.assets.map(a => ({
+        ...a,
+        valueHistory: [...(a.valueHistory ?? []), a.currentValue],
+        incomeHistory: [...(a.incomeHistory ?? []), Math.floor(calculateAssetIncome(a, checked, dominance))],
+      })),
+    }
+  })
 
   // 인플레이션 히스토리
   const newInflationHistory = [...(checked.inflationHistory ?? []), checked.cumulativeInflation]

@@ -98,12 +98,13 @@ export function BreakdownPopover({ breakdown, anchorEl, onClose }: BreakdownPopo
           </div>
         )}
 
-        {/* 히스토리가 2개 이상이면 라인차트 + 스택바 */}
-        {(breakdown.history?.length ?? 0) >= 2 && (
+        {/* 히스토리 또는 다중 시리즈가 있으면 차트 표시 */}
+        {((breakdown.history?.length ?? 0) >= 2 || (breakdown.histories?.length ?? 0) > 0) && (
           <>
             <div className="mb-2">
               <BreakdownChart
                 history={breakdown.history}
+                histories={breakdown.histories}
                 maxValue={breakdown.maxValue}
                 items={breakdown.items}
                 final={breakdown.final}
@@ -114,7 +115,7 @@ export function BreakdownPopover({ breakdown, anchorEl, onClose }: BreakdownPopo
         )}
 
         {/* 히스토리 없어도 아이템 2개 이상이면 스택바만 */}
-        {breakdown.items.length > 1 && (breakdown.history?.length ?? 0) < 2 && (
+        {breakdown.items.length > 1 && (breakdown.history?.length ?? 0) < 2 && !(breakdown.histories?.length) && (
           <>
             <div className="mb-2">
               <BreakdownChart

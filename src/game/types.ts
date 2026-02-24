@@ -53,6 +53,7 @@ export interface OwnedAsset {
   upgradeLevel: number // 0~3
   currentValue: number // 현재 평가 가치 (매 턴 갱신)
   valueHistory: number[] // 턴별 자산 가치 히스토리
+  incomeHistory: number[] // 턴별 소득 히스토리
 }
 
 // === 시장 조사 ===
@@ -316,10 +317,18 @@ export interface BreakdownItem {
   type: 'base' | 'add' | 'multiply'
 }
 
+export interface HistorySeries {
+  label: string
+  data: number[]
+  color: string
+  dashed?: boolean // 점선 여부 (매입가 참조선 등)
+}
+
 export interface MoneyBreakdown {
   title?: string
   items: BreakdownItem[]
   final: number
-  history?: number[]   // 턴별 변동 추이
+  history?: number[]   // 턴별 변동 추이 (단일 시리즈)
+  histories?: HistorySeries[] // 다중 시리즈 (자산 가치/소득/매입가)
   maxValue?: number    // 차트 Y축 최대값 (티어별 최대)
 }

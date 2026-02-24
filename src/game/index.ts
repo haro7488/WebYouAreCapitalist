@@ -28,6 +28,7 @@ export type {
   EventConditions,
   MoneyBreakdown,
   BreakdownItem,
+  HistorySeries,
 } from './types'
 
 // Constants
@@ -77,6 +78,7 @@ export {
   calculateCompanyTotalIncome,
   calculateCompanyNetIncome,
   calculateDominance,
+  calculateGlobalDominance,
   calculateScore,
   getInfluenceTier,
   getCompanyRank,

@@ -1,7 +1,9 @@
-import type { BreakdownItem } from '@game/types'
+import type { BreakdownItem, HistorySeries } from '@game/types'
+import { formatMoney } from '@game/utils'
 
 export interface BreakdownChartProps {
   history?: number[]
+  histories?: HistorySeries[]
   maxValue?: number
   items: BreakdownItem[]
   final: number
@@ -77,6 +79,98 @@ function LineChart({ history, maxValue }: { history: number[]; maxValue: number 
   )
 }
 
+/** 다중 시리즈 선그래프 (자산 가치/소득/매입가 등) */
+function MultiLineChart({ series }: { series: HistorySeries[] }) {
+  const W = 260
+  const H = 72
+  const padLeft = 4
+  const padRight = 4
+  const padTop = 4
+  const padBottom = 14 // 범례 공간
+
+  const chartW = W - padLeft - padRight
+  const chartH = H - padTop - padBottom
+
+  // 모든 시리즈에서 전체 min/max 계산
+  const allValues = series.flatMap((s) => s.data)
+  const globalMax = Math.max(...allValues, 1)
+  const globalMin = Math.min(...allValues, 0)
+  const range = globalMax - globalMin || 1
+
+  const xScale = (i: number, total: number) =>
+    padLeft + (i / Math.max(total - 1, 1)) * chartW
+  const yScale = (v: number) =>
+    padTop + chartH - ((v - globalMin) / range) * chartH
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 72 }}>
+        {/* 그리드 라인 */}
+        {[0.25, 0.5, 0.75].map((pct) => {
+          const y = padTop + chartH - pct * chartH
+          return (
+            <line
+              key={pct}
+              x1={padLeft} y1={y}
+              x2={W - padRight} y2={y}
+              stroke="#334155" strokeWidth="0.5"
+            />
+          )
+        })}
+
+        {/* 각 시리즈 렌더링 */}
+        {series.map((s) => {
+          if (s.data.length < 2) return null
+          const points = s.data
+            .map((v, i) => `${xScale(i, s.data.length).toFixed(1)},${yScale(v).toFixed(1)}`)
+            .join(' ')
+          const lastIdx = s.data.length - 1
+          const lastX = xScale(lastIdx, s.data.length)
+          const lastY = yScale(s.data[lastIdx])
+
+          return (
+            <g key={s.label}>
+              <polyline
+                points={points}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={s.dashed ? 1 : 1.5}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                strokeDasharray={s.dashed ? '4 3' : undefined}
+              />
+              {!s.dashed && (
+                <circle cx={lastX} cy={lastY} r="2.5" fill={s.color} />
+              )}
+            </g>
+          )
+        })}
+      </svg>
+
+      {/* 범례 + 현재 값 */}
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+        {series.map((s) => {
+          const lastVal = s.data[s.data.length - 1]
+          return (
+            <div key={s.label} className="flex items-center gap-1">
+              <div
+                className="w-2.5 h-0.5 rounded-full"
+                style={{
+                  backgroundColor: s.color,
+                  ...(s.dashed ? { backgroundImage: `repeating-linear-gradient(90deg, ${s.color} 0 3px, transparent 3px 6px)`, backgroundColor: 'transparent' } : {}),
+                }}
+              />
+              <span className="text-[10px] text-slate-400">
+                {s.label} <span style={{ color: s.color }}>{formatMoney(lastVal ?? 0)}</span>
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function StackBar({ items, final, maxValue }: { items: BreakdownItem[]; final: number; maxValue?: number }) {
   const refMax = maxValue && maxValue > 0 ? maxValue : Math.abs(final) || 1
 
@@ -125,14 +219,18 @@ function StackBar({ items, final, maxValue }: { items: BreakdownItem[]; final: n
   )
 }
 
-export function BreakdownChart({ history, maxValue, items, final }: BreakdownChartProps) {
-  const hasLine = (history?.length ?? 0) >= 2
+export function BreakdownChart({ history, histories, maxValue, items, final }: BreakdownChartProps) {
+  const hasMultiLine = (histories?.length ?? 0) > 0
+  const hasLine = !hasMultiLine && (history?.length ?? 0) >= 2
   const hasStack = items.length > 1
 
-  if (!hasLine && !hasStack) return null
+  if (!hasMultiLine && !hasLine && !hasStack) return null
 
   return (
     <div className="space-y-1">
+      {hasMultiLine && (
+        <MultiLineChart series={histories!} />
+      )}
       {hasLine && (
         <LineChart history={history!} maxValue={maxValue ?? 0} />
       )}

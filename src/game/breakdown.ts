@@ -1,5 +1,5 @@
 // 금액 내역 분해 함수 — 기존 계산 로직을 미러링하되 중간값을 BreakdownItem[]으로 반환
-import type { GameState, Company, OwnedAsset, MoneyBreakdown, BreakdownItem } from './types'
+import type { GameState, Company, OwnedAsset, MoneyBreakdown, BreakdownItem, HistorySeries } from './types'
 import {
   ASSETS,
   ASSET_UPGRADE_INCOME_MULTIPLIER,
@@ -101,14 +101,37 @@ export function getAssetIncomeBreakdown(
     items.push({ label: '지배력 보너스', value: dominanceMult, type: 'multiply' })
   }
 
-  // 같은 티어 자산 최대 소득을 maxValue로
-  const maxIncome = getTierMax(asset.tier, 'baseIncome') * 3 // 업그레이드+배율 고려
+  // 다중 시리즈 히스토리 (자산 가치 / 소득 / 매입가)
+  const turnCount = owned.valueHistory?.length ?? 0
+  const histories: HistorySeries[] = []
+
+  if (turnCount >= 2) {
+    histories.push({
+      label: '자산 가치',
+      data: owned.valueHistory,
+      color: '#3b82f6', // blue
+    })
+    if (owned.incomeHistory?.length) {
+      histories.push({
+        label: '소득',
+        data: owned.incomeHistory,
+        color: '#34d399', // green
+      })
+    }
+    // 매입가 참조선 (모든 턴에 동일한 값)
+    histories.push({
+      label: '매입가',
+      data: Array(turnCount).fill(owned.purchasePrice),
+      color: '#94a3b8', // slate
+      dashed: true,
+    })
+  }
+
   return {
     title: `${asset.name} 소득`,
     items,
     final: income,
-    history: owned.valueHistory,
-    maxValue: maxIncome,
+    histories: histories.length > 0 ? histories : undefined,
   }
 }
 

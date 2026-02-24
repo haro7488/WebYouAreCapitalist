@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import type { OwnedAsset, Asset, SectorTrend } from '@game/index'
 import { Button, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import { formatMoney, ASSET_UPGRADE_COST_RATIO, ASSET_UPGRADE_INCOME_MULTIPLIER, getAssetIncomeBreakdown } from '@game/index'
+import { formatMoney, ASSET_UPGRADE_COST_RATIO, ASSET_UPGRADE_INCOME_MULTIPLIER, calculateAssetIncome, calculateGlobalDominance, getAssetIncomeBreakdown } from '@game/index'
 import { useGameStore } from '@stores/gameStore'
 
 // 섹터 트렌드별 방향 표시
@@ -36,7 +37,16 @@ export function OwnedAssetRow({
   const upgradeCost = isMaxLevel
     ? 0
     : Math.floor(asset.cost * ASSET_UPGRADE_COST_RATIO * (owned.upgradeLevel + 1))
-  const incomeBonus = Math.round((ASSET_UPGRADE_INCOME_MULTIPLIER - 1) * 100)
+
+  // 실제 소득 계산 (모든 배율 적용)
+  const actualIncome = useMemo(() => {
+    if (!gameState || !player) return asset.baseIncome
+    const dominance = calculateGlobalDominance(player, gameState.companies)
+    return Math.floor(calculateAssetIncome(owned, gameState, dominance))
+  }, [gameState, player, owned, asset.baseIncome])
+
+  // 강화 시 소득 증가분 (현재 소득 × (배율 - 1))
+  const incomeIncrease = isMaxLevel ? 0 : Math.floor(actualIncome * (ASSET_UPGRADE_INCOME_MULTIPLIER - 1))
 
   return (
     // 모바일에서 버튼이 두 번째 줄로 내려가도록 flex-wrap 적용
@@ -52,7 +62,7 @@ export function OwnedAssetRow({
         <span className="text-xs text-slate-500 truncate flex items-center gap-0.5">
           <GlossaryText>{`매입 턴${owned.purchaseTurn}`}</GlossaryText>
           {' | 소득 '}
-          <MoneyDisplay amount={asset.baseIncome} size="sm" getBreakdown={gameState && player ? () => getAssetIncomeBreakdown(owned, gameState, player) : undefined} />
+          <MoneyDisplay amount={actualIncome} size="sm" getBreakdown={gameState && player ? () => getAssetIncomeBreakdown(owned, gameState, player) : undefined} />
           /턴
         </span>
       </div>
@@ -69,7 +79,7 @@ export function OwnedAssetRow({
           <span className="text-xs text-amber-400 font-medium">최대</span>
         ) : (
           <div className="flex flex-col items-end text-xs text-slate-400">
-            <span>{formatMoney(upgradeCost)} · 소득 +{incomeBonus}%</span>
+            <span>{formatMoney(upgradeCost)} · 소득 +{formatMoney(incomeIncrease)}/턴</span>
           </div>
         )}
         {!isMaxLevel && (
