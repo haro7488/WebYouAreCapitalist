@@ -3,8 +3,9 @@ import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
 import { GameHeader, AssetMarket, Portfolio, EventCard, TurnResult, ActionBar, ResearchPanel, Leaderboard } from '@components/game'
-import { calculateDominance, getInfluenceTier } from '@game/index'
-import type { Sector, DominanceLevel } from '@game/index'
+import { calculateDominance, getInfluenceTier, calculateCompanyNetIncome } from '@game/index'
+import { formatMoney } from '@game/utils'
+import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
 
 // 섹터 한국어 이름
 const SECTOR_NAMES: Record<Sector, string> = {
@@ -28,6 +29,22 @@ const DOMINANCE_COLORS: Record<DominanceLevel, string> = {
   competitor: 'text-amber-400',
   dominant: 'text-money-400',
 }
+
+// 섹터 트렌드
+const TREND_LABELS: Record<SectorTrend, string> = {
+  hot: '🔥 뜨거움',
+  neutral: '➖ 중립',
+  cold: '❄️ 침체',
+}
+const TREND_COLORS: Record<SectorTrend, string> = {
+  hot: 'text-red-400',
+  neutral: 'text-slate-400',
+  cold: 'text-blue-400',
+}
+
+// 시장 상태
+const MARKET_LABELS = { boom: '📈 호황', stable: '➖ 보합', recession: '📉 불황' }
+const MARKET_COLORS = { boom: 'text-emerald-400', stable: 'text-slate-300', recession: 'text-red-400' }
 
 type PlanningView = 'summary' | 'market' | 'portfolio'
 
@@ -99,24 +116,58 @@ export function GameScreen() {
             <div className="flex-1 min-w-0">
               {planningView === 'summary' && (
                 <div className="space-y-4">
+                  {/* 시장 상세 */}
+                  <Card header="시장 상황">
+                    <StatRow
+                      label="경기"
+                      value={<span className={MARKET_COLORS[gameState.market.condition]}>{MARKET_LABELS[gameState.market.condition]}</span>}
+                    />
+                    <StatRow label="남은 턴" value={`${gameState.market.turnsRemaining}턴`} />
+                    <StatRow label="변동성" value={`${Math.round(gameState.market.volatility * 100)}%`} />
+                  </Card>
+
+                  {/* 수익/지출 */}
+                  {(() => {
+                    const income = calculateCompanyNetIncome(player, gameState)
+                    return (
+                      <Card header="수익 구조">
+                        <StatRow label="총 수익" value={<span className="text-emerald-400">+{formatMoney(income.revenue)}</span>} />
+                        <StatRow label="기본 지출" value={<span className="text-red-400">-{formatMoney(income.expenses)}</span>} />
+                        <StatRow label="순수익" value={
+                          <span className={income.net >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                            {income.net >= 0 ? '+' : ''}{formatMoney(income.net)}/턴
+                          </span>
+                        } />
+                      </Card>
+                    )
+                  })()}
+
                   {/* 자산 현황 */}
                   <Card header="자산 현황">
+                    <StatRow label="현금" value={<MoneyDisplay amount={money} />} />
                     <StatRow label="보유 자산" value={`${ownedAssets.length}개`} />
                     <StatRow label="자산 가치" value={<MoneyDisplay amount={totalAssetValue} />} />
                     <StatRow label="순자산" value={<MoneyDisplay amount={money + totalAssetValue} />} />
                   </Card>
 
-                  {/* 섹터 지배력 */}
-                  <Card header="섹터 지배력">
+                  {/* 섹터 트렌드 + 지배력 통합 */}
+                  <Card header="섹터 현황">
                     {(Object.keys(SECTOR_NAMES) as Sector[]).map((sector) => {
                       const info = dominanceMap[sector]
                       const isActive = info.count > 0
+                      const sectorState = gameState.sectorStates[sector]
                       return (
-                        <div key={sector} className="flex justify-between items-center py-1">
-                          <span className="text-slate-400">{SECTOR_NAMES[sector]}</span>
-                          <span className={isActive ? DOMINANCE_COLORS[info.level] : 'text-slate-600'}>
-                            {isActive ? DOMINANCE_LABELS[info.level] : '미진출'}
-                          </span>
+                        <div key={sector} className="flex items-center justify-between py-1.5">
+                          <span className="text-slate-300 font-medium text-sm">{SECTOR_NAMES[sector]}</span>
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className={TREND_COLORS[sectorState.trend]}>
+                              {TREND_LABELS[sectorState.trend]}
+                              <span className="text-slate-500 ml-1">({sectorState.turnsRemaining}턴)</span>
+                            </span>
+                            <span className={`min-w-[3rem] text-right ${isActive ? DOMINANCE_COLORS[info.level] : 'text-slate-600'}`}>
+                              {isActive ? DOMINANCE_LABELS[info.level] : '미진출'}
+                            </span>
+                          </div>
                         </div>
                       )
                     })}

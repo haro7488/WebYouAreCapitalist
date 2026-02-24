@@ -79,7 +79,7 @@ export function GameHeader({ onHome }: GameHeaderProps) {
 
   const player = gameState.companies[0]
   const { turn, maxTurns, market } = gameState
-  const { ap: actionPoints, maxAp: maxActionPoints, influence } = player
+  const { ap: actionPoints, maxAp: maxActionPoints, influence, cash } = player
   const netWorth = calculateCompanyNetWorth(player)
   const expectedIncome = calculateCompanyTotalIncome(player, gameState)
 
@@ -111,6 +111,9 @@ export function GameHeader({ onHome }: GameHeaderProps) {
 
         {/* 중앙: 핵심 지표 */}
         <div className="flex items-center gap-3 text-xs">
+          <span className="text-green-400" title="현금">
+            💵 {formatMoney(cash)}
+          </span>
           <span className="text-purple-400" title="영향력">
             ⭐ {influence}
           </span>

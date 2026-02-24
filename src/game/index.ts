@@ -70,6 +70,7 @@ export {
   calculateAssetValue,
   calculateNetWorth,
   calculateCompanyTotalIncome,
+calculateCompanyNetIncome,
   calculateDominance,
   calculateScore,
   getInfluenceTier,
