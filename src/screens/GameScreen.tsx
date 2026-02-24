@@ -235,10 +235,10 @@ export function GameScreen() {
         {/* Result 페이즈 */}
         {phase === 'result' && (
           <div className="flex gap-4 flex-col lg:flex-row">
-            <div className="w-full lg:w-72 shrink-0">
+            <div className="w-full lg:w-72 shrink-0 order-2 lg:order-1">
               <Leaderboard />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 order-1 lg:order-2">
               <TurnResult />
             </div>
           </div>
