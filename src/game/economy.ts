@@ -11,6 +11,7 @@ import {
   INFLUENCE_TIERS,
   SECTOR_DEMAND_PREMIUM,
 } from './constants'
+import { getCompanyTraitEffects } from './logic/traitEngine'
 
 /** 자산 정보를 ID로 조회 */
 function findAsset(assetId: string) {
@@ -266,12 +267,13 @@ export function calculateCompanyNetIncome(
   precomputedIncome?: number,
 ): { revenue: number; expenses: number; net: number } {
   const effects = mergeEffects(company.activeEffects)
+  const traitEffects = getCompanyTraitEffects(company)
 
   const totalIncome = precomputedIncome ?? calculateCompanyTotalIncome(company, state)
 
   const inflationMult = state.cumulativeInflation
   const revenue = Math.floor(totalIncome * effects.revenueMultiplier! * inflationMult)
-  const expenses = Math.floor(state.config.baseExpenses * effects.expenseMultiplier! * inflationMult)
+  const expenses = Math.floor(state.config.baseExpenses * effects.expenseMultiplier! * traitEffects.expenseMultiplier * inflationMult)
   const directMoney = effects.money ?? 0
 
   return {

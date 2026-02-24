@@ -32,6 +32,7 @@ import { updateMarket, updateSectorTrends } from './market'
 import { rollForEvents } from './events'
 import { getAIActions, getAIEventChoice } from './competitor/ai'
 import { applyInflation } from './logic/inflation'
+import { getCompanyTraitEffects } from './logic/traitEngine'
 
 // === 편의 함수 ===
 
@@ -61,12 +62,13 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
   // 수요 프리미엄: 경쟁사 투자 집중 섹터 → 매입 비용 상승
   const demandPremium = calculateSectorDemandPremium(state.companies, companyIndex, asset.sector)
 
-  // 할인 적용: 영향력 티어 할인 + 이벤트 nextPurchaseDiscount
+  // 할인 적용: 영향력 티어 할인 + 이벤트 nextPurchaseDiscount + 특성 purchaseDiscount
   const influenceTier = getInfluenceTier(company.influence)
   const nextDiscount = company.activeEffects.reduce(
     (acc, e) => acc + (e.nextPurchaseDiscount ?? 0), 0,
   )
-  const totalDiscount = influenceTier.purchaseDiscount + nextDiscount
+  const traitEffects = getCompanyTraitEffects(company)
+  const totalDiscount = influenceTier.purchaseDiscount + nextDiscount + traitEffects.purchaseDiscount
   const cost = Math.floor(asset.cost * demandPremium * (1 - totalDiscount))
   if (company.cash < cost) return state
 
@@ -110,7 +112,9 @@ function applySellFor(state: GameState, companyIndex: number, ownedIndex: number
   if (!asset) return state
 
   const marketMult = asset.marketMultiplier[state.market.condition]
-  const sellValue = Math.floor(owned.currentValue * (SELL_BASE_RATIO + SELL_MARKET_RATIO * marketMult))
+  const traitEffects = getCompanyTraitEffects(company)
+  const baseSellValue = Math.floor(owned.currentValue * (SELL_BASE_RATIO + SELL_MARKET_RATIO * marketMult))
+  const sellValue = Math.floor(baseSellValue * (1 - traitEffects.sellPenalty))
 
   const newAssets = [...company.assets]
   newAssets.splice(ownedIndex, 1)
