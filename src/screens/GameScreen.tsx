@@ -50,12 +50,11 @@ const TREND_COLORS: Record<SectorTrend, string> = {
 const MARKET_LABELS = { boom: '📈 호황', stable: '➖ 보합', recession: '📉 불황' }
 const MARKET_COLORS = { boom: 'text-emerald-400', stable: 'text-slate-300', recession: 'text-red-400' }
 
-type PlanningView = 'summary' | 'market' | 'portfolio'
+type PlanningView = 'summary' | 'market' | 'portfolio' | 'research'
 
 /** 메인 게임 화면 — 페이즈에 따라 다른 콘텐츠 렌더링 */
 export function GameScreen() {
   const [planningView, setPlanningView] = useState<PlanningView>('summary')
-  const [showResearchPanel, setShowResearchPanel] = useState(false)
 
   // 개별 셀렉터로 성능 최적화
   const gameState = useGameStore((s) => s.gameState)
@@ -93,11 +92,10 @@ export function GameScreen() {
     }
   }, [isRunActive, lastRunResult, navigateTo])
 
-  // 페이즈 변경 시 planningView, researchPanel 초기화
+  // 페이즈 변경 시 planningView 초기화
   useEffect(() => {
     if (gameState?.phase !== 'planning') {
       setPlanningView('summary')
-      setShowResearchPanel(false)
     }
   }, [gameState?.phase])
 
@@ -215,6 +213,11 @@ export function GameScreen() {
 
               {planningView === 'market' && <AssetMarket />}
               {planningView === 'portfolio' && <Portfolio />}
+              {planningView === 'research' && (
+                <ResearchPanel
+                  onResearch={(target, sector) => submitAction({ type: 'research', target, sector })}
+                />
+              )}
             </div>
           </div>
         )}
@@ -250,20 +253,13 @@ export function GameScreen() {
       {phase === 'planning' && (
         <>
           <ActionBar
+            activeView={planningView}
             onMarket={() => setPlanningView('market')}
             onPortfolio={() => setPlanningView('portfolio')}
             onSummary={() => setPlanningView('summary')}
-            onResearch={() => setShowResearchPanel(true)}
+            onResearch={() => setPlanningView('research')}
             onEndTurn={() => submitAction({ type: 'endTurn' })}
           />
-
-          {showResearchPanel && (
-            <ResearchPanel
-              researchResult={player.researchResult}
-              onResearch={(target, sector) => submitAction({ type: 'research', target, sector })}
-              onClose={() => setShowResearchPanel(false)}
-            />
-          )}
         </>
       )}
 
