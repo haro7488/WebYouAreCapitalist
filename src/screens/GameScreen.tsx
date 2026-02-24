@@ -62,6 +62,7 @@ export function GameScreen() {
   const lastRunResult = useGameStore((s) => s.lastRunResult)
   const submitAction = useGameStore((s) => s.submitAction)
   const resolvePhase = useGameStore((s) => s.resolvePhase)
+  const processGovernmentPhase = useGameStore((s) => s.processGovernmentPhase)
   const selectGoal = useGameStore((s) => s.selectGoal)
   const navigateTo = useUIStore((s) => s.navigateTo)
 
@@ -75,6 +76,14 @@ export function GameScreen() {
       return () => clearTimeout(timer)
     }
   }, [gameState?.phase, resolvePhase])
+
+  // Government 페이즈 자동 전환
+  useEffect(() => {
+    if (gameState?.phase === 'government' && !gameState.governmentEvent) {
+      const timer = setTimeout(() => processGovernmentPhase(), 300)
+      return () => clearTimeout(timer)
+    }
+  }, [gameState?.phase, gameState?.governmentEvent, processGovernmentPhase])
 
   // 게임 오버 감지 → 결과 화면 전환
   useEffect(() => {
