@@ -1,11 +1,13 @@
 import { Button } from '@components/common'
-import { GlossaryText } from '@components/glossary'
 import { LayoutDashboard, Briefcase, Store, Search, SkipForward } from 'lucide-react'
 import { useGameStore } from '@stores/gameStore'
 import { ASSETS } from '@game/constants'
 import type { OwnedAsset } from '@game/types'
 
+type ViewType = 'summary' | 'market' | 'portfolio' | 'research'
+
 interface ActionBarProps {
+  activeView?: ViewType
   onMarket: () => void
   onPortfolio: () => void
   onSummary: () => void
@@ -14,7 +16,7 @@ interface ActionBarProps {
 }
 
 /** 하단 고정 액션 바: 현황 / 포트폴리오 / 시장 / 조사 / 다음턴 */
-export function ActionBar({ onSummary, onPortfolio, onMarket, onResearch, onEndTurn }: ActionBarProps) {
+export function ActionBar({ activeView = 'summary', onSummary, onPortfolio, onMarket, onResearch, onEndTurn }: ActionBarProps) {
   const gameState = useGameStore((s) => s.gameState)
 
   // 정보 자산 개수 계산
@@ -37,30 +39,38 @@ export function ActionBar({ onSummary, onPortfolio, onMarket, onResearch, onEndT
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-700 p-3">
       <div className="flex gap-2">
-        <Button variant="primary" className="flex-1" onClick={onSummary}>
-          <LayoutDashboard size={16} />
-          <GlossaryText>현황</GlossaryText>
-        </Button>
-        <Button variant="secondary" className="flex-1" onClick={onPortfolio}>
-          <Briefcase size={16} />
-          <GlossaryText>포트폴리오</GlossaryText>
-        </Button>
-        <Button variant="secondary" className="flex-1" onClick={onMarket}>
-          <Store size={16} />
-          <GlossaryText>시장</GlossaryText>
-        </Button>
-        <Button variant="secondary" className="flex-1 relative" onClick={onResearch}>
-          <Search size={16} />
-          <GlossaryText>조사</GlossaryText>
-          {hasInfoAssets && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-blue-500 text-white rounded-full px-1">
-              {remainingResearch}
-            </span>
-          )}
-        </Button>
-        <Button variant="secondary" className="flex-1" onClick={onEndTurn}>
+        {/* 좌측: 탭 4개 */}
+        <div className="flex gap-2 flex-1">
+          <Button variant={activeView === 'summary' ? 'primary' : 'secondary'} className="flex-1" onClick={onSummary}>
+            <LayoutDashboard size={16} />
+            <span>현황</span>
+          </Button>
+          <Button variant={activeView === 'portfolio' ? 'primary' : 'secondary'} className="flex-1" onClick={onPortfolio}>
+            <Briefcase size={16} />
+            <span>포트폴리오</span>
+          </Button>
+          <Button variant={activeView === 'market' ? 'primary' : 'secondary'} className="flex-1" onClick={onMarket}>
+            <Store size={16} />
+            <span>시장</span>
+          </Button>
+          <Button variant={activeView === 'research' ? 'primary' : 'secondary'} className="flex-1 relative" onClick={onResearch}>
+            <Search size={16} />
+            <span>조사</span>
+            {hasInfoAssets && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-blue-500 text-white rounded-full px-1">
+                {remainingResearch}
+              </span>
+            )}
+          </Button>
+        </div>
+
+        {/* 구분선 */}
+        <div className="w-px bg-slate-700 self-stretch" />
+
+        {/* 우측: 다음 턴 액션 */}
+        <Button variant="secondary" className="px-4" onClick={onEndTurn}>
           <SkipForward size={16} />
-          <GlossaryText>다음턴</GlossaryText>
+          <span>다음 턴</span>
         </Button>
       </div>
     </div>
