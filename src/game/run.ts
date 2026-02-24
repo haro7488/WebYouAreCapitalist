@@ -38,6 +38,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     activeEffects: [],
     netWorth: startingCash,
     dominatedSectors: [],
+    traits: [],
   }
 
   // 경쟁사 생성
@@ -62,6 +63,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
       activeEffects: [],
       netWorth: startingCash,
       dominatedSectors: [],
+      traits: [],
     }
   })
 
@@ -88,6 +90,8 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     sectorStates: createInitialSectorStates(rng),
 
     currentEvent: null,
+    pendingEvents: [],
+    currentEventIndex: 0,
     eventHistory: [],
 
     aiStrategies,

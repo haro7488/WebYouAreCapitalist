@@ -2,7 +2,7 @@ import type { GameEvent, GameState } from './types'
 import type { Rng } from './utils'
 import { VOLATILITY_EVENT_BONUS } from './constants'
 
-/** 이벤트 레지스트리 (12개: 경제 4, 섹터 3, 개인 3, 기회 2) */
+/** 이벤트 레지스트리 (17개: 경제 4, 섹터 3, 개인 3, 기회 2, 신규 5) */
 export const EVENT_REGISTRY: GameEvent[] = [
   // === 경제 이벤트 (4개) ===
   {
@@ -12,7 +12,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
     minTurn: 3,
     weight: 10,
     choices: [
-      { id: 'restructure', text: '포트폴리오를 재조정한다', effect: { money: -100, influence: 5 } },
+      { id: 'restructure', text: '포트폴리오를 재조정한다', effect: { money: -100, influence: 5, traitGrant: 'efficient' } },
       { id: 'endure', text: '현재 포지션을 유지한다', effect: { expenseMultiplier: 1.3 } },
     ],
     dominanceChoice: {
@@ -26,8 +26,9 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '정부가 대규모 경기 부양책을 발표했습니다!',
     minTurn: 5,
     weight: 8,
+    condition: (state) => state.companies[0].influence >= 10,
     choices: [
-      { id: 'expand', text: '공격적으로 투자를 늘린다', effect: { nextPurchaseDiscount: 0.2, influence: 3 } },
+      { id: 'expand', text: '공격적으로 투자를 늘린다', effect: { nextPurchaseDiscount: 0.2, influence: 3, traitGrant: 'reckless' } },
       { id: 'save', text: '현금을 비축한다', effect: { money: 200 } },
     ],
   },
@@ -37,7 +38,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '글로벌 금융 시장에 위기 조짐이 보입니다.',
     minTurn: 10,
     weight: 5,
-    condition: (state) => state.market.condition !== 'recession',
+    condition: (state) => state.market.condition !== 'recession' && state.companies[0].assets.length >= 2,
     choices: [
       { id: 'hedge', text: '안전 자산으로 대피한다 (-$200)', effect: { money: -200, marketShift: 'recession' } },
       { id: 'hold', text: '현재 포지션을 유지한다', effect: { marketShift: 'recession', influence: -10 } },
@@ -72,7 +73,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
     minTurn: 4,
     weight: 9,
     choices: [
-      { id: 'adopt', text: '신기술에 투자한다 (-$150)', effect: { money: -150, sectorShift: { sector: 'tech', trend: 'hot' }, influence: 5 } },
+      { id: 'adopt', text: '신기술에 투자한다 (-$150)', effect: { money: -150, sectorShift: { sector: 'tech', trend: 'hot' }, influence: 5, traitGrant: 'visionary' } },
       { id: 'wait', text: '시장 반응을 지켜본다', effect: { sectorShift: { sector: 'tech', trend: 'hot' } } },
     ],
     dominanceChoice: {
@@ -86,6 +87,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '정부가 부동산 시장에 강력한 규제를 도입합니다.',
     minTurn: 5,
     weight: 8,
+    condition: (state) => state.sectorStates.realEstate.trend !== 'cold',
     choices: [
       { id: 'comply', text: '규제에 맞춰 조정한다', effect: { money: -100, sectorShift: { sector: 'realEstate', trend: 'cold' }, influence: 3 } },
       { id: 'lobby', text: '로비를 통해 완화를 시도한다 (-$250)', effect: { money: -250, influence: 8 } },
@@ -114,9 +116,10 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '국세청에서 세무 조사 통보가 왔습니다.',
     minTurn: 8,
     weight: 6,
+    condition: (state) => state.companies[0].cash >= 300,
     choices: [
       { id: 'accountant', text: '전문 회계사를 고용한다 (-$150)', effect: { money: -150, influence: 2 } },
-      { id: 'self', text: '직접 대응한다', effect: { money: -300, influence: -5 } },
+      { id: 'self', text: '직접 대응한다', effect: { money: -300, influence: -5, traitGrant: 'paranoid' } },
     ],
   },
   {
@@ -125,8 +128,9 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '유력 투자자가 파트너십을 제안합니다.',
     minTurn: 6,
     weight: 7,
+    condition: (state) => state.companies[0].influence >= 20,
     choices: [
-      { id: 'accept', text: '파트너십을 수락한다', effect: { revenueMultiplier: 1.3, influence: 10 } },
+      { id: 'accept', text: '파트너십을 수락한다', effect: { revenueMultiplier: 1.3, influence: 10, traitGrant: 'networker' } },
       { id: 'decline', text: '독립 경영을 유지한다', effect: { influence: -3 } },
     ],
   },
@@ -136,9 +140,10 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '언론에서 당신의 투자에 대한 부정적 기사가 나왔습니다.',
     minTurn: 7,
     weight: 7,
+    condition: (state) => state.companies[0].influence >= 30,
     choices: [
       { id: 'pr-campaign', text: 'PR 캠페인으로 대응한다 (-$200)', effect: { money: -200, influence: 5 } },
-      { id: 'silence', text: '침묵으로 일관한다', effect: { influence: -15 } },
+      { id: 'silence', text: '침묵으로 일관한다', effect: { influence: -15, traitGrant: 'notorious' } },
     ],
   },
 
@@ -149,7 +154,7 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '경쟁사를 인수할 수 있는 기회가 왔습니다!',
     minTurn: 12,
     weight: 4,
-    condition: (state) => state.companies[0].assets.length >= 3,
+    condition: (state) => state.companies[0].assets.length >= 3 && state.companies[0].cash >= 300,
     choices: [
       { id: 'acquire', text: '인수를 진행한다 (-$300)', effect: { money: -300, freeAsset: 'restaurant', influence: 15 } },
       { id: 'pass', text: '이번 기회는 넘긴다', effect: { influence: -2 } },
@@ -161,40 +166,129 @@ export const EVENT_REGISTRY: GameEvent[] = [
     description: '유망 기업의 IPO에 참여할 기회입니다!',
     minTurn: 10,
     weight: 4,
-    condition: (state) => state.companies[0].influence >= 40,
+    condition: (state) => state.companies[0].influence >= 40 && state.companies[0].cash >= 400,
     choices: [
       { id: 'invest-ipo', text: 'IPO에 투자한다 (-$400)', effect: { money: -400, freeAsset: 'app-startup', influence: 20 } },
       { id: 'skip-ipo', text: '이번 IPO는 건너뛴다', effect: { influence: -5 } },
     ],
   },
+
+  // === 신규 이벤트 (5개) ===
+  {
+    id: 'insider-info',
+    title: '내부자 정보',
+    description: '신뢰할 수 있는 소식통이 은밀한 정보를 제공합니다.',
+    minTurn: 8,
+    weight: 6,
+    condition: (state) => state.companies[0].influence >= 60,
+    choices: [
+      { id: 'use-info', text: '정보를 활용한다', effect: { nextPurchaseDiscount: 0.3, influence: 5, traitGrant: 'sharp-eye' } },
+      { id: 'report', text: '당국에 신고한다', effect: { influence: 10 } },
+    ],
+  },
+  {
+    id: 'market-crash-warning',
+    title: '시장 붕괴 경고',
+    description: '시장 과열 신호가 감지되었습니다. 대규모 조정이 임박했을 수 있습니다.',
+    minTurn: 10,
+    weight: 5,
+    condition: (state) => state.companies[0].assets.length >= 5 && state.market.condition === 'boom',
+    choices: [
+      { id: 'liquidate', text: '일부 자산을 정리한다', effect: { money: 300, influence: -5 } },
+      { id: 'double-down', text: '오히려 더 매수한다', effect: { nextPurchaseDiscount: 0.15, traitGrant: 'reckless' } },
+    ],
+  },
+  {
+    id: 'government-subsidy',
+    title: '정부 보조금',
+    description: '정부가 중소기업 지원 프로그램을 시행합니다.',
+    minTurn: 5,
+    weight: 7,
+    condition: (state) => {
+      // 순위 3~4위일 때 (약자 지원)
+      const sorted = [...state.companies].sort((a, b) => b.netWorth - a.netWorth)
+      const rank = sorted.findIndex((c) => c.id === state.companies[0].id) + 1
+      return rank >= 3
+    },
+    choices: [
+      { id: 'accept-subsidy', text: '보조금을 수령한다 (+$400)', effect: { money: 400, influence: 3 } },
+      { id: 'decline-subsidy', text: '자력으로 극복한다', effect: { influence: 8 } },
+    ],
+  },
+  {
+    id: 'monopoly-investigation',
+    title: '독점 조사',
+    description: '공정거래위원회가 독점 의혹으로 조사를 시작했습니다.',
+    minTurn: 12,
+    weight: 5,
+    condition: (state) => state.companies[0].dominatedSectors.length > 0,
+    choices: [
+      { id: 'cooperate', text: '조사에 협조한다 (-$200)', effect: { money: -200, influence: 5 } },
+      { id: 'resist', text: '법적 대응을 한다 (-$400)', effect: { money: -400, influence: -10, traitGrant: 'paranoid' } },
+    ],
+  },
+  {
+    id: 'lucky-investment',
+    title: '행운의 투자',
+    description: '놀라운 투자 기회가 당신에게 찾아왔습니다!',
+    minTurn: 6,
+    weight: 4,
+    condition: (state) => state.companies[0].traits.includes('lucky'),
+    choices: [
+      { id: 'seize', text: '기회를 잡는다', effect: { money: 500, influence: 10 } },
+      { id: 'share', text: '동료들과 나눈다', effect: { money: 200, influence: 20 } },
+    ],
+  },
 ]
 
-/** 이벤트 발생 여부 판정 + 이벤트 선택 */
-export function rollForEvent(state: GameState, rng: Rng): GameEvent | null {
-  const probability = state.config.eventProbability + state.market.volatility * VOLATILITY_EVENT_BONUS
-  if (rng.random() > probability) return null
-
-  // 조건을 충족하는 이벤트만 필터
-  const eligible = EVENT_REGISTRY.filter((e) => {
+/** 조건을 충족하는 이벤트 필터링 */
+function getEligibleEvents(state: GameState, excludeIds: string[] = []): GameEvent[] {
+  const recentEvents = state.eventHistory.slice(-5)
+  return EVENT_REGISTRY.filter((e) => {
     if (state.turn < e.minTurn) return false
     if (e.condition && !e.condition(state)) return false
-    // 같은 이벤트가 최근 5턴 내에 발생했으면 제외
-    const recentEvents = state.eventHistory.slice(-5)
     if (recentEvents.includes(e.id)) return false
+    if (excludeIds.includes(e.id)) return false
     return true
   })
+}
 
-  if (eligible.length === 0) return null
-
-  // 가중치 기반 선택
+/** 가중치 기반 이벤트 선택 */
+function pickWeightedEvent(eligible: GameEvent[], rng: Rng): GameEvent {
   const totalWeight = eligible.reduce((sum, e) => sum + e.weight, 0)
   let roll = rng.random() * totalWeight
   for (const event of eligible) {
     roll -= event.weight
     if (roll <= 0) return event
   }
-
   return eligible[eligible.length - 1]
+}
+
+/** 이벤트 발생 판정: 1개 보장 + 추가 확률 판정으로 최대 2개 반환 */
+export function rollForEvents(state: GameState, rng: Rng): GameEvent[] {
+  const eligible = getEligibleEvents(state)
+  if (eligible.length === 0) return []
+
+  // 1번째: 조건 충족 이벤트에서 무조건 1개 선택 (guaranteed)
+  const first = pickWeightedEvent(eligible, rng)
+  const result: GameEvent[] = [first]
+
+  // 2번째: 기존 확률 판정으로 추가 이벤트 (1번째와 다른 이벤트)
+  const probability = state.config.eventProbability + state.market.volatility * VOLATILITY_EVENT_BONUS
+  if (rng.random() <= probability) {
+    const secondEligible = getEligibleEvents(state, [first.id])
+    if (secondEligible.length > 0) {
+      result.push(pickWeightedEvent(secondEligible, rng))
+    }
+  }
+
+  return result
+}
+
+/** 하위 호환: 단일 이벤트 반환 (사용처가 있으면 유지) */
+export function rollForEvent(state: GameState, rng: Rng): GameEvent | null {
+  const events = rollForEvents(state, rng)
+  return events.length > 0 ? events[0] : null
 }
 
 /** ID로 이벤트 레지스트리에서 이벤트 조회 */

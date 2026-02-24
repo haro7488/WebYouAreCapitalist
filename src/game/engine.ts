@@ -1,4 +1,4 @@
-import type { GameState, Company, TurnAction, EventChoice, GameEvent, OwnedAsset, Sector, ResearchResult, MarketCondition } from './types'
+import type { GameState, Company, TurnAction, EventChoice, EventEffect, GameEvent, OwnedAsset, Sector, ResearchResult, MarketCondition } from './types'
 import {
   ASSETS,
   ASSET_UPGRADE_COST_RATIO,
@@ -29,7 +29,7 @@ import {
   assertMoneyConservation,
 } from './economy'
 import { updateMarket, updateSectorTrends } from './market'
-import { rollForEvent } from './events'
+import { rollForEvents } from './events'
 import { getAIActions, getAIEventChoice } from './competitor/ai'
 
 // === 편의 함수 ===
@@ -353,12 +353,15 @@ function processAIEventChoices(state: GameState, event: GameEvent): GameState {
     if (!choice) continue
 
     const effect = choice.effect
-    const updated: Company = {
+    let updated: Company = {
       ...company,
       cash: company.cash + (effect.money ?? 0),
       influence: clamp(company.influence + (effect.influence ?? 0), 0, 100),
       activeEffects: [...company.activeEffects, effect],
     }
+
+    // 특성 부여/제거 (AI도 적용)
+    updated = applyTraitEffects(updated, effect)
 
     // 무료 자산 획득
     if (effect.freeAsset) {
@@ -409,6 +412,18 @@ function processAIEventChoices(state: GameState, event: GameEvent): GameState {
 
 // === 이벤트 처리 ===
 
+/** 특성 부여/제거 적용 */
+function applyTraitEffects(company: Company, effect: EventEffect): Company {
+  let traits = [...company.traits]
+  if (effect.traitGrant && !traits.includes(effect.traitGrant)) {
+    traits = [...traits, effect.traitGrant]
+  }
+  if (effect.traitRemove) {
+    traits = traits.filter((t) => t !== effect.traitRemove)
+  }
+  return { ...company, traits }
+}
+
 /** 이벤트 선택지 효과 적용 */
 function applyEventChoice(state: GameState, choice: EventChoice): GameState {
   const effect = choice.effect
@@ -420,6 +435,9 @@ function applyEventChoice(state: GameState, choice: EventChoice): GameState {
     influence: clamp(player.influence + (effect.influence ?? 0), 0, 100),
     activeEffects: [...player.activeEffects, effect],
   }
+
+  // 특성 부여/제거
+  updatedPlayer = applyTraitEffects(updatedPlayer, effect)
 
   // 무료 자산 획득
   if (effect.freeAsset) {
@@ -605,18 +623,24 @@ export function submitAction(state: GameState, action: TurnAction): GameState {
     let afterAI = processAICompanies(newState)
 
     const rng = createRng(afterAI.rngState)
-    const event = rollForEvent(afterAI, rng)
+    const events = rollForEvents(afterAI, rng)
 
-    if (event) {
-      // AI도 이벤트에 대응
-      const afterAIEvent = processAIEventChoices(
-        { ...afterAI, currentEvent: event, rngState: rng.getState() },
-        event,
-      )
+    if (events.length > 0) {
+      const firstEvent = events[0]
+      // AI도 모든 이벤트에 대응
+      let afterAIEvent = { ...afterAI, rngState: rng.getState() }
+      for (const evt of events) {
+        afterAIEvent = processAIEventChoices(
+          { ...afterAIEvent, currentEvent: evt },
+          evt,
+        )
+      }
       return {
         ...afterAIEvent,
         phase: 'event',
-        currentEvent: event,
+        currentEvent: firstEvent,
+        pendingEvents: events,
+        currentEventIndex: 0,
       }
     }
 
@@ -633,7 +657,7 @@ export function submitAction(state: GameState, action: TurnAction): GameState {
 
 /**
  * Event Phase: 이벤트 선택지 처리
- * event → resolution
+ * pendingEvents를 순차 처리: 다음 이벤트가 있으면 event 유지, 없으면 → resolution
  */
 export function submitEventChoice(state: GameState, choiceId: string): GameState {
   if (state.phase !== 'event' || !state.currentEvent) return state
@@ -658,7 +682,26 @@ export function submitEventChoice(state: GameState, choiceId: string): GameState
   if (!choice) return state
 
   const newState = applyEventChoice(state, choice)
-  return { ...newState, phase: 'resolution' }
+
+  // 다음 대기 이벤트가 있으면 event phase 유지
+  const nextIndex = state.currentEventIndex + 1
+  if (nextIndex < state.pendingEvents.length) {
+    const nextEvent = state.pendingEvents[nextIndex]
+    return {
+      ...newState,
+      phase: 'event',
+      currentEvent: nextEvent,
+      currentEventIndex: nextIndex,
+    }
+  }
+
+  // 모든 이벤트 처리 완료 → resolution
+  return {
+    ...newState,
+    phase: 'resolution',
+    pendingEvents: [],
+    currentEventIndex: 0,
+  }
 }
 
 /**
@@ -720,7 +763,8 @@ export function processFullTurn(state: GameState, actions: TurnAction[], eventCh
     current = submitAction(current, { type: 'endTurn' })
   }
 
-  if (current.phase === 'event' && eventChoiceId) {
+  // 이벤트가 여러 개일 수 있으므로 모든 이벤트에 동일한 선택지 ID 적용
+  while (current.phase === 'event' && eventChoiceId) {
     current = submitEventChoice(current, eventChoiceId)
   }
 

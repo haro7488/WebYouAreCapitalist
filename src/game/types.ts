@@ -73,6 +73,8 @@ export interface EventEffect {
   sectorShift?: { sector: Sector; trend: SectorTrend } // 섹터 트렌드 강제 전환
   freeAsset?: string // 무료로 획득하는 자산 ID
   nextPurchaseDiscount?: number // 다음 매입 할인율 (0-1)
+  traitGrant?: string // 특성 부여
+  traitRemove?: string // 특성 제거
 }
 
 export interface EventChoice {
@@ -112,6 +114,7 @@ export interface Company {
   influence: number // 0-100, 영향력
   ap: number // 이번 턴 남은 AP
   maxAp: number // 이번 턴 최대 AP
+  traits: string[] // 보유 특성 id 목록
 
   // 턴별 계산 결과
   revenue: number // 이번 턴 수익
@@ -147,6 +150,8 @@ export interface GameState {
 
   // 이벤트
   currentEvent: GameEvent | null
+  pendingEvents: GameEvent[] // 대기 중인 이벤트 목록 (1~2개)
+  currentEventIndex: number // 현재 처리 중인 이벤트 인덱스
   eventHistory: string[] // 발생한 이벤트 ID 목록
 
   // AI 경쟁사 전략 매핑 (companyId → strategyId)

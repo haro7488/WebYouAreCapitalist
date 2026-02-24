@@ -12,11 +12,7 @@ interface GameHeaderProps {
 }
 
 // 샘플: 테스트용 활성 특성 (이후 gameState에서 가져올 예정)
-const SAMPLE_TRAITS = [
-  TRAIT_REGISTRY.find((t) => t.id === 'sharp-eye')!,
-  TRAIT_REGISTRY.find((t) => t.id === 'networker')!,
-  TRAIT_REGISTRY.find((t) => t.id === 'reckless')!,
-]
+// 실제 traits는 gameState에서 가져옴
 
 function TraitIcon({ trait }: { trait: Trait }) {
   const [showTooltip, setShowTooltip] = useState(false)
@@ -84,7 +80,9 @@ export function GameHeader({ onHome }: GameHeaderProps) {
   const expectedIncome = calculateCompanyTotalIncome(player, gameState)
 
   // TODO: gameState에서 traits 가져오기 (현재 샘플)
-  const activeTraits = SAMPLE_TRAITS
+  const activeTraits = player.traits
+    .map(id => TRAIT_REGISTRY.find(t => t.id === id))
+    .filter((t): t is Trait => t != null)
 
   return (
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700">
