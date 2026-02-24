@@ -27,29 +27,32 @@ interface BreakdownPopoverProps {
 export function BreakdownPopover({ breakdown, anchorEl, onClose }: BreakdownPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null)
 
-  // 위치 계산
+  // 위치 계산 (fixed 포지셔닝 — viewport 기준 좌표 사용)
+  const popoverWidth = 280
+  const popoverHeight = 200 // 예상 높이
+  const gap = 8
+
   let top = 0
   let left = 0
   let showAbove = false
 
   if (anchorEl) {
     const rect = anchorEl.getBoundingClientRect()
-    const popoverHeight = 200 // 예상 높이
     const spaceBelow = window.innerHeight - rect.bottom
-    showAbove = spaceBelow < popoverHeight && rect.top > popoverHeight
+    showAbove = spaceBelow < popoverHeight + gap && rect.top > popoverHeight + gap
 
-    left = rect.left + rect.width / 2 - 140 // width 280 / 2
+    left = rect.left + rect.width / 2 - popoverWidth / 2
     // 화면 밖으로 나가지 않도록 클램프
-    left = Math.max(8, Math.min(left, window.innerWidth - 288))
+    left = Math.max(8, Math.min(left, window.innerWidth - popoverWidth - 8))
 
     if (showAbove) {
-      top = rect.top + window.scrollY - 8 // 화살표 공간
+      top = rect.top - gap
     } else {
-      top = rect.bottom + window.scrollY + 8
+      top = rect.bottom + gap
     }
   }
 
-  // 바깥 클릭 감지
+  // 바깥 클릭 + 스크롤 시 닫기
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {
       if (
@@ -60,15 +63,22 @@ export function BreakdownPopover({ breakdown, anchorEl, onClose }: BreakdownPopo
         onClose()
       }
     }
+    function handleScroll() {
+      onClose()
+    }
     document.addEventListener('mousedown', handleMouseDown)
-    return () => document.removeEventListener('mousedown', handleMouseDown)
+    window.addEventListener('scroll', handleScroll, true)
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      window.removeEventListener('scroll', handleScroll, true)
+    }
   }, [anchorEl, onClose])
 
   const content = (
     <div
       ref={popoverRef}
-      className="fixed z-[200] w-[280px] rounded-lg border border-slate-600 bg-slate-800 shadow-xl"
-      style={{ top, left }}
+      className="fixed z-[200] rounded-lg border border-slate-600 bg-slate-800 shadow-xl animate-in fade-in duration-150"
+      style={{ top, left, width: popoverWidth, transform: showAbove ? 'translateY(-100%)' : undefined }}
     >
       {/* 화살표 */}
       {showAbove ? (

@@ -38,7 +38,7 @@ interface Props {
 export function GlossaryProvider({ children, onOpenHelp }: Props) {
   const [stack, setStack] = useState<StackItem[]>([])
 
-  // 외부 클릭 시 전체 닫기
+  // 외부 클릭 시 전체 닫기 + 스크롤 시 닫기
   useEffect(() => {
     if (stack.length === 0) return
     const handler = (e: MouseEvent) => {
@@ -47,8 +47,15 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
       if (target.closest('[data-glossary-term]')) return
       setStack((prev) => prev.slice(0, -1)) // 마지막 팝오버부터 하나씩 닫기
     }
+    const scrollHandler = () => {
+      setStack([])
+    }
     document.addEventListener('mousedown', handler, true)
-    return () => document.removeEventListener('mousedown', handler, true)
+    window.addEventListener('scroll', scrollHandler, true)
+    return () => {
+      document.removeEventListener('mousedown', handler, true)
+      window.removeEventListener('scroll', scrollHandler, true)
+    }
   }, [stack.length])
 
   const openTerm = useCallback((id: string, rect: DOMRect, popoverIndex?: number | null) => {
