@@ -43,7 +43,7 @@ function NetWorthBarChart({ sorted }: { sorted: { company: Company; isPlayer: bo
 
   return (
     <div className="mt-3 pt-3 border-t border-slate-700 space-y-1.5">
-      <div className="text-xs text-slate-400 mb-2">📊 순자산 비교</div>
+      <div className="text-xs text-slate-400 mb-2">📊 <GlossaryText>순자산 비교</GlossaryText></div>
       {sorted.map(({ company, isPlayer }) => {
         const ratio = Math.max(0, company.netWorth / maxNetWorth)
         return (
