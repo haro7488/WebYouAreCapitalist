@@ -82,17 +82,19 @@ export function GlossaryProvider({ children, onOpenHelp }: Props) {
 
 // === Popover (Portal) ===
 
+interface GlossaryPopoverProps {
+  termId: string
+  anchorRect: DOMRect
+  zIndex: number
+  onNavigate: () => void
+}
+
 function GlossaryPopover({
   termId,
   anchorRect,
   zIndex,
   onNavigate,
-}: {
-  termId: string
-  anchorRect: DOMRect
-  zIndex: number
-  onNavigate: () => void
-}) {
+}: GlossaryPopoverProps) {
   const entry = GLOSSARY.find((e) => e.id === termId)
   if (!entry) return null
 
