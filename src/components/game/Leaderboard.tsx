@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { Card, MoneyDisplay } from '@components/common'
+import { GlossaryText } from '@components/glossary'
 import { CompanyDetail } from './CompanyDetail'
 import { calculateCompanyTotalIncome } from '@game/index'
 import type { Company, Sector, GameState } from '@game/types'
@@ -118,7 +119,7 @@ function RankingLineChart({ gameState }: { gameState: GameState }) {
 
   return (
     <div className="mt-3 pt-3 border-t border-slate-700">
-      <div className="text-xs text-slate-400 mb-2">📈 순위 변동</div>
+      <div className="text-xs text-slate-400 mb-2">📈 <GlossaryText>순위 변동</GlossaryText></div>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ maxHeight: 120 }}>
         {/* Y축 그리드 + 라벨 */}
         {Array.from({ length: companyCount }, (_, i) => i + 1).map(rank => (
@@ -192,7 +193,7 @@ export function Leaderboard() {
       <Card
         header={
           <div className="flex justify-between items-center">
-            <span>📊 기업 순위</span>
+            <span>📊 <GlossaryText>기업 순위</GlossaryText></span>
             <span className="text-xs text-slate-400 font-normal">턴 {turn}/{gameState.maxTurns}</span>
           </div>
         }
@@ -245,7 +246,7 @@ export function Leaderboard() {
                 {/* 예상 수익 */}
                 <div className="ml-12 mt-0.5">
                   <span className="text-xs text-slate-500">
-                    예상 수익: <span className={expectedIncome >= 0 ? 'text-money-400' : 'text-danger-400'}>+{formatMoney(Math.floor(expectedIncome))}/턴</span>
+                    <GlossaryText>예상 수익</GlossaryText>: <span className={expectedIncome >= 0 ? 'text-money-400' : 'text-danger-400'}>+{formatMoney(Math.floor(expectedIncome))}/턴</span>
                   </span>
                 </div>
               </button>
@@ -255,7 +256,7 @@ export function Leaderboard() {
 
         {/* 시장 풀 */}
         <div className="mt-3 pt-3 border-t border-slate-700 flex justify-between text-xs text-slate-400">
-          <span>시장 풀</span>
+          <span><GlossaryText>시장 풀</GlossaryText></span>
           <MoneyDisplay amount={gameState.marketPool} size="sm" />
         </div>
 
