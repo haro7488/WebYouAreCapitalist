@@ -153,6 +153,7 @@ export interface Company {
   // 매 턴 resolution에서 갱신
   netWorth: number // cash + Σ(asset value)
   dominatedSectors: Sector[] // 지배 중인 섹터 목록
+  goalCompleted: boolean // 목표 달성 여부
 }
 
 // === 핵심 게임 상태 ===

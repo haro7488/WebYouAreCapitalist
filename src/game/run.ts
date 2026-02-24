@@ -37,6 +37,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     netWorth: startingCash,
     dominatedSectors: [],
     traits: [],
+    goalCompleted: false,
   }
 
   // 경쟁사 생성
@@ -61,6 +62,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
       netWorth: startingCash,
       dominatedSectors: [],
       traits: [],
+      goalCompleted: false,
     }
   })
 
@@ -147,6 +149,8 @@ export function endRun(finalState: GameState, meta: MetaState): { result: RunRes
     dominatedSectors,
     maxInfluence: player.influence,
     rankings,
+    goalAchieved: player.goalCompleted,
+    goalBonus: player.goalCompleted && finalState.selectedGoal ? finalState.selectedGoal.bonus : undefined,
   }
 
   const updatedMeta: MetaState = {

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "sector-dominator",
+    "name": "섹터 지배자",
+    "description": "2개 이상의 섹터에서 지배자(dominant) 등급 달성",
+    "type": "domination",
+    "condition": {
+      "minDominatedSectors": 2
+    },
+    "bonus": 4000
+  },
+  {
+    "id": "asset-king",
+    "name": "자산왕",
+    "description": "순자산 $50,000 이상으로 런 종료",
+    "type": "asset",
+    "condition": {
+      "minNetWorth": 50000
+    },
+    "bonus": 8000
+  },
+  {
+    "id": "capitalist",
+    "name": "영향력의 정점",
+    "description": "영향력 80 이상(자본가 등급) 달성",
+    "type": "influence",
+    "condition": {
+      "minInfluence": 80
+    },
+    "bonus": 3000
+  }
+]

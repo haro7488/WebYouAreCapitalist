@@ -229,15 +229,20 @@ export function calculateAssetValue(owned: OwnedAsset, state: GameState): number
   return owned.currentValue * (1 + totalAppreciation + inflationAppreciation)
 }
 
-/** 기업의 순자산 계산 (현금 + 모든 보유 자산 현재 가치) */
-export function calculateCompanyNetWorth(company: Company): number {
+/** 기업의 순자산 계산 (현금 + 모든 보유 자산 현재 가치 + 목표 보너스) */
+export function calculateCompanyNetWorth(company: Company, goal?: { bonus: number } | null): number {
   const assetValue = company.assets.reduce((sum, owned) => sum + owned.currentValue, 0)
-  return company.cash + assetValue
+  const baseNetWorth = company.cash + assetValue
+  
+  // 목표 달성 시 보너스 가산
+  const goalBonus = (company.goalCompleted && goal) ? goal.bonus : 0
+  
+  return baseNetWorth + goalBonus
 }
 
 /** GameState의 순자산 계산 (하위 호환 — companies[0] 기준) */
 export function calculateNetWorth(state: GameState): number {
-  return calculateCompanyNetWorth(getPlayerCompany(state))
+  return calculateCompanyNetWorth(getPlayerCompany(state), state.selectedGoal)
 }
 
 /** 활성 효과들을 합산 */

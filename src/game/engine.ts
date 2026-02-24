@@ -33,6 +33,7 @@ import { rollForEvents } from './events'
 import { getAIActions, getAIEventChoice } from './competitor/ai'
 import { applyInflation } from './logic/inflation'
 import { getCompanyTraitEffects } from './logic/traitEngine'
+import { checkGoalCompletion, calculateGoalBonus } from './logic/goalEngine'
 
 // === 편의 함수 ===
 
@@ -597,6 +598,38 @@ function resolveEconomy(state: GameState): GameState {
       .map(([sector]) => sector)
     return { ...company, dominatedSectors }
   })
+
+  // 2.5단계: 목표 달성 체크 및 보너스 적용 (플레이어만)
+  if (state.selectedGoal) {
+    const playerIndex = 0
+    const player = updatedCompanies[playerIndex]
+    
+    // 목표 달성 체크
+    const isGoalCompleted = checkGoalCompletion(state, player, state.selectedGoal.id)
+    
+    if (isGoalCompleted && !player.goalCompleted) {
+      // 목표 보너스를 순자산에 가산
+      const bonus = calculateGoalBonus(state.selectedGoal)
+      updatedCompanies = updatedCompanies.map((company, i) => {
+        if (i === playerIndex) {
+          return {
+            ...company,
+            netWorth: company.netWorth + bonus,
+            goalCompleted: true,
+          }
+        }
+        return company
+      })
+    } else if (!isGoalCompleted) {
+      // 목표 미달성 시 플래그 유지
+      updatedCompanies = updatedCompanies.map((company, i) => {
+        if (i === playerIndex) {
+          return { ...company, goalCompleted: false }
+        }
+        return company
+      })
+    }
+  }
 
   // 3단계: 순위 효과 — 1위 영향력 보너스
   const rankings = calculateRankings(updatedCompanies)
