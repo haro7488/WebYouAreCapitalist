@@ -54,9 +54,10 @@ export function checkEventConditions(
   }
 
   // 특정 섹터 자산 보유
-  if (conditions.hasSector !== undefined) {
+  const sectorCheck = conditions.hasSector ?? conditions.hasSectorAsset
+  if (sectorCheck !== undefined) {
     const sectorAssetIds = new Set(
-      ASSETS.filter((a) => a.sector === conditions.hasSector).map((a) => a.id),
+      ASSETS.filter((a) => a.sector === sectorCheck).map((a) => a.id),
     )
     const owns = company.assets.some((oa) => sectorAssetIds.has(oa.assetId))
     if (!owns) return false

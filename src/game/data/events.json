@@ -236,5 +236,112 @@
       { "id": "seize", "text": "기회를 잡는다", "effect": { "money": 500, "influence": 10 } },
       { "id": "share", "text": "동료들과 나눈다", "effect": { "money": 200, "influence": 20 } }
     ]
+  },
+  {
+    "id": "secret-listing",
+    "title": "비밀 매물",
+    "description": "신뢰할 수 있는 중개인이 아무도 모르는 매물 정보를 귀띔해줍니다.",
+    "type": "opportunity",
+    "minTurn": 4,
+    "weight": 6,
+    "conditions": { "minCash": 250 },
+    "choices": [
+      { "id": "buy", "text": "매입한다 (-$250)", "effect": { "money": -250, "freeAsset": "convenience-store", "influence": 5 } },
+      { "id": "pass", "text": "넘긴다", "effect": { "influence": 2 } }
+    ]
+  },
+  {
+    "id": "energy-crisis",
+    "title": "에너지 위기",
+    "description": "에너지 가격이 폭등하며 보유 자산의 운영 비용이 급증하고 있습니다.",
+    "type": "pressure",
+    "minTurn": 8,
+    "weight": 6,
+    "conditions": { "hasSectorAsset": "energy" },
+    "choices": [
+      { "id": "emergency-response", "text": "긴급 대응 (-$180)", "effect": { "money": -180, "influence": 5 } },
+      { "id": "ignore", "text": "방관한다", "effect": { "expenseMultiplier": 1.5, "traitGrant": "reckless" } }
+    ],
+    "dominanceChoice": {
+      "sector": "energy",
+      "choice": { "id": "leverage-energy", "text": "에너지 지배력으로 위기를 기회로", "effect": { "money": 300, "influence": 10 } }
+    }
+  },
+  {
+    "id": "scandal-exploit",
+    "title": "스캔들 이용",
+    "description": "당신의 악명이 오히려 협상 테이블에서 강력한 무기가 됩니다.",
+    "type": "opportunity",
+    "minTurn": 6,
+    "weight": 5,
+    "conditions": { "hasTrait": "notorious" },
+    "choices": [
+      { "id": "use-notoriety", "text": "악명을 이용한다", "effect": { "money": 400, "influence": -10 } },
+      { "id": "improve-image", "text": "이미지 개선 (-$300)", "effect": { "money": -300, "traitRemove": "notorious", "influence": 15 } }
+    ]
+  },
+  {
+    "id": "reckless-challenge",
+    "title": "무모한 도전",
+    "description": "위험을 두려워하지 않는 당신에게 대담한 사업 기회가 찾아왔습니다.",
+    "type": "opportunity",
+    "minTurn": 7,
+    "weight": 5,
+    "conditions": { "hasTrait": "reckless" },
+    "choices": [
+      { "id": "challenge", "text": "도전한다 (-$200)", "effect": { "money": -200, "freeAsset": "saas", "influence": 8 } },
+      { "id": "restrain", "text": "자제한다", "effect": { "traitRemove": "reckless", "influence": 5 } }
+    ]
+  },
+  {
+    "id": "over-investigation",
+    "title": "과잉 조사",
+    "description": "경쟁사의 작은 움직임도 놓치지 않으려는 집착이 뜻밖의 통찰을 가져다줍니다.",
+    "type": "choice",
+    "minTurn": 5,
+    "weight": 5,
+    "conditions": { "hasTrait": "paranoid" },
+    "choices": [
+      { "id": "dig-deeper", "text": "의심을 파고든다", "effect": { "nextPurchaseDiscount": 0.25, "influence": 3 } },
+      { "id": "relax", "text": "긴장을 풀다", "effect": { "traitRemove": "paranoid", "influence": 8 } }
+    ]
+  },
+  {
+    "id": "logistics-revolution",
+    "title": "물류 혁명",
+    "description": "물류 기술의 혁신이 유통 산업 전반을 재편하고 있습니다.",
+    "type": "opportunity",
+    "minTurn": 5,
+    "weight": 7,
+    "choices": [
+      { "id": "invest-logistics", "text": "물류 네트워크 투자 (-$150)", "effect": { "money": -150, "sectorShift": { "sector": "logistics", "trend": "hot" }, "influence": 5, "traitGrant": "efficient" } },
+      { "id": "watch", "text": "관망한다", "effect": { "influence": 1 } }
+    ]
+  },
+  {
+    "id": "employee-strike",
+    "title": "직원 파업",
+    "description": "여러 사업장의 직원들이 처우 개선을 요구하며 동시 파업에 돌입했습니다.",
+    "type": "pressure",
+    "minTurn": 9,
+    "weight": 6,
+    "conditions": { "minAssets": 4 },
+    "choices": [
+      { "id": "raise-wages", "text": "임금 인상 (-$250)", "effect": { "money": -250, "influence": 10, "traitGrant": "networker" } },
+      { "id": "hard-line", "text": "강경 대응", "effect": { "influence": -15, "expenseMultiplier": 0.8, "traitGrant": "notorious" } }
+    ]
+  },
+  {
+    "id": "venture-investment",
+    "title": "벤처 투자 제안",
+    "description": "유망한 스타트업이 당신에게 초기 투자자가 될 것을 제안합니다.",
+    "type": "opportunity",
+    "minTurn": 4,
+    "weight": 7,
+    "conditions": { "minCash": 200 },
+    "choices": [
+      { "id": "invest", "text": "투자한다 (-$200)", "effect": { "money": -200, "revenueMultiplier": 1.3, "influence": 5, "traitGrant": "visionary" } },
+      { "id": "play-safe", "text": "안전하게 간다", "effect": { "money": 50, "influence": 2, "traitGrant": "paranoid" } }
+    ]
   }
 ]
