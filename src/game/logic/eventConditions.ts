@@ -1,5 +1,4 @@
 import type { EventConditions, GameState, Company } from '../types'
-import { ASSETS } from '../schema/assets.schema'
 
 /**
  * 선언형 조건 객체를 평가하여 이벤트 발생 가능 여부를 판정한다.
@@ -53,13 +52,10 @@ export function checkEventConditions(
     if (currentRank < rankThreshold) return false
   }
 
-  // 특정 섹터 자산 보유
+  // 특정 섹터 자산 보유 (assetId가 곧 Sector)
   const sectorCheck = conditions.hasSector ?? conditions.hasSectorAsset
   if (sectorCheck !== undefined) {
-    const sectorAssetIds = new Set(
-      ASSETS.filter((a) => a.sector === sectorCheck).map((a) => a.id),
-    )
-    const owns = company.assets.some((oa) => sectorAssetIds.has(oa.assetId))
+    const owns = company.assets.some((oa) => oa.assetId === sectorCheck)
     if (!owns) return false
   }
 
