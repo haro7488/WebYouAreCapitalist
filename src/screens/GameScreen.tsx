@@ -3,10 +3,9 @@ import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, Leaderboard, GoalSelectionModal, TraitRevealModal } from '@components/game'
+import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, ResearchLab, Leaderboard, GoalSelectionModal, TraitRevealModal, MarketHistory } from '@components/game'
 import { findTrait } from '@game/traits'
 import { calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
-import { formatMoney } from '@game/utils'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
 import GOALS_DATA from '@game/data/goals.json'
 
@@ -19,6 +18,7 @@ const SECTOR_NAMES: Record<Sector, string> = {
   energy: '에너지',
   information: '정보',
   finance: '금융',
+  rnd: '연구개발',
 }
 
 // 지배력 레벨 한국어 표시
@@ -37,8 +37,8 @@ const DOMINANCE_COLORS: Record<DominanceLevel, string> = {
 
 // 섹터 트렌드
 const TREND_LABELS: Record<SectorTrend, string> = {
-  hot: '🔥 뜨거움',
-  neutral: '➖ 중립',
+  hot: '🔥 과열',
+  neutral: '➖ 보통',
   cold: '❄️ 침체',
 }
 const TREND_COLORS: Record<SectorTrend, string> = {
@@ -51,12 +51,14 @@ const TREND_COLORS: Record<SectorTrend, string> = {
 const MARKET_LABELS = { boom: '📈 호황', stable: '➖ 보합', recession: '📉 불황' }
 const MARKET_COLORS = { boom: 'text-emerald-400', stable: 'text-slate-300', recession: 'text-red-400' }
 
-type PlanningView = 'summary' | 'market' | 'portfolio' | 'research'
+type PlanningView = 'summary' | 'market' | 'portfolio' | 'research' | 'lab'
 
 /** 메인 게임 화면 — 페이즈에 따라 다른 콘텐츠 렌더링 */
 export function GameScreen() {
   const [planningView, setPlanningView] = useState<PlanningView>('summary')
   const [traitsAcknowledged, setTraitsAcknowledged] = useState(false)
+  const [showMarketHistory, setShowMarketHistory] = useState(false)
+  const [labSector, setLabSector] = useState<Sector | undefined>(undefined)
 
   // 개별 셀렉터로 성능 최적화
   const gameState = useGameStore((s) => s.gameState)
@@ -142,13 +144,24 @@ export function GameScreen() {
               {planningView === 'summary' && (
                 <div className="space-y-4">
                   {/* 시장 상세 */}
-                  <Card header={<GlossaryText>시장 상황</GlossaryText>}>
+                  <Card header={
+                    <div className="flex items-center justify-between w-full">
+                      <GlossaryText>시장 상황</GlossaryText>
+                      <button
+                        onClick={() => setShowMarketHistory(v => !v)}
+                        className="text-[10px] px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+                      >
+                        {showMarketHistory ? '기록 접기' : '기록 보기'}
+                      </button>
+                    </div>
+                  }>
                     <StatRow
                       label={<GlossaryText>경기</GlossaryText>}
                       value={<span className={MARKET_COLORS[gameState.market.condition]}><GlossaryText>{MARKET_LABELS[gameState.market.condition]}</GlossaryText></span>}
                     />
                     <StatRow label={<GlossaryText>남은 턴</GlossaryText>} value={`${gameState.market.turnsRemaining}턴`} />
                     <StatRow label={<GlossaryText>변동성</GlossaryText>} value={`${Math.round(gameState.market.volatility * 100)}%`} />
+                    {showMarketHistory && <MarketHistory gameState={gameState} />}
                   </Card>
 
                   {/* 정부 정책 — 항시 표시 */}
@@ -179,9 +192,14 @@ export function GameScreen() {
                         <StatRow label={<GlossaryText>총 수익</GlossaryText>} value={<MoneyDisplay amount={income.revenue} size="sm" showSign getBreakdown={() => getRevenueBreakdown(player, gameState)} />} />
                         <StatRow label={<GlossaryText>기본 지출</GlossaryText>} value={<MoneyDisplay amount={-income.expenses} size="sm" showSign getBreakdown={() => getExpenseBreakdown(player, gameState)} />} />
                         <StatRow label={<GlossaryText>순수익</GlossaryText>} value={
-                          <span className={income.net >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                            {income.net >= 0 ? '+' : ''}{formatMoney(income.net)}/턴
-                          </span>
+                          <MoneyDisplay amount={income.net} size="sm" showSign getBreakdown={() => ({
+                            title: '순수익',
+                            items: [
+                              { label: '자산 수익', value: income.revenue, type: 'base' },
+                              { label: '지출', value: -income.expenses, type: 'add' },
+                            ],
+                            final: income.net,
+                          })} />
                         } />
                       </Card>
                     )
@@ -210,14 +228,14 @@ export function GameScreen() {
                               <span className="text-slate-500 ml-1">({sectorState.turnsRemaining}턴)</span>
                             </span>
                             <span className="flex items-center gap-1 text-xs">
-                              <span className="text-emerald-400">호황x{SECTOR_MARKET_MULTIPLIER[sector].boom}</span>
+                              <span className="text-emerald-400"><GlossaryText>호황</GlossaryText>x{SECTOR_MARKET_MULTIPLIER[sector].boom}</span>
                               <span className={
                                 SECTOR_MARKET_MULTIPLIER[sector].recession < 0.5
                                   ? 'text-red-400'
                                   : SECTOR_MARKET_MULTIPLIER[sector].recession >= 0.8
                                     ? 'text-emerald-400'
                                     : 'text-orange-400'
-                              }>불황x{SECTOR_MARKET_MULTIPLIER[sector].recession}</span>
+                              }><GlossaryText>불황</GlossaryText>x{SECTOR_MARKET_MULTIPLIER[sector].recession}</span>
                             </span>
                             <span className={`min-w-[3rem] text-right ${isActive ? DOMINANCE_COLORS[info.level] : 'text-slate-600'}`}>
                               <GlossaryText>{isActive ? DOMINANCE_LABELS[info.level] : '미진출'}</GlossaryText>
@@ -253,10 +271,21 @@ export function GameScreen() {
               )}
 
               {planningView === 'market' && <AssetMarket />}
-              {planningView === 'portfolio' && <Portfolio />}
+              {planningView === 'portfolio' && (
+                <Portfolio onResearchNavigate={(sector) => {
+                  setLabSector(sector)
+                  setPlanningView('lab')
+                }} />
+              )}
               {planningView === 'research' && (
                 <ResearchPanel
                   onResearch={(target, sector) => submitAction({ type: 'research', target, sector })}
+                />
+              )}
+              {planningView === 'lab' && (
+                <ResearchLab
+                  selectedSector={labSector}
+                  onSectorSelect={setLabSector}
                 />
               )}
             </div>
@@ -299,6 +328,7 @@ export function GameScreen() {
             onPortfolio={() => setPlanningView('portfolio')}
             onSummary={() => setPlanningView('summary')}
             onResearch={() => setPlanningView('research')}
+            onLab={() => { setLabSector(undefined); setPlanningView('lab') }}
             onEndTurn={() => submitAction({ type: 'endTurn' })}
           />
         </>

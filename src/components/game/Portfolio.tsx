@@ -1,9 +1,9 @@
 import { useGameStore } from '@stores/gameStore'
-import { findSector, calculateDominance, formatMoney } from '@game/index'
-import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
-import { Card, MoneyDisplay, Badge } from '@components/common'
+import { findSector, calculateDominance, formatMoney, getAssetIncomeBreakdown, getSellPriceBreakdown } from '@game/index'
+import { SECTOR_MAX_UPGRADE_LEVEL } from '@game/index'
+import type { Sector, SectorTrend, DominanceLevel, MoneyBreakdown } from '@game/index'
+import { Card, MoneyDisplay, Badge, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import { OwnedAssetRow } from './OwnedAssetRow'
 
 // 섹터 한국어 라벨
 const SECTOR_LABEL: Record<Sector, string> = {
@@ -14,13 +14,21 @@ const SECTOR_LABEL: Record<Sector, string> = {
   energy: '에너지',
   information: '정보',
   finance: '금융',
+  rnd: '연구개발',
 }
 
 // 섹터 트렌드 → Badge 매핑
 const TREND_LABEL: Record<SectorTrend, { variant: 'boom' | 'stable' | 'recession'; text: string }> = {
-  hot: { variant: 'boom', text: '호황' },
+  hot: { variant: 'boom', text: '과열' },
   neutral: { variant: 'stable', text: '보통' },
   cold: { variant: 'recession', text: '침체' },
+}
+
+// 트렌드 방향 표시
+const TREND_ARROW: Record<SectorTrend, { symbol: string; color: string }> = {
+  hot: { symbol: '↑', color: 'text-red-400' },
+  neutral: { symbol: '→', color: 'text-slate-400' },
+  cold: { symbol: '↓', color: 'text-blue-400' },
 }
 
 // 지배력 표시
@@ -30,8 +38,32 @@ const DOMINANCE_LABEL: Record<DominanceLevel, { text: string; color: string }> =
   dominant: { text: '지배', color: 'text-money-400' },
 }
 
+/** 섹터 그룹 합산 소득 breakdown 생성 */
+function getSectorIncomeBreakdown(
+  items: { owned: Parameters<typeof getAssetIncomeBreakdown>[0]; index: number }[],
+  gameState: Parameters<typeof getAssetIncomeBreakdown>[1],
+  player: Parameters<typeof getAssetIncomeBreakdown>[2],
+): MoneyBreakdown {
+  const breakdowns = items.map(({ owned }) => getAssetIncomeBreakdown(owned, gameState, player))
+  const total = breakdowns.reduce((sum, b) => sum + b.final, 0)
+
+  return {
+    title: `섹터 소득 합계 (${items.length}구좌)`,
+    items: breakdowns.map((b, i) => ({
+      label: `구좌 ${i + 1} (턴${items[i].owned.purchaseTurn})`,
+      value: b.final,
+      type: 'add' as const,
+    })),
+    final: total,
+  }
+}
+
+interface PortfolioProps {
+  onResearchNavigate?: (sector: Sector) => void
+}
+
 /** 보유 자산 포트폴리오 카드 (섹터별 그룹핑) */
-export function Portfolio() {
+export function Portfolio({ onResearchNavigate }: PortfolioProps) {
   const gameState = useGameStore((s) => s.gameState)
   const submitAction = useGameStore((s) => s.submitAction)
 
@@ -63,7 +95,7 @@ export function Portfolio() {
       ) : (
         <>
           {/* 총 자산 요약 */}
-          <div className="px-3 py-2 mb-2 bg-slate-800/50 rounded space-y-1">
+          <div className="px-3 py-2 mb-3 bg-slate-800/50 rounded space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400"><GlossaryText>총 매입 비용</GlossaryText></span>
               <MoneyDisplay amount={totalCost} size="sm" />
@@ -81,43 +113,110 @@ export function Portfolio() {
           </div>
 
           {/* 섹터별 그룹 */}
-          {Array.from(bySector.entries()).map(([sector, items]) => {
-            const profile = findSector(sector)
-            const sectorUpgradeLevel = player.sectorUpgrades?.[sector] ?? 0
-            return (
-              <div key={sector} className="mb-2">
-                <div className="px-3 py-1.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-500 uppercase">
-                      <GlossaryText>{SECTOR_LABEL[sector]}</GlossaryText> ({items.length}구좌)
+          <div className="space-y-3">
+            {Array.from(bySector.entries()).map(([sector, items]) => {
+              const profile = findSector(sector)
+              const sectorUpgradeLevel = player.sectorUpgrades?.[sector] ?? 0
+              const maxLevel = SECTOR_MAX_UPGRADE_LEVEL
+              const isMaxLevel = sectorUpgradeLevel >= maxLevel
+              const trend = sectorStates[sector].trend
+
+              // 섹터 그룹 합계 소득 breakdown
+              const sectorIncomeBreakdown = getSectorIncomeBreakdown(items, gameState, player)
+
+              return (
+                <div key={sector} className="bg-slate-800/40 rounded-lg border border-slate-700/50 overflow-hidden">
+                  {/* 섹터 그룹 헤더 */}
+                  <div className="px-3 py-2 flex flex-wrap items-center gap-2 bg-slate-800/60">
+                    <span className="text-sm font-semibold text-slate-200">
+                      {profile?.icon} <GlossaryText>{SECTOR_LABEL[sector]}</GlossaryText>
                     </span>
+                    <span className="text-xs text-slate-500">{items.length}구좌</span>
                     <Badge
-                      variant={TREND_LABEL[sectorStates[sector].trend].variant}
-                      label={TREND_LABEL[sectorStates[sector].trend].text}
+                      variant={TREND_LABEL[trend].variant}
+                      label={<GlossaryText>{TREND_LABEL[trend].text}</GlossaryText>}
                     />
+                    {sectorUpgradeLevel > 0 && (
+                      <span className="text-xs text-amber-400 font-medium">
+                        <GlossaryText>{`Lv.${sectorUpgradeLevel}/${maxLevel}`}</GlossaryText>
+                      </span>
+                    )}
+                    {dominanceMap[sector]?.level !== 'entrant' && (
+                      <span className={`text-xs font-medium ${DOMINANCE_LABEL[dominanceMap[sector].level].color}`}>
+                        <GlossaryText>{DOMINANCE_LABEL[dominanceMap[sector].level].text}</GlossaryText>
+                      </span>
+                    )}
+                    {/* 우측: 소득 합계 + 강화 */}
+                    <div className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-slate-400">
+                        소득{' '}
+                        <MoneyDisplay amount={sectorIncomeBreakdown.final} size="sm" getBreakdown={() => sectorIncomeBreakdown} />
+                        /턴
+                      </span>
+                      {isMaxLevel ? (
+                        <span className="text-xs text-amber-400 font-medium">최대</span>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => onResearchNavigate?.(sector)}
+                        >
+                          🔬 연구 Lv.{sectorUpgradeLevel}
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  {dominanceMap[sector]?.level !== 'entrant' && (
-                    <span className={`text-xs font-medium ${DOMINANCE_LABEL[dominanceMap[sector].level].color}`}>
-                      {DOMINANCE_LABEL[dominanceMap[sector].level].text}
-                    </span>
-                  )}
+
+                  {/* 구좌 목록 */}
+                  {items.map(({ owned, index }) => {
+                    const incomeBreakdown = getAssetIncomeBreakdown(owned, gameState, player)
+                    const sellBreakdown = getSellPriceBreakdown(owned, gameState, player)
+
+                    return (
+                      <div
+                        key={`${sector}-${index}`}
+                        className="flex flex-wrap items-center justify-between px-3 py-2 border-t border-slate-700/50"
+                      >
+                        {/* 좌측: 매입 정보 + 소득 */}
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="text-xs text-slate-500 truncate">
+                            <GlossaryText>{`매입 ${formatMoney(owned.purchasePrice)}`}</GlossaryText>
+                            {` (턴${owned.purchaseTurn})`}
+                            {' · 소득 '}
+                            <MoneyDisplay amount={incomeBreakdown.final} size="sm" getBreakdown={() => incomeBreakdown} />
+                            /턴
+                          </span>
+                        </div>
+
+                        {/* 우측: 현재 가치 (히스토리 차트) + 매각가 + 매각 버튼 */}
+                        <div className="flex items-center gap-2">
+                          <MoneyDisplay
+                            amount={owned.currentValue}
+                            size="sm"
+                            getBreakdown={() => ({
+                              title: '자산 가치 변동',
+                              items: [
+                                { label: '매입가', value: owned.purchasePrice, type: 'base' },
+                                { label: '평가 손익', value: owned.currentValue - owned.purchasePrice, type: 'add' },
+                              ],
+                              final: owned.currentValue,
+                              history: owned.valueHistory,
+                              maxValue: Math.max(...(owned.valueHistory.length > 0 ? owned.valueHistory : [owned.currentValue])) * 1.2,
+                            })}
+                          />
+                          <span className={`text-sm ${TREND_ARROW[trend].color}`}>{TREND_ARROW[trend].symbol}</span>
+                          <Button variant="danger" size="sm" onClick={() => submitAction({ type: 'sell', ownedIndex: index })}>
+                            <MoneyDisplay amount={sellBreakdown.final} size="sm" getBreakdown={() => sellBreakdown} />
+                            {' '}매각
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                {items.map(({ owned, index }, i) => (
-                  <OwnedAssetRow
-                    key={`${sector}-${index}`}
-                    owned={owned}
-                    asset={profile!}
-                    index={index}
-                    sectorTrend={sectorStates[sector].trend}
-                    sectorUpgradeLevel={sectorUpgradeLevel}
-                    onSell={(idx) => submitAction({ type: 'sell', ownedIndex: idx })}
-                    onSectorUpgrade={(s) => submitAction({ type: 'sectorUpgrade', sector: s as Sector })}
-                    showUpgradeButton={i === 0}
-                  />
-                ))}
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </>
       )}
     </Card>
