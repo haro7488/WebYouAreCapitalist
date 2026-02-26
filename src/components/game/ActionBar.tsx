@@ -1,8 +1,7 @@
 import { Button } from '@components/common'
 import { LayoutDashboard, Briefcase, Store, Search, SkipForward } from 'lucide-react'
 import { useGameStore } from '@stores/gameStore'
-import { ASSETS } from '@game/constants'
-import type { OwnedAsset } from '@game/types'
+import { INFORMATION_SECTOR } from '@game/index'
 
 type ViewType = 'summary' | 'market' | 'portfolio' | 'research'
 
@@ -19,12 +18,9 @@ interface ActionBarProps {
 export function ActionBar({ activeView = 'summary', onSummary, onPortfolio, onMarket, onResearch, onEndTurn }: ActionBarProps) {
   const gameState = useGameStore((s) => s.gameState)
 
-  // 정보 자산 개수 계산
+  // 정보 자산 개수 계산 (assetId가 곧 Sector)
   const infoAssetCount = gameState?.companies[0].assets.filter(
-    (ownedAsset: OwnedAsset) => {
-      const assetData = ASSETS.find(a => a.id === ownedAsset.assetId)
-      return assetData?.sector === 'information'
-    }
+    (ownedAsset) => ownedAsset.assetId === INFORMATION_SECTOR
   ).length ?? 0
 
   // 이번 턴 조사 횟수

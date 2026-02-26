@@ -3,8 +3,8 @@ import { Card, Badge } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { TrendingUp, BarChart3, AlertCircle, AlertTriangle, ClipboardList, Landmark } from 'lucide-react'
 import { useGameStore } from '@stores/gameStore'
-import { ASSETS } from '@game/constants'
-import type { ResearchResult, Sector, SectorTrend, OwnedAsset } from '@game/index'
+import { INFORMATION_SECTOR } from '@game/index'
+import type { ResearchResult, Sector, SectorTrend } from '@game/index'
 import type { ResearchRecord } from '@game/types'
 
 // 섹터 한국어 이름
@@ -42,12 +42,9 @@ export function ResearchPanel({ onResearch }: ResearchPanelProps) {
   const [showSectorSelect, setShowSectorSelect] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState<ResearchRecord | null>(null)
 
-  // 정보 자산 개수 및 남은 조사 횟수 계산
+  // 정보 자산 개수 및 남은 조사 횟수 계산 (assetId가 곧 Sector)
   const infoAssetCount = gameState?.companies[0].assets.filter(
-    (ownedAsset: OwnedAsset) => {
-      const assetData = ASSETS.find(a => a.id === ownedAsset.assetId)
-      return assetData?.sector === 'information'
-    }
+    (ownedAsset) => ownedAsset.assetId === INFORMATION_SECTOR
   ).length ?? 0
 
   const researchCount = gameState?.companies[0].actionsThisTurn.filter(

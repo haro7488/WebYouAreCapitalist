@@ -2,7 +2,7 @@ import { Card, MoneyDisplay, StatRow, Badge, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { TraitBar } from './TraitDisplay'
 import { useGameStore } from '@stores/gameStore'
-import { ASSETS, getNetWorthBreakdown } from '@game/index'
+import { findSector, getNetWorthBreakdown, INFORMATION_SECTOR } from '@game/index'
 import type { Company, Sector, ResearchResult } from '@game/types'
 import { TRAIT_REGISTRY, type Trait } from '@game/traits'
 
@@ -33,8 +33,7 @@ const SECTOR_NAMES: Record<Sector, string> = {
   finance: '💰 금융',
 }
 
-// 업그레이드 레벨 표시용 헬퍼
-const UPGRADE_LABELS = ['기본', '레벨1', '레벨2', '레벨3']
+// (업그레이드는 섹터 레벨로 이동, 개별 자산 레벨 없음)
 
 interface CompanyDetailProps {
   company: Company
@@ -60,10 +59,7 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
 
   // 조사 가능 여부 계산
   const player = gameState?.companies[0]
-  const infoAssetCount = player?.assets.filter(a => {
-    const def = ASSETS.find(d => d.id === a.assetId)
-    return def?.sector === 'information'
-  }).length ?? 0
+  const infoAssetCount = player?.assets.filter(a => a.assetId === INFORMATION_SECTOR).length ?? 0
   const researchUsed = player?.actionsThisTurn.filter(a => a.type === 'research').length ?? 0
   const remainingResearch = Math.max(0, infoAssetCount - researchUsed)
   const canResearch = remainingResearch > 0 && gameState?.phase === 'planning'
@@ -88,8 +84,7 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
     ? (latestStrategyRecord.result as Extract<ResearchResult, { type: 'strategy' }>)
     : null
 
-  // assetId → Asset 이름/섹터 조회를 위한 맵
-  const assetMap = Object.fromEntries(ASSETS.map((a) => [a.id, a]))
+  // assetId → SectorProfile 조회 (assetId가 곧 Sector)
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center" onClick={onClose}>
@@ -177,18 +172,15 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
                   ) : (
                     <div className="space-y-1">
                       {competitorResult.assets.map((owned, idx) => {
-                        const asset = assetMap[owned.assetId]
+                        const profile = findSector(owned.assetId as Sector)
                         return (
                           <div key={idx} className="flex items-center justify-between py-1 border-b border-slate-700 last:border-0">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-slate-200 truncate">
-                                {asset?.name ?? owned.assetId}
+                                {profile?.name ?? owned.assetId}
                               </p>
                               <p className="text-xs text-slate-500">
-                                {asset ? SECTOR_NAMES[asset.sector] : ''}{' '}
-                                {owned.upgradeLevel > 0 && (
-                                  <span className="text-amber-500">{UPGRADE_LABELS[owned.upgradeLevel] ?? `Lv${owned.upgradeLevel}`}</span>
-                                )}
+                                {profile ? SECTOR_NAMES[owned.assetId as Sector] : ''}
                               </p>
                             </div>
                             <MoneyDisplay amount={owned.currentValue} size="sm" />

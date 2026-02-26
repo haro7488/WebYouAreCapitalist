@@ -1,7 +1,7 @@
 import { useGameStore } from '@stores/gameStore'
 import { Card, Button, Badge, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import { calculateDominance, ASSETS, findTrait } from '@game/index'
+import { calculateDominance, findSector, findTrait } from '@game/index'
 import { getCompanyTraitEffects } from '@game/logic/traitEngine'
 import type { EventEffect } from '@game/types'
 
@@ -71,8 +71,8 @@ function EffectPreview({ effect }: { effect: EventEffect }) {
   }
 
   if (effect.freeAsset) {
-    const asset = ASSETS.find((a) => a.id === effect.freeAsset)
-    const assetName = asset ? asset.name : effect.freeAsset
+    const sectorProfile = findSector(effect.freeAsset)
+    const assetName = sectorProfile ? sectorProfile.name : effect.freeAsset
     items.push(
       <span key="freeAsset" className="text-emerald-400">
         🎁 {assetName} 획득

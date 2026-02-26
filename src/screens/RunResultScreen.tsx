@@ -3,7 +3,7 @@ import { RankingChart } from '@components/game/RankingChart'
 import { HistoryChart } from '@components/game/HistoryChart'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
-import { ASSETS } from '@game/index'
+import { findSector } from '@game/index'
 import type { Sector } from '@game/index'
 
 // 섹터 한국어 이름 매핑
@@ -41,14 +41,21 @@ export function RunResultScreen() {
     companyRevenueHistories,
   } = lastRunResult
 
-  // 보유 자산을 섹터별로 그룹핑
-  const assetsBySector = ownedAssets.reduce<Record<string, { name: string; currentValue: number }[]>>(
+  // 보유 자산을 섹터별로 그룹핑 (assetId가 곧 Sector)
+  const assetsBySector = ownedAssets.reduce<Record<string, { name: string; currentValue: number; count: number }[]>>(
     (acc, owned) => {
-      const asset = ASSETS.find((a) => a.id === owned.assetId)
-      if (!asset) return acc
-      const key = asset.sector
-      if (!acc[key]) acc[key] = []
-      acc[key].push({ name: asset.name, currentValue: owned.currentValue })
+      const sector = owned.assetId
+      const profile = findSector(sector)
+      if (!profile) return acc
+      // 같은 섹터는 합산
+      if (!acc[sector]) acc[sector] = []
+      const existing = acc[sector].find(e => e.name === profile.name)
+      if (existing) {
+        existing.currentValue += owned.currentValue
+        existing.count++
+      } else {
+        acc[sector].push({ name: profile.name, currentValue: owned.currentValue, count: 1 })
+      }
       return acc
     },
     {},
@@ -161,7 +168,7 @@ export function RunResultScreen() {
                 {assets.map((asset) => (
                   <StatRow
                     key={asset.name}
-                    label={asset.name}
+                    label={`${asset.name}${asset.count > 1 ? ` ×${asset.count}` : ''}`}
                     value={<MoneyDisplay amount={asset.currentValue} />}
                   />
                 ))}

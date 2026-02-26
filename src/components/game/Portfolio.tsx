@@ -1,5 +1,5 @@
 import { useGameStore } from '@stores/gameStore'
-import { ASSETS, calculateDominance, formatMoney } from '@game/index'
+import { findSector, calculateDominance, formatMoney } from '@game/index'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
 import { Card, MoneyDisplay, Badge } from '@components/common'
 import { GlossaryText } from '@components/glossary'
@@ -42,17 +42,13 @@ export function Portfolio() {
   const { sectorStates } = gameState
   const dominanceMap = calculateDominance(ownedAssets)
 
-  // 자산 ID → 정의 매핑
-  const assetMap = new Map(ASSETS.map((a) => [a.id, a]))
-
-  // 섹터별 그룹핑
+  // 섹터별 그룹핑 (assetId가 곧 Sector)
   const bySector = new Map<Sector, { owned: typeof ownedAssets[number]; index: number }[]>()
   ownedAssets.forEach((owned, index) => {
-    const asset = assetMap.get(owned.assetId)
-    if (!asset) return
-    const list = bySector.get(asset.sector) ?? []
+    const sector = owned.assetId as Sector
+    const list = bySector.get(sector) ?? []
     list.push({ owned, index })
-    bySector.set(asset.sector, list)
+    bySector.set(sector, list)
   })
 
   // 총 자산 가치 / 총 매입 비용
@@ -61,7 +57,7 @@ export function Portfolio() {
   const totalPnL = totalValue - totalCost
 
   return (
-    <Card header={<>내 <GlossaryText>포트폴리오</GlossaryText> ({ownedAssets.length}개)</>}>
+    <Card header={<>내 <GlossaryText>포트폴리오</GlossaryText> ({ownedAssets.length}구좌)</>}>
       {ownedAssets.length === 0 ? (
         <p className="text-slate-500 text-center py-8"><GlossaryText>보유 자산이 없습니다</GlossaryText></p>
       ) : (
@@ -85,41 +81,43 @@ export function Portfolio() {
           </div>
 
           {/* 섹터별 그룹 */}
-          {Array.from(bySector.entries()).map(([sector, items]) => (
-            <div key={sector} className="mb-2">
-              <div className="px-3 py-1.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-slate-500 uppercase">
-                    <GlossaryText>{SECTOR_LABEL[sector]}</GlossaryText> ({items.length})
-                  </span>
-                  <Badge
-                    variant={TREND_LABEL[sectorStates[sector].trend].variant}
-                    label={TREND_LABEL[sectorStates[sector].trend].text}
-                  />
+          {Array.from(bySector.entries()).map(([sector, items]) => {
+            const profile = findSector(sector)
+            const sectorUpgradeLevel = player.sectorUpgrades?.[sector] ?? 0
+            return (
+              <div key={sector} className="mb-2">
+                <div className="px-3 py-1.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-500 uppercase">
+                      <GlossaryText>{SECTOR_LABEL[sector]}</GlossaryText> ({items.length}구좌)
+                    </span>
+                    <Badge
+                      variant={TREND_LABEL[sectorStates[sector].trend].variant}
+                      label={TREND_LABEL[sectorStates[sector].trend].text}
+                    />
+                  </div>
+                  {dominanceMap[sector]?.level !== 'entrant' && (
+                    <span className={`text-xs font-medium ${DOMINANCE_LABEL[dominanceMap[sector].level].color}`}>
+                      {DOMINANCE_LABEL[dominanceMap[sector].level].text}
+                    </span>
+                  )}
                 </div>
-                {dominanceMap[sector]?.level !== 'entrant' && (
-                  <span className={`text-xs font-medium ${DOMINANCE_LABEL[dominanceMap[sector].level].color}`}>
-                    {DOMINANCE_LABEL[dominanceMap[sector].level].text}
-                  </span>
-                )}
-              </div>
-              {items.map(({ owned, index }) => {
-                const def = assetMap.get(owned.assetId)
-                if (!def) return null
-                return (
+                {items.map(({ owned, index }, i) => (
                   <OwnedAssetRow
-                    key={`${owned.assetId}-${index}`}
+                    key={`${sector}-${index}`}
                     owned={owned}
-                    asset={def}
+                    asset={profile!}
                     index={index}
-                    sectorTrend={sectorStates[def.sector].trend}
-                    onSell={(idx) => submitAction({ type: 'sell', ownedIndex: idx, assetId: owned.assetId })}
-                    onUpgrade={(idx) => submitAction({ type: 'upgrade', ownedIndex: idx, assetId: owned.assetId })}
+                    sectorTrend={sectorStates[sector].trend}
+                    sectorUpgradeLevel={sectorUpgradeLevel}
+                    onSell={(idx) => submitAction({ type: 'sell', ownedIndex: idx })}
+                    onSectorUpgrade={(s) => submitAction({ type: 'sectorUpgrade', sector: s as Sector })}
+                    showUpgradeButton={i === 0}
                   />
-                )
-              })}
-            </div>
-          ))}
+                ))}
+              </div>
+            )
+          })}
         </>
       )}
     </Card>

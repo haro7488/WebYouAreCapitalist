@@ -162,7 +162,7 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: PERSIST_KEY,
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       // gameState와 isRunActive만 저장 (lastRunResult 제외)
       partialize: (state) => ({

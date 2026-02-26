@@ -3,7 +3,8 @@ import { Card, StatRow, MoneyDisplay, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { MarketIndicator } from './MarketIndicator'
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react'
-import { ASSETS, getCompanyRank, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
+import { findSector, getCompanyRank, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
+import type { Sector, TurnAction } from '@game/index'
 
 /** 턴 결과 요약 카드 */
 export function TurnResult() {
@@ -97,44 +98,40 @@ export function TurnResult() {
         }
 
         const competitors = gameState.companies.slice(1)
-        const assetMap = new Map(ASSETS.map((a) => [a.id, a]))
 
-        // buy/sell/upgrade 액션을 모두 수집하고 아이콘·색상·메시지를 결정
+        // buy/sell/sectorUpgrade 액션을 수집하고 아이콘·색상·메시지를 결정
         const actions = competitors.flatMap((c) =>
           c.actionsThisTurn
             .filter(
               (a): a is
-                | { type: 'buy'; assetId: string }
-                | { type: 'sell'; ownedIndex: number; assetId: string }
-                | { type: 'upgrade'; ownedIndex: number; assetId: string } =>
-                a.type === 'buy' || a.type === 'sell' || a.type === 'upgrade',
+                | Extract<TurnAction, { type: 'buy' }>
+                | Extract<TurnAction, { type: 'sell' }>
+                | Extract<TurnAction, { type: 'sectorUpgrade' }> =>
+                a.type === 'buy' || a.type === 'sell' || a.type === 'sectorUpgrade',
             )
             .map((a) => {
-              const asset = assetMap.get(a.assetId)
-              if (!asset) return null
-
               if (a.type === 'buy') {
+                const profile = findSector(a.sector)
                 return {
                   icon: '📈',
                   colorClass: 'text-green-400',
-                  msg: `${c.name}이(가) ${SECTOR_NAMES[asset.sector] ?? asset.sector} 섹터에 투자`,
+                  msg: `${c.name}이(가) ${SECTOR_NAMES[a.sector] ?? a.sector} 섹터에 투자`,
                 }
               } else if (a.type === 'sell') {
                 return {
                   icon: '📉',
                   colorClass: 'text-red-400',
-                  msg: `${c.name}이(가) ${asset.name}을(를) 매각`,
+                  msg: `${c.name}이(가) 자산을 매각`,
                 }
               } else {
-                // upgrade
+                // sectorUpgrade
                 return {
                   icon: '⬆️',
                   colorClass: 'text-blue-400',
-                  msg: `${c.name}이(가) ${asset.name}을(를) 강화`,
+                  msg: `${c.name}이(가) ${SECTOR_NAMES[a.sector] ?? a.sector} 섹터를 강화`,
                 }
               }
-            })
-            .filter(Boolean),
+            }),
         ) as { icon: string; colorClass: string; msg: string }[]
 
         if (actions.length === 0) return null
