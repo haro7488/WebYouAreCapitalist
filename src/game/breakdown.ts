@@ -75,7 +75,14 @@ export function getPurchaseCostBreakdown(
     items.push({ label: '할인율', value: 1 - totalDiscount, type: 'multiply' })
   }
 
-  return { title: '매입 비용', items, final: cost }
+  const priceHistory = state.sectorPriceHistory?.[sector] ?? []
+  return {
+    title: '매입 비용',
+    items,
+    final: cost,
+    history: priceHistory.length > 0 ? priceHistory : undefined,
+    maxValue: priceHistory.length > 0 ? Math.max(...priceHistory, cost) * 1.2 : undefined,
+  }
 }
 
 /** 소득유형 표시명 */
@@ -197,7 +204,17 @@ export function getSellPriceBreakdown(
     items.push({ label: '빠른 손절 보너스', value: 1 + traitEffects.sellBonus, type: 'multiply' })
   }
 
-  return { title: '매각가', items, final: sellValue }
+  // 가치 히스토리 기반 매각가 추이 (현재 매각 비율 적용)
+  const sellRatio = (SELL_BASE_RATIO + SELL_MARKET_RATIO * marketMult) * (1 - traitEffects.sellPenalty) * (1 + traitEffects.sellBonus)
+  const sellHistory = (owned.valueHistory ?? []).map(v => Math.floor(v * sellRatio))
+
+  return {
+    title: '매각가',
+    items,
+    final: sellValue,
+    history: sellHistory.length > 0 ? sellHistory : undefined,
+    maxValue: sellHistory.length > 0 ? Math.max(...sellHistory, sellValue) * 1.2 : undefined,
+  }
 }
 
 /** 수익 분해 */

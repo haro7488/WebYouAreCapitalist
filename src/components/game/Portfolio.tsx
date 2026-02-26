@@ -47,6 +47,19 @@ function getSectorIncomeBreakdown(
   const breakdowns = items.map(({ owned }) => getAssetIncomeBreakdown(owned, gameState, player))
   const total = breakdowns.reduce((sum, b) => sum + b.final, 0)
 
+  // 섹터 자산 가치 합산 히스토리 (우측 정렬)
+  const histories = items.map(({ owned }) => owned.valueHistory ?? [])
+  const maxLen = Math.max(...histories.map(h => h.length), 0)
+  const combinedHistory: number[] = []
+  for (let i = 0; i < maxLen; i++) {
+    let sum = 0
+    for (const hist of histories) {
+      const offset = maxLen - hist.length
+      if (i >= offset) sum += hist[i - offset]
+    }
+    combinedHistory.push(sum)
+  }
+
   return {
     title: `섹터 소득 합계 (${items.length}구좌)`,
     items: breakdowns.map((b, i) => ({
@@ -55,6 +68,8 @@ function getSectorIncomeBreakdown(
       type: 'add' as const,
     })),
     final: total,
+    history: combinedHistory.length > 0 ? combinedHistory : undefined,
+    maxValue: combinedHistory.length > 0 ? Math.max(...combinedHistory, total) * 1.2 : undefined,
   }
 }
 
@@ -98,11 +113,35 @@ export function Portfolio({ onResearchNavigate }: PortfolioProps) {
           <div className="px-3 py-2 mb-3 bg-slate-800/50 rounded space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400"><GlossaryText>총 매입 비용</GlossaryText></span>
-              <MoneyDisplay amount={totalCost} size="sm" />
+              <MoneyDisplay amount={totalCost} size="sm" getBreakdown={() => ({
+                title: '총 매입 비용',
+                items: ownedAssets.map((a) => ({
+                  label: `${SECTOR_LABEL[a.assetId as Sector]} (턴${a.purchaseTurn})`,
+                  value: a.purchasePrice,
+                  type: 'add' as const,
+                })),
+                final: totalCost,
+              })} />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400"><GlossaryText>총 자산 가치</GlossaryText></span>
-              <MoneyDisplay amount={totalValue} size="sm" />
+              <MoneyDisplay amount={totalValue} size="sm" getBreakdown={() => {
+                // 자산 가치 히스토리 = 순자산 - 현금
+                const nwHist = player.netWorthHistory ?? []
+                const cashHist = player.cashHistory ?? []
+                const assetHist = nwHist.map((nw, i) => Math.max(0, nw - (cashHist[i] ?? 0)))
+                return {
+                  title: '총 자산 가치',
+                  items: ownedAssets.map((a) => ({
+                    label: `${SECTOR_LABEL[a.assetId as Sector]}`,
+                    value: a.currentValue,
+                    type: 'add' as const,
+                  })),
+                  final: totalValue,
+                  history: assetHist.length > 0 ? assetHist : undefined,
+                  maxValue: assetHist.length > 0 ? Math.max(...assetHist, totalValue) * 1.2 : undefined,
+                }
+              }} />
             </div>
             <div className="flex items-center justify-between border-t border-slate-700 pt-1">
               <span className="text-xs text-slate-400"><GlossaryText>평가 손익</GlossaryText></span>
