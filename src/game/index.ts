@@ -72,6 +72,7 @@ export { submitAction, submitEventChoice, processGovernmentPhase, submitGovernme
 
 // Economy
 export {
+  findSector,
   calculateNetIncome,
   calculateAssetIncome,
   calculateTotalAssetIncome,
@@ -80,6 +81,7 @@ export {
   calculateCompanyTotalIncome,
   calculateCompanyNetIncome,
   calculateDominance,
+  calculateGlobalDominance,
   calculateScore,
   getInfluenceTier,
   getCompanyRank,
@@ -88,6 +90,7 @@ export {
 
 // Breakdown
 export {
+  calculateCurrentPrice,
   getPurchaseCostBreakdown,
   getAssetIncomeBreakdown,
   getSellPriceBreakdown,
