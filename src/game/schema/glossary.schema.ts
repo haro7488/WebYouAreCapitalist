@@ -1,5 +1,92 @@
 import type { GlossaryCategory, GlossaryEntry } from '../glossary'
 import raw from '../data/glossary.json'
+import * as B from './balance.schema'
+
+// balance.json 수치를 glossary 설명에 주입하기 위한 토큰 맵
+// glossary.json에서 {{TOKEN_NAME}} 형태로 참조
+const TOKENS: Record<string, string> = {
+  // 기본 수치
+  STARTING_MONEY: B.STARTING_MONEY.toLocaleString(),
+  MAX_TURNS: String(B.MAX_TURNS),
+  BASE_EXPENSES: String(B.BASE_EXPENSES),
+  INITIAL_MARKET_POOL: B.INITIAL_MARKET_POOL.toLocaleString(),
+  EVENT_BASE_PROBABILITY: String(B.EVENT_BASE_PROBABILITY * 100),
+  BANKRUPTCY_INTEREST_RATE: String(B.BANKRUPTCY_INTEREST_RATE * 100),
+  META_CURRENCY_RATE: String(B.META_CURRENCY_RATE * 100),
+  SELL_BASE_RATIO: String(B.SELL_BASE_RATIO),
+  SELL_MARKET_RATIO: String(B.SELL_MARKET_RATIO),
+
+  // 영향력
+  INFLUENCE_DECAY_PER_TURN: String(B.INFLUENCE_DECAY_PER_TURN),
+  INFLUENCE_PER_PURCHASE: String(B.INFLUENCE_PER_PURCHASE),
+  INFLUENCE_DOMINANCE_BONUS: String(B.INFLUENCE_DOMINANCE_BONUS),
+  RANK_FIRST_INFLUENCE_BONUS: String(B.RANK_FIRST_INFLUENCE_BONUS),
+
+  // 섹터 강화
+  SECTOR_MAX_UPGRADE_LEVEL: String(B.SECTOR_MAX_UPGRADE_LEVEL),
+  SECTOR_UPGRADE_INCOME_MULTIPLIER: String(B.SECTOR_UPGRADE_INCOME_MULTIPLIER),
+  SECTOR_UPGRADE_COST_RATIO: String(B.SECTOR_UPGRADE_COST_RATIO * 100),
+
+  // 연구
+  RESEARCH_BASE_SUCCESS_RATE: String(B.RESEARCH_BASE_SUCCESS_RATE * 100),
+  RESEARCH_LEVEL_PENALTY: String(B.RESEARCH_LEVEL_PENALTY * 100),
+  RESEARCH_PITY_INCREMENT: String(B.RESEARCH_PITY_INCREMENT * 100),
+  RESEARCH_RND_LEVEL_BONUS: String(B.RESEARCH_RND_LEVEL_BONUS * 100),
+  RESEARCH_POINT_COST: String(B.RESEARCH_POINT_COST),
+
+  // 점수
+  SCORE_NETWORTH_WEIGHT: String(B.SCORE_NETWORTH_WEIGHT),
+  SCORE_INFLUENCE_WEIGHT: String(B.SCORE_INFLUENCE_WEIGHT),
+  SCORE_TURN_BONUS: String(B.SCORE_TURN_BONUS),
+  SCORE_DOMINANCE_BONUS: String(B.SCORE_DOMINANCE_BONUS),
+
+  // 지배력
+  DOMINANCE_COMPETITOR_COUNT: String(B.DOMINANCE_THRESHOLDS.competitor.count),
+  DOMINANCE_COMPETITOR_SHARE: String(B.DOMINANCE_THRESHOLDS.competitor.sharePercent * 100),
+  DOMINANCE_COMPETITOR_BONUS: String(B.DOMINANCE_THRESHOLDS.competitor.incomeBonus),
+  DOMINANCE_DOMINANT_COUNT: String(B.DOMINANCE_THRESHOLDS.dominant.count),
+  DOMINANCE_DOMINANT_SHARE: String(B.DOMINANCE_THRESHOLDS.dominant.sharePercent * 100),
+  DOMINANCE_DOMINANT_BONUS: String(B.DOMINANCE_THRESHOLDS.dominant.incomeBonus),
+
+  // 섹터 수요 프리미엄
+  DEMAND_PREMIUM_1: String((B.SECTOR_DEMAND_PREMIUM[1] ?? 0) * 100),
+  DEMAND_PREMIUM_2: String((B.SECTOR_DEMAND_PREMIUM[2] ?? 0) * 100),
+  DEMAND_PREMIUM_3: String((B.SECTOR_DEMAND_PREMIUM[3] ?? 0) * 100),
+
+  // 섹터별 시장 배율
+  FOOD_BOOM: String(B.SECTOR_MARKET_MULTIPLIER.food.boom),
+  FOOD_RECESSION: String(B.SECTOR_MARKET_MULTIPLIER.food.recession),
+  TECH_BOOM: String(B.SECTOR_MARKET_MULTIPLIER.tech.boom),
+  TECH_STABLE: String(B.SECTOR_MARKET_MULTIPLIER.tech.stable),
+  TECH_RECESSION: String(B.SECTOR_MARKET_MULTIPLIER.tech.recession),
+  REALESTATE_BOOM: String(B.SECTOR_MARKET_MULTIPLIER.realEstate.boom),
+  REALESTATE_STABLE: String(B.SECTOR_MARKET_MULTIPLIER.realEstate.stable),
+  REALESTATE_RECESSION: String(B.SECTOR_MARKET_MULTIPLIER.realEstate.recession),
+  LOGISTICS_BOOM: String(B.SECTOR_MARKET_MULTIPLIER.logistics.boom),
+  LOGISTICS_RECESSION: String(B.SECTOR_MARKET_MULTIPLIER.logistics.recession),
+  ENERGY_BOOM: String(B.SECTOR_MARKET_MULTIPLIER.energy.boom),
+  ENERGY_RECESSION: String(B.SECTOR_MARKET_MULTIPLIER.energy.recession),
+  FINANCE_BOOM: String(B.SECTOR_MARKET_MULTIPLIER.finance.boom),
+  FINANCE_STABLE: String(B.SECTOR_MARKET_MULTIPLIER.finance.stable),
+  FINANCE_RECESSION: String(B.SECTOR_MARKET_MULTIPLIER.finance.recession),
+  INFO_BOOM: String(B.SECTOR_MARKET_MULTIPLIER.information.boom),
+  INFO_RECESSION: String(B.SECTOR_MARKET_MULTIPLIER.information.recession),
+  RND_BOOM: String(B.SECTOR_MARKET_MULTIPLIER.rnd.boom),
+  RND_RECESSION: String(B.SECTOR_MARKET_MULTIPLIER.rnd.recession),
+
+  // 섹터 트렌드 배율
+  TREND_HOT: String(B.SECTOR_TREND_MULTIPLIER.hot),
+  TREND_COLD: String(B.SECTOR_TREND_MULTIPLIER.cold),
+}
+
+/** {{TOKEN}} 패턴을 실제 balance 값으로 치환 */
+function resolve(str: string): string {
+  return str.replace(/\{\{(\w+)\}\}/g, (_, k) => TOKENS[k] ?? `{{${k}}}`)
+}
 
 export const GLOSSARY_CATEGORIES = raw.categories as Record<GlossaryCategory, string>
-export const GLOSSARY: GlossaryEntry[] = raw.entries as GlossaryEntry[]
+export const GLOSSARY: GlossaryEntry[] = (raw.entries as GlossaryEntry[]).map(e => ({
+  ...e,
+  description: resolve(e.description),
+  formula: e.formula ? resolve(e.formula) : e.formula,
+}))
