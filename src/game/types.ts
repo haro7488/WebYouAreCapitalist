@@ -170,7 +170,7 @@ export interface Company {
   // 턴별 히스토리
   netWorthHistory: number[]
   revenueHistory: number[]
-  cashHistory: number[]
+  expenseHistory: number[]
 }
 
 // === 핵심 게임 상태 ===
@@ -305,6 +305,8 @@ export interface RunResult {
   rankings: RunResultRanking[] // 순자산 내림차순 정렬된 전체 기업 순위
   rankingHistory: number[][] // 턴별 기업 순위 기록
   companyNames: string[] // 기업명 (rankingHistory 인덱스 매칭)
+  companyNetWorthHistories: number[][] // 기업별 순자산 히스토리 [companyIdx][turnIdx]
+  companyRevenueHistories: number[][] // 기업별 수익 히스토리 [companyIdx][turnIdx]
   goalAchieved?: boolean
   goalBonus?: number
 }

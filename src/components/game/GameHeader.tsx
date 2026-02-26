@@ -73,7 +73,7 @@ export function GameHeader({ onHome }: GameHeaderProps) {
           </span>
           {/* 순자산: 모바일에서 숨김 */}
           <span className="hidden sm:inline-flex items-center gap-0.5" title="순자산">
-            💰 <MoneyDisplay amount={netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(player)} />
+            💰 <MoneyDisplay amount={netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(player, gameState)} />
           </span>
           {/* 예상수익: 모바일에서 숨김 */}
           <span className="hidden sm:inline-flex items-center gap-0.5" title="예상 수익">

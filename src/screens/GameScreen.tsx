@@ -3,7 +3,8 @@ import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, Leaderboard, GoalSelectionModal } from '@components/game'
+import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, Leaderboard, GoalSelectionModal, TraitRevealModal } from '@components/game'
+import { findTrait } from '@game/traits'
 import { calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
 import { formatMoney } from '@game/utils'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
@@ -55,6 +56,7 @@ type PlanningView = 'summary' | 'market' | 'portfolio' | 'research'
 /** 메인 게임 화면 — 페이즈에 따라 다른 콘텐츠 렌더링 */
 export function GameScreen() {
   const [planningView, setPlanningView] = useState<PlanningView>('summary')
+  const [traitsAcknowledged, setTraitsAcknowledged] = useState(false)
 
   // 개별 셀렉터로 성능 최적화
   const gameState = useGameStore((s) => s.gameState)
@@ -66,8 +68,16 @@ export function GameScreen() {
   const selectGoal = useGameStore((s) => s.selectGoal)
   const navigateTo = useUIStore((s) => s.navigateTo)
 
-  // 목표 선택 모달 표시 여부
+  // 특성 공개 모달: turn 1 + planning + 특성 있음 + 아직 미확인
+  const playerTraits = gameState
+    ? gameState.companies[0].traits.map(id => findTrait(id)).filter((t): t is NonNullable<typeof t> => !!t)
+    : []
+  const showTraitReveal = gameState && gameState.turn === 1 && gameState.phase === 'planning'
+    && !traitsAcknowledged && playerTraits.length > 0
+
+  // 목표 선택 모달: 특성 확인 후에만 표시
   const showGoalSelection = gameState && !gameState.selectedGoal && gameState.turn === 1 && gameState.phase === 'planning'
+    && (traitsAcknowledged || playerTraits.length === 0)
 
   // Resolution 페이즈 자동 전환
   useEffect(() => {
@@ -182,7 +192,7 @@ export function GameScreen() {
                     <StatRow label={<GlossaryText>현금</GlossaryText>} value={<MoneyDisplay amount={money} />} />
                     <StatRow label={<GlossaryText>보유 자산</GlossaryText>} value={`${ownedAssets.length}개`} />
                     <StatRow label={<GlossaryText>자산 가치</GlossaryText>} value={<MoneyDisplay amount={totalAssetValue} />} />
-                    <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={money + totalAssetValue} getBreakdown={() => getNetWorthBreakdown(player)} />} />
+                    <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={money + totalAssetValue} getBreakdown={() => getNetWorthBreakdown(player, gameState)} />} />
                   </Card>
 
                   {/* 섹터 트렌드 + 지배력 통합 */}
@@ -292,6 +302,14 @@ export function GameScreen() {
             onEndTurn={() => submitAction({ type: 'endTurn' })}
           />
         </>
+      )}
+
+      {/* 특성 공개 모달 */}
+      {showTraitReveal && (
+        <TraitRevealModal
+          traits={playerTraits}
+          onConfirm={() => setTraitsAcknowledged(true)}
+        />
       )}
 
       {/* 목표 선택 모달 */}

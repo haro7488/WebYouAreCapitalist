@@ -115,7 +115,7 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
         <div className="p-4 space-y-4">
           {/* 재무 현황 */}
           <Card header={<GlossaryText>재무 현황</GlossaryText>}>
-            <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={company.netWorth} getBreakdown={() => getNetWorthBreakdown(company)} />} />
+            <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={company.netWorth} getBreakdown={() => getNetWorthBreakdown(company, gameState!)} />} />
             <StatRow label={<GlossaryText>보유 현금</GlossaryText>} value={<MoneyDisplay amount={company.cash} />} />
             <StatRow label={<GlossaryText>보유 자산</GlossaryText>} value={`${company.assets.length}개`} />
           </Card>

@@ -14,7 +14,7 @@ import {
   calculateCompanyTotalIncome,
   mergeEffects,
 } from './economy'
-import { getCompanyTraitEffects } from './logic/traitEngine'
+import { getCompanyTraitEffects, getCompanySectorTraitEffects } from './logic/traitEngine'
 
 /** 자산 정보를 ID로 조회 */
 function findAsset(assetId: string) {
@@ -47,7 +47,9 @@ export function getPurchaseCostBreakdown(
     0,
   )
   const traitEffects = getCompanyTraitEffects(company)
-  const totalDiscount = influenceTier.purchaseDiscount + nextDiscount + traitEffects.purchaseDiscount
+  const sectorTraitEffects = getCompanySectorTraitEffects(company)
+  const sectorDiscount = sectorTraitEffects.purchaseDiscounts[asset.sector] ?? 0
+  const totalDiscount = influenceTier.purchaseDiscount + nextDiscount + traitEffects.purchaseDiscount + sectorDiscount
   const cost = Math.floor(asset.cost * demandPremium * (1 - totalDiscount))
 
   const items: BreakdownItem[] = [
@@ -62,6 +64,8 @@ export function getPurchaseCostBreakdown(
     items.push({ label: '할인율', value: 1 - totalDiscount, type: 'multiply' })
   }
 
+  // 섹터 친화 할인은 totalDiscount에 이미 포함되어 있으므로 별도 표시 불필요
+
   return { title: '매입 비용', items, final: cost, maxValue: getTierMax(asset.tier, 'cost') * 2 }
 }
 
@@ -75,11 +79,17 @@ export function getAssetIncomeBreakdown(
   if (!asset) return { title: '자산 소득', items: [], final: 0 }
 
   const dominance = calculateGlobalDominance(company, state.companies)
+  const traitEffects = getCompanyTraitEffects(company)
+  const sectorTraitEffects = getCompanySectorTraitEffects(company)
   const upgradeMult = Math.pow(ASSET_UPGRADE_INCOME_MULTIPLIER, owned.upgradeLevel)
   const marketMult = asset.marketMultiplier[state.market.condition]
   const trendMult = SECTOR_TREND_MULTIPLIER[state.sectorStates[asset.sector].trend]
-  const dominanceMult = dominance[asset.sector].incomeBonus
-  const income = asset.baseIncome * upgradeMult * marketMult * trendMult * dominanceMult
+  const rawDominanceBonus = dominance[asset.sector].incomeBonus
+  const dominanceMult = rawDominanceBonus === 1
+    ? 1
+    : 1 + (rawDominanceBonus - 1) * traitEffects.dominanceBonusMultiplier
+  const sectorMult = sectorTraitEffects.incomeMultipliers[asset.sector] ?? 1
+  const income = asset.baseIncome * upgradeMult * marketMult * trendMult * dominanceMult * sectorMult
 
   const items: BreakdownItem[] = [
     { label: '기본 소득', value: asset.baseIncome, type: 'base' },
@@ -99,6 +109,10 @@ export function getAssetIncomeBreakdown(
 
   if (dominanceMult !== 1) {
     items.push({ label: '지배력 보너스', value: dominanceMult, type: 'multiply' })
+  }
+
+  if (sectorMult !== 1) {
+    items.push({ label: sectorMult > 1 ? '섹터 친화 보너스' : '섹터 기피 페널티', value: sectorMult, type: 'multiply' })
   }
 
   // 같은 티어 자산 최대 소득을 maxValue로
@@ -124,7 +138,7 @@ export function getSellPriceBreakdown(
   const marketMult = asset.marketMultiplier[state.market.condition]
   const traitEffects = getCompanyTraitEffects(company)
   const baseSellValue = Math.floor(owned.currentValue * (SELL_BASE_RATIO + SELL_MARKET_RATIO * marketMult))
-  const sellValue = Math.floor(baseSellValue * (1 - traitEffects.sellPenalty))
+  const sellValue = Math.floor(baseSellValue * (1 - traitEffects.sellPenalty) * (1 + traitEffects.sellBonus))
 
   const items: BreakdownItem[] = [
     { label: '현재 가치', value: owned.currentValue, type: 'base' },
@@ -133,6 +147,10 @@ export function getSellPriceBreakdown(
 
   if (traitEffects.sellPenalty > 0) {
     items.push({ label: '매각 페널티', value: 1 - traitEffects.sellPenalty, type: 'multiply' })
+  }
+
+  if (traitEffects.sellBonus > 0) {
+    items.push({ label: '빠른 손절 보너스', value: 1 + traitEffects.sellBonus, type: 'multiply' })
   }
 
   return { title: '매각가', items, final: sellValue }
@@ -202,12 +220,21 @@ export function getExpenseBreakdown(
     items.push({ label: '인플레이션 배율', value: inflationMult, type: 'multiply' })
   }
 
-  return { title: '지출', items, final: expenses }
+  // 전체 기업 중 최대 지출을 maxValue로
+  const allExpMax = Math.max(...state.companies.map(c => Math.max(...(c.expenseHistory ?? []), c.expenses, 1)))
+  return {
+    title: '지출',
+    items,
+    final: expenses,
+    history: company.expenseHistory,
+    maxValue: allExpMax * 1.2,
+  }
 }
 
 /** 순자산 분해 */
 export function getNetWorthBreakdown(
   company: Company,
+  state: GameState,
   goalBonus?: number,
 ): MoneyBreakdown {
   const assetValue = company.assets.reduce((sum, owned) => sum + owned.currentValue, 0)
@@ -224,7 +251,7 @@ export function getNetWorthBreakdown(
   }
 
   // 전체 기업 중 최대 순자산을 maxValue로
-  const allNwMax = Math.max(...(company.netWorthHistory ?? []), final, 1)
+  const allNwMax = Math.max(...state.companies.map(c => Math.max(...(c.netWorthHistory ?? []), c.netWorth, 1)))
   return {
     title: '순자산',
     items,

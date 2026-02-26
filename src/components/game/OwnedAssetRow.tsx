@@ -50,7 +50,8 @@ export function OwnedAssetRow({
           </span>
         </span>
         <span className="text-xs text-slate-500 truncate flex items-center gap-0.5">
-          <GlossaryText>{`매입 턴${owned.purchaseTurn}`}</GlossaryText>
+          <GlossaryText>{`매입 ${formatMoney(owned.purchasePrice)}`}</GlossaryText>
+          {` (턴${owned.purchaseTurn})`}
           {' | 소득 '}
           <MoneyDisplay amount={asset.baseIncome} size="sm" getBreakdown={gameState && player ? () => getAssetIncomeBreakdown(owned, gameState, player) : undefined} />
           /턴

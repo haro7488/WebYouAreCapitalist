@@ -1,5 +1,6 @@
 import { Button, Card, StatRow, MoneyDisplay, Badge } from '@components/common'
 import { RankingChart } from '@components/game/RankingChart'
+import { HistoryChart } from '@components/game/HistoryChart'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { ASSETS } from '@game/index'
@@ -36,6 +37,8 @@ export function RunResultScreen() {
     rankings,
     rankingHistory,
     companyNames,
+    companyNetWorthHistories,
+    companyRevenueHistories,
   } = lastRunResult
 
   // 보유 자산을 섹터별로 그룹핑
@@ -115,10 +118,32 @@ export function RunResultScreen() {
         </Card>
 
         {/* 순위 변동 차트 카드 */}
-        {rankingHistory && rankingHistory.length >= 2 && companyNames && (
+        {rankingHistory && rankingHistory.length >= 1 && companyNames && (
           <Card header="순위 변동">
             <RankingChart
               rankingHistory={rankingHistory}
+              companyNames={companyNames}
+              playerIndex={0}
+            />
+          </Card>
+        )}
+
+        {/* 순자산 변동 차트 카드 */}
+        {companyNetWorthHistories && companyNetWorthHistories[0]?.length >= 1 && companyNames && (
+          <Card header="순자산 변동">
+            <HistoryChart
+              histories={companyNetWorthHistories}
+              companyNames={companyNames}
+              playerIndex={0}
+            />
+          </Card>
+        )}
+
+        {/* 수익 변동 차트 카드 */}
+        {companyRevenueHistories && companyRevenueHistories[0]?.length >= 1 && companyNames && (
+          <Card header="수익 변동">
+            <HistoryChart
+              histories={companyRevenueHistories}
               companyNames={companyNames}
               playerIndex={0}
             />

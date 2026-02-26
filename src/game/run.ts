@@ -7,11 +7,43 @@ import {
   DEFAULT_GAME_CONFIG,
 } from './constants'
 import { createRng, generateRunId, generateSeed } from './utils'
+import type { Rng } from './utils'
 import { assignCompanyNames } from './competitor/names'
 import { STRATEGIES } from './competitor/strategies'
 import { createInitialMarket, createInitialSectorStates } from './market'
 import { getMetaEffects } from './meta'
 import { calculateScore, calculateNetWorth, calculateDominance } from './economy'
+import { TRAIT_REGISTRY } from './traits'
+
+// 섹터 친화 → 기피 충돌 매핑
+const SECTOR_AFFINITY_TO_AVERSION: Record<string, string> = {
+  'food-affinity': 'food-aversion',
+  'tech-affinity': 'tech-aversion',
+  'estate-affinity': 'estate-aversion',
+  'logistics-affinity': 'logistics-aversion',
+  'finance-affinity': 'finance-aversion',
+  'energy-affinity': 'energy-aversion',
+}
+
+/** 시작 특성 배정: 긍정 1개 + 부정 1개 (섹터 충돌 방지) */
+function assignStartingTraits(rng: Rng): string[] {
+  const positiveTraits = TRAIT_REGISTRY.filter(t => t.type === 'positive')
+  const negativeTraits = TRAIT_REGISTRY.filter(t => t.type === 'negative')
+
+  // 긍정 특성 1개 랜덤
+  const positive = rng.pick(positiveTraits)
+
+  // 같은 섹터의 기피 특성 제외
+  const excludeId = SECTOR_AFFINITY_TO_AVERSION[positive.id]
+  const eligibleNegatives = excludeId
+    ? negativeTraits.filter(t => t.id !== excludeId)
+    : negativeTraits
+
+  // 부정 특성 1개 랜덤
+  const negative = rng.pick(eligibleNegatives)
+
+  return [positive.id, negative.id]
+}
 
 /** 새 런 시작 */
 export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): GameState {
@@ -37,11 +69,11 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     activeEffects: [],
     netWorth: startingCash,
     dominatedSectors: [],
-    traits: [],
+    traits: assignStartingTraits(rng),
     goalCompleted: false,
-    netWorthHistory: [],
-    revenueHistory: [],
-    cashHistory: [],
+    netWorthHistory: [startingCash],
+    revenueHistory: [0],
+    expenseHistory: [0],
   }
 
   // 경쟁사 생성
@@ -66,11 +98,11 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
       activeEffects: [],
       netWorth: startingCash,
       dominatedSectors: [],
-      traits: [],
+      traits: assignStartingTraits(rng),
       goalCompleted: false,
-      netWorthHistory: [],
-      revenueHistory: [],
-      cashHistory: [],
+      netWorthHistory: [startingCash],
+      revenueHistory: [0],
+      expenseHistory: [0],
     }
   })
 
@@ -111,7 +143,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
 
     rankingHistory: [initialRanks],
 
-    inflationHistory: [],
+    inflationHistory: [0.02],
 
     rngState: rng.getState(),
 
@@ -161,6 +193,8 @@ export function endRun(finalState: GameState, meta: MetaState): { result: RunRes
     rankings,
     rankingHistory: finalState.rankingHistory,
     companyNames: finalState.companies.map(c => c.name),
+    companyNetWorthHistories: finalState.companies.map(c => c.netWorthHistory),
+    companyRevenueHistories: finalState.companies.map(c => c.revenueHistory),
     goalAchieved: player.goalCompleted,
     goalBonus: player.goalCompleted && finalState.selectedGoal ? finalState.selectedGoal.bonus : undefined,
   }

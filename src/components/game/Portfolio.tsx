@@ -1,5 +1,5 @@
 import { useGameStore } from '@stores/gameStore'
-import { ASSETS, calculateDominance } from '@game/index'
+import { ASSETS, calculateDominance, formatMoney } from '@game/index'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
 import { Card, MoneyDisplay, Badge } from '@components/common'
 import { GlossaryText } from '@components/glossary'
@@ -55,8 +55,10 @@ export function Portfolio() {
     bySector.set(asset.sector, list)
   })
 
-  // 총 자산 가치
+  // 총 자산 가치 / 총 매입 비용
   const totalValue = ownedAssets.reduce((sum, a) => sum + a.currentValue, 0)
+  const totalCost = ownedAssets.reduce((sum, a) => sum + a.purchasePrice, 0)
+  const totalPnL = totalValue - totalCost
 
   return (
     <Card header={<>내 <GlossaryText>포트폴리오</GlossaryText> ({ownedAssets.length}개)</>}>
@@ -64,10 +66,22 @@ export function Portfolio() {
         <p className="text-slate-500 text-center py-8"><GlossaryText>보유 자산이 없습니다</GlossaryText></p>
       ) : (
         <>
-          {/* 총 자산 가치 */}
-          <div className="flex items-center justify-between px-3 py-2 mb-2 bg-slate-800/50 rounded">
-            <span className="text-xs text-slate-400"><GlossaryText>총 자산 가치</GlossaryText></span>
-            <MoneyDisplay amount={totalValue} size="sm" />
+          {/* 총 자산 요약 */}
+          <div className="px-3 py-2 mb-2 bg-slate-800/50 rounded space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400"><GlossaryText>총 매입 비용</GlossaryText></span>
+              <MoneyDisplay amount={totalCost} size="sm" />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400"><GlossaryText>총 자산 가치</GlossaryText></span>
+              <MoneyDisplay amount={totalValue} size="sm" />
+            </div>
+            <div className="flex items-center justify-between border-t border-slate-700 pt-1">
+              <span className="text-xs text-slate-400"><GlossaryText>평가 손익</GlossaryText></span>
+              <span className={`text-xs font-medium ${totalPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {totalPnL >= 0 ? '+' : ''}{formatMoney(totalPnL)}
+              </span>
+            </div>
           </div>
 
           {/* 섹터별 그룹 */}

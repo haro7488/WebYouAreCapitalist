@@ -33,7 +33,7 @@ import { updateMarket, updateSectorTrends } from './market'
 import { rollForEvents } from './events'
 import { getAIActions, getAIEventChoice } from './competitor/ai'
 import { applyInflation } from './logic/inflation'
-import { getCompanyTraitEffects } from './logic/traitEngine'
+import { getCompanyTraitEffects, getCompanySectorTraitEffects } from './logic/traitEngine'
 import { checkGoalCompletion, calculateGoalBonus } from './logic/goalEngine'
 import { GOVERNMENT_EVENTS } from './schema/governmentEvents.schema'
 import { checkEventConditions } from './logic/eventConditions'
@@ -63,13 +63,15 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
   // 수요 프리미엄: 경쟁사 투자 집중 섹터 → 매입 비용 상승
   const demandPremium = calculateSectorDemandPremium(state.companies, companyIndex, asset.sector)
 
-  // 할인 적용: 영향력 티어 할인 + 이벤트 nextPurchaseDiscount + 특성 purchaseDiscount
+  // 할인 적용: 영향력 티어 할인 + 이벤트 nextPurchaseDiscount + 특성 purchaseDiscount + 섹터 특성 할인
   const influenceTier = getInfluenceTier(company.influence)
   const nextDiscount = company.activeEffects.reduce(
     (acc, e) => acc + (e.nextPurchaseDiscount ?? 0), 0,
   )
   const traitEffects = getCompanyTraitEffects(company)
-  const totalDiscount = influenceTier.purchaseDiscount + nextDiscount + traitEffects.purchaseDiscount
+  const sectorTraitEffects = getCompanySectorTraitEffects(company)
+  const sectorDiscount = sectorTraitEffects.purchaseDiscounts[asset.sector] ?? 0
+  const totalDiscount = influenceTier.purchaseDiscount + nextDiscount + traitEffects.purchaseDiscount + sectorDiscount
   const cost = Math.floor(asset.cost * demandPremium * (1 - totalDiscount))
   if (company.cash < cost) return state
 
@@ -79,7 +81,7 @@ function applyBuyFor(state: GameState, companyIndex: number, assetId: string): G
     purchasePrice: cost,
     upgradeLevel: 0,
     currentValue: asset.cost,
-    valueHistory: [],
+    valueHistory: [asset.cost],
   }
 
   const influenceGain = Math.round((INFLUENCE_PER_PURCHASE[asset.tier] ?? 0) * traitEffects.influenceGainMultiplier)
@@ -116,7 +118,7 @@ function applySellFor(state: GameState, companyIndex: number, ownedIndex: number
   const marketMult = asset.marketMultiplier[state.market.condition]
   const traitEffects = getCompanyTraitEffects(company)
   const baseSellValue = Math.floor(owned.currentValue * (SELL_BASE_RATIO + SELL_MARKET_RATIO * marketMult))
-  const sellValue = Math.floor(baseSellValue * (1 - traitEffects.sellPenalty))
+  const sellValue = Math.floor(baseSellValue * (1 - traitEffects.sellPenalty) * (1 + traitEffects.sellBonus))
 
   const newAssets = [...company.assets]
   newAssets.splice(ownedIndex, 1)
@@ -147,7 +149,8 @@ function applyUpgradeFor(state: GameState, companyIndex: number, ownedIndex: num
   const asset = ASSETS.find((a) => a.id === owned.assetId)
   if (!asset) return state
 
-  const upgradeCost = Math.floor(asset.cost * ASSET_UPGRADE_COST_RATIO * (owned.upgradeLevel + 1))
+  const traitEffects = getCompanyTraitEffects(company)
+  const upgradeCost = Math.floor(asset.cost * ASSET_UPGRADE_COST_RATIO * (owned.upgradeLevel + 1) * traitEffects.upgradeCostMultiplier)
   if (company.cash < upgradeCost) return state
 
   const newAssets = [...company.assets]
@@ -495,7 +498,7 @@ function processAIEventChoices(state: GameState, event: GameEvent): GameState {
           purchasePrice: 0,
           upgradeLevel: 0,
           currentValue: asset.cost,
-          valueHistory: [],
+          valueHistory: [asset.cost],
         }]
       }
     }
@@ -572,7 +575,7 @@ function applyEventChoice(state: GameState, choice: EventChoice): GameState {
         purchasePrice: 0,
         upgradeLevel: 0,
         currentValue: asset.cost,
-        valueHistory: [],
+        valueHistory: [asset.cost],
       }
       updatedPlayer = {
         ...updatedPlayer,
@@ -649,8 +652,10 @@ function resolveEconomy(state: GameState): GameState {
     const assetValueIncrease = newAssetValue - oldAssetValue
     totalAssetValueIncrease += assetValueIncrease
 
-    // 영향력 자연 감소
-    const newInfluence = clamp(company.influence - INFLUENCE_DECAY_PER_TURN, 0, 100)
+    // 영향력 자연 감소 (특성에 의한 감소 배율 적용)
+    const companyTraitEffects = getCompanyTraitEffects(company)
+    const influenceDecay = INFLUENCE_DECAY_PER_TURN * companyTraitEffects.influenceDecayMultiplier
+    const newInfluence = clamp(company.influence - influenceDecay, 0, 100)
 
     let newCash = company.cash + income.net
 
@@ -1009,7 +1014,7 @@ export function advanceTurn(state: GameState): GameState {
     ...c,
     netWorthHistory: [...(c.netWorthHistory ?? []), c.netWorth],
     revenueHistory: [...(c.revenueHistory ?? []), c.revenue],
-    cashHistory: [...(c.cashHistory ?? []), c.cash],
+    expenseHistory: [...(c.expenseHistory ?? []), c.expenses],
     assets: c.assets.map(a => ({
       ...a,
       valueHistory: [...(a.valueHistory ?? []), a.currentValue],

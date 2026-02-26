@@ -6,13 +6,19 @@ export type TraitType = 'positive' | 'negative'
 export interface TraitEffect {
   purchaseDiscount?: number       // 매입 할인율 (0.1 = 10%)
   sellPenalty?: number            // 매각 패널티 (0.15 = 15% 감소)
+  sellBonus?: number              // 매각 보너스 (0.1 = 10% 증가)
   expenseMultiplier?: number      // 지출 배율 (0.7 = 30% 감소, 1.25 = 25% 증가)
   influenceGainMultiplier?: number // 영향력 획득 배율
+  influenceDecayMultiplier?: number // 영향력 감소 배율 (2.0 = 2배 빠르게 감소)
+  dominanceBonusMultiplier?: number // 지배력 소득 보너스 배율 (2.0 = 2배)
+  upgradeCostMultiplier?: number  // 업그레이드 비용 배율 (1.3 = 30% 증가)
   opportunityWeightBonus?: number // 긍정 이벤트 가중치 보너스
   pressureWeightBonus?: number    // 부정 이벤트 가중치 보너스
   trendForesight?: number         // 트렌드 선행 확인 턴 수
   investigateAccuracyPenalty?: number // 조사 정확도 패널티
   lockRandomChoice?: boolean      // 이벤트 선택지 잠금
+  sectorIncomeBonus?: { sector: string; multiplier: number }    // 특정 섹터 소득 배율
+  sectorPurchaseDiscount?: { sector: string; discount: number } // 특정 섹터 매입 할인
 }
 
 export interface Trait {

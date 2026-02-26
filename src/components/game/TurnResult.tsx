@@ -55,7 +55,7 @@ export function TurnResult() {
         />
         <StatRow
           label={<GlossaryText>순자산</GlossaryText>}
-          value={<MoneyDisplay amount={netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(player)} />}
+          value={<MoneyDisplay amount={netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(player, gameState)} />}
           icon={TrendingUp}
         />
       </div>

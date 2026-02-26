@@ -29,6 +29,21 @@ function LineChart({ history, maxValue }: { history: number[]; maxValue: number 
   const min = Math.min(...history, 0)
   const range = max - min || 1
 
+  // 데이터 1개: 점만 표시
+  if (history.length === 1) {
+    const cx = W / 2
+    const cy = H - PAD - ((history[0] - min) / range) * (H - PAD * 2)
+    return (
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 48 }} preserveAspectRatio="none">
+        {[0.25, 0.5, 0.75].map((pct) => {
+          const y = H - PAD - pct * (H - PAD * 2)
+          return <line key={pct} x1={PAD} y1={y} x2={W - PAD} y2={y} stroke="#334155" strokeWidth="0.5" />
+        })}
+        <circle cx={cx} cy={cy} r="3" fill={strokeColor} />
+      </svg>
+    )
+  }
+
   const points = history.map((v, i) => {
     const x = PAD + (i / (history.length - 1)) * (W - PAD * 2)
     const y = H - PAD - ((v - min) / range) * (H - PAD * 2)
@@ -126,7 +141,7 @@ function StackBar({ items, final, maxValue }: { items: BreakdownItem[]; final: n
 }
 
 export function BreakdownChart({ history, maxValue, items, final }: BreakdownChartProps) {
-  const hasLine = (history?.length ?? 0) >= 2
+  const hasLine = (history?.length ?? 0) >= 1
   const hasStack = items.length > 1
 
   if (!hasLine && !hasStack) return null

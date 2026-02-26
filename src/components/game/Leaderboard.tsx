@@ -4,6 +4,7 @@ import { Card, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { CompanyDetail } from './CompanyDetail'
 import { RankingChart } from './RankingChart'
+import { HistoryChart } from './HistoryChart'
 import { calculateCompanyTotalIncome, getNetWorthBreakdown } from '@game/index'
 import type { Company, Sector } from '@game/types'
 import { formatMoney } from '@game/index'
@@ -139,7 +140,7 @@ export function Leaderboard() {
 
                   {/* 순자산 + 변동 */}
                   <div className="flex items-center shrink-0">
-                    <MoneyDisplay amount={company.netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(company)} />
+                    <MoneyDisplay amount={company.netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(company, gameState)} />
                     <RankChange prev={prevRank} current={rank} />
                   </div>
                 </div>
@@ -165,11 +166,23 @@ export function Leaderboard() {
         <NetWorthBarChart sorted={sorted} />
 
         {/* 순위 변동 선그래프 */}
-        {gameState.rankingHistory && gameState.rankingHistory.length >= 2 && (
+        {gameState.rankingHistory && gameState.rankingHistory.length >= 1 && (
           <div className="mt-3 pt-3 border-t border-slate-700">
             <div className="text-xs text-slate-400 mb-2">📈 <GlossaryText>순위 변동</GlossaryText></div>
             <RankingChart
               rankingHistory={gameState.rankingHistory}
+              companyNames={gameState.companies.map(c => c.name)}
+              playerIndex={0}
+            />
+          </div>
+        )}
+
+        {/* 순자산 변동 선그래프 */}
+        {gameState.companies[0].netWorthHistory.length >= 1 && (
+          <div className="mt-3 pt-3 border-t border-slate-700">
+            <div className="text-xs text-slate-400 mb-2">💰 <GlossaryText>순자산 변동</GlossaryText></div>
+            <HistoryChart
+              histories={gameState.companies.map(c => c.netWorthHistory)}
               companyNames={gameState.companies.map(c => c.name)}
               playerIndex={0}
             />

@@ -11,7 +11,7 @@ import {
   INFLUENCE_TIERS,
   SECTOR_DEMAND_PREMIUM,
 } from './constants'
-import { getCompanyTraitEffects } from './logic/traitEngine'
+import { getCompanyTraitEffects, getCompanySectorTraitEffects } from './logic/traitEngine'
 
 /** 자산 정보를 ID로 조회 */
 function findAsset(assetId: string) {
@@ -187,29 +187,36 @@ function calculateCompanySectorValue(company: Company, sector: Sector): number {
   return total
 }
 
-/** 특정 기업의 섹터별 소득 계산 (baseIncome 기반, 글로벌 지배력 적용) */
+/** 특정 기업의 섹터별 소득 계산 (baseIncome 기반, 글로벌 지배력 + 섹터 특성 적용) */
 export function calculateCompanySectorIncome(
   company: Company,
   sector: Sector,
   state: GameState,
 ): number {
   const dominance = calculateGlobalDominance(company, state.companies)
+  const sectorEffects = getCompanySectorTraitEffects(company)
+  const traitEffects = getCompanyTraitEffects(company)
+  const sectorMult = sectorEffects.incomeMultipliers[sector] ?? 1
   let total = 0
   for (const owned of company.assets) {
     const asset = findAsset(owned.assetId)
     if (asset && asset.sector === sector) {
-      total += calculateAssetIncome(owned, state, dominance)
+      total += calculateAssetIncome(owned, state, dominance, sectorMult, traitEffects.dominanceBonusMultiplier)
     }
   }
   return total
 }
 
-/** 기업의 총 소득 계산 (baseIncome 기반 전 자산 합산) */
+/** 기업의 총 소득 계산 (baseIncome 기반 전 자산 합산, 섹터 특성 반영) */
 export function calculateCompanyTotalIncome(company: Company, state: GameState): number {
   const dominance = calculateGlobalDominance(company, state.companies)
+  const sectorEffects = getCompanySectorTraitEffects(company)
+  const traitEffects = getCompanyTraitEffects(company)
   let total = 0
   for (const owned of company.assets) {
-    total += calculateAssetIncome(owned, state, dominance)
+    const asset = findAsset(owned.assetId)
+    const sectorMult = asset ? (sectorEffects.incomeMultipliers[asset.sector] ?? 1) : 1
+    total += calculateAssetIncome(owned, state, dominance, sectorMult, traitEffects.dominanceBonusMultiplier)
   }
   return total
 }
@@ -293,11 +300,13 @@ export function calculateNetIncome(state: GameState): { revenue: number; expense
   return calculateCompanyNetIncome(getPlayerCompany(state), state)
 }
 
-/** 개별 자산의 턴 소득 계산 (baseIncome × 업그레이드 × 시장 × 트렌드 × 지배력) */
+/** 개별 자산의 턴 소득 계산 (baseIncome × 업그레이드 × 시장 × 트렌드 × 지배력 × 섹터특성) */
 export function calculateAssetIncome(
   owned: OwnedAsset,
   state: GameState,
   dominance: Record<Sector, DominanceInfo>,
+  sectorTraitMultiplier: number = 1,
+  dominanceBonusMultiplier: number = 1,
 ): number {
   const asset = findAsset(owned.assetId)
   if (!asset) return 0
@@ -305,9 +314,13 @@ export function calculateAssetIncome(
   const upgradeMult = Math.pow(ASSET_UPGRADE_INCOME_MULTIPLIER, owned.upgradeLevel)
   const marketMult = asset.marketMultiplier[state.market.condition]
   const trendMult = SECTOR_TREND_MULTIPLIER[state.sectorStates[asset.sector].trend]
-  const dominanceMult = dominance[asset.sector].incomeBonus
+  // 지배력 보너스에 특성 배율 적용: (incomeBonus - 1) * multiplier + 1
+  const rawDominanceBonus = dominance[asset.sector].incomeBonus
+  const dominanceMult = rawDominanceBonus === 1
+    ? 1
+    : 1 + (rawDominanceBonus - 1) * dominanceBonusMultiplier
 
-  return asset.baseIncome * upgradeMult * marketMult * trendMult * dominanceMult
+  return asset.baseIncome * upgradeMult * marketMult * trendMult * dominanceMult * sectorTraitMultiplier
 }
 
 /** 모든 보유 자산의 턴당 소득 합산 (하위 호환) */
