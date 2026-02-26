@@ -1,21 +1,29 @@
 import type { CompetitorStrategy } from './types'
 import type { GameState, Company, TurnAction, Sector, GameEvent } from '../types'
-import { ASSETS } from '../constants'
-import { calculateDominance } from '../economy'
+import { SECTORS, SECTOR_UPGRADE_COST_RATIO, SECTOR_MAX_UPGRADE_LEVEL } from '../constants'
+import { findSector } from '../economy'
+import { calculateCurrentPrice } from '../breakdown'
 import { createRng } from '../utils'
 
 // === 공용 헬퍼 ===
 
 const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information']
 
-/** 기업이 구매 가능한 자산 필터 (보유 중 제외) */
-function getAffordableAssets(company: Company, cash: number, maxTier?: number) {
-  const owned = new Set(company.assets.map(a => a.assetId))
-  return ASSETS.filter(a =>
-    a.cost <= cash &&
-    (!maxTier || a.tier <= maxTier) &&
-    !owned.has(a.id),
-  )
+/** 현재 가격 기준 구매 가능한 섹터 목록 (가격 포함) */
+function getAffordableSectors(state: GameState, cash: number): { sector: Sector; price: number }[] {
+  return SECTORS
+    .map(s => ({ sector: s.id, price: calculateCurrentPrice(s.id, state) }))
+    .filter(s => s.price <= cash)
+}
+
+/** 기업이 보유한 섹터별 구좌 수 */
+function countBySector(company: Company): Record<Sector, number> {
+  const counts = {} as Record<Sector, number>
+  for (const s of ALL_SECTORS) counts[s] = 0
+  for (const owned of company.assets) {
+    counts[owned.assetId] = (counts[owned.assetId] || 0) + 1
+  }
+  return counts
 }
 
 /** 이벤트 선택지 중 금전적으로 가장 안전한 것 선택 */
@@ -39,17 +47,7 @@ function chooseHighValueEvent(event: GameEvent): string {
   return scored[0].id
 }
 
-/** 기업이 보유한 섹터별 자산 수 맵 */
-function getOwnedSectors(company: Company): Set<Sector> {
-  const sectors = new Set<Sector>()
-  for (const owned of company.assets) {
-    const asset = ASSETS.find(a => a.id === owned.assetId)
-    if (asset) sectors.add(asset.sector)
-  }
-  return sectors
-}
-
-// === 🏦 보수형: Tier 1~2 분산, 불황 시 현금 비축 ===
+// === 🏦 보수형: 저가 섹터 분산, 불황 시 현금 비축 ===
 
 export const conservativeStrategy: CompetitorStrategy = {
   decide(state: GameState, company: Company): TurnAction[] {
@@ -61,20 +59,23 @@ export const conservativeStrategy: CompetitorStrategy = {
       return [{ type: 'endTurn' }]
     }
 
-    // Tier 1~2 분산 매입 (미보유 섹터 우선, 가격 오름차순)
-    const ownedSectors = getOwnedSectors(company)
-    const affordable = getAffordableAssets(company, cash, 2)
+    // 미보유 섹터 우선, 가격 오름차순 매입
+    const sectorCounts = countBySector(company)
+    const affordable = getAffordableSectors(state, cash)
       .sort((a, b) => {
-        const aNew = ownedSectors.has(a.sector) ? 0 : 1
-        const bNew = ownedSectors.has(b.sector) ? 0 : 1
+        const aNew = sectorCounts[a.sector] === 0 ? 1 : 0
+        const bNew = sectorCounts[b.sector] === 0 ? 1 : 0
         if (aNew !== bNew) return bNew - aNew
-        return a.cost - b.cost
+        return a.price - b.price
       })
 
-    for (const asset of affordable) {
-      if (cash < asset.cost) break
-      actions.push({ type: 'buy', assetId: asset.id })
-      cash -= asset.cost
+    for (const { sector, price } of affordable) {
+      if (cash < price) continue
+      // 보수형: 섹터당 최대 2구좌
+      if (sectorCounts[sector] >= 2) continue
+      actions.push({ type: 'buy', sector })
+      cash -= price
+      sectorCounts[sector]++
     }
 
     if (actions.length === 0) actions.push({ type: 'endTurn' })
@@ -86,34 +87,38 @@ export const conservativeStrategy: CompetitorStrategy = {
   },
 }
 
-// === 🚀 공격형: Tier 2~3 집중, 호황 시 공격적 매입 ===
+// === 🚀 공격형: 고가 섹터 집중, 호황 시 공격적 매입 ===
 
 export const aggressiveStrategy: CompetitorStrategy = {
   decide(state: GameState, company: Company): TurnAction[] {
     const actions: TurnAction[] = []
     let cash = company.cash
 
-    // Tier 2~3 집중 (호황 시 Tier 2+, 평시 Tier 1+)
-    const minTier = state.market.condition === 'boom' ? 2 : 1
-    const affordable = getAffordableAssets(company, cash)
-      .filter(a => a.tier >= minTier)
-      .sort((a, b) => b.cost - a.cost) // 비싼 것부터
+    // 고가 섹터 우선 매입 (비싼 것부터)
+    const affordable = getAffordableSectors(state, cash)
+      .sort((a, b) => b.price - a.price)
 
-    for (const asset of affordable) {
-      if (cash < asset.cost) break
-      actions.push({ type: 'buy', assetId: asset.id })
-      cash -= asset.cost
+    for (const { sector, price } of affordable) {
+      if (cash < price) break
+      actions.push({ type: 'buy', sector })
+      cash -= price
     }
 
-    // 매입 못하면 기존 자산 업그레이드
+    // 매입 못하면 가장 많이 보유한 섹터 강화
     if (actions.length === 0 && company.assets.length > 0) {
-      const upgradeIdx = company.assets.reduce((best, a, i) =>
-        a.currentValue > (company.assets[best]?.currentValue ?? 0) ? i : best, 0)
-      if (company.assets[upgradeIdx].upgradeLevel < 3) {
-        const asset = ASSETS.find(a => a.id === company.assets[upgradeIdx].assetId)
-        const cost = asset ? Math.floor(asset.cost * 0.3 * (company.assets[upgradeIdx].upgradeLevel + 1)) : Infinity
-        if (cash >= cost) {
-          actions.push({ type: 'upgrade', ownedIndex: upgradeIdx, assetId: company.assets[upgradeIdx].assetId })
+      const sectorCounts = countBySector(company)
+      const bestSector = ALL_SECTORS
+        .filter(s => sectorCounts[s] > 0)
+        .sort((a, b) => sectorCounts[b] - sectorCounts[a])[0]
+
+      if (bestSector) {
+        const level = company.sectorUpgrades?.[bestSector] ?? 0
+        if (level < SECTOR_MAX_UPGRADE_LEVEL) {
+          const profile = findSector(bestSector)
+          const cost = Math.floor(profile.baseCost * SECTOR_UPGRADE_COST_RATIO * (level + 1))
+          if (cash >= cost) {
+            actions.push({ type: 'sectorUpgrade', sector: bestSector })
+          }
         }
       }
     }
@@ -134,38 +139,33 @@ export const dominationStrategy: CompetitorStrategy = {
     const actions: TurnAction[] = []
     let cash = company.cash
 
-    // 타겟 섹터: 가장 많은 자산을 보유한 섹터 (없으면 시드 RNG로 선택)
-    const dominance = calculateDominance(company.assets)
-    let targetSector = ALL_SECTORS.reduce((best, s) =>
-      dominance[s].count > dominance[best].count ? s : best, ALL_SECTORS[0])
+    // 타겟 섹터: 가장 많이 보유한 섹터 (없으면 시드 RNG로 선택)
+    const sectorCounts = countBySector(company)
+    let targetSector: Sector
 
     if (company.assets.length === 0) {
-      // 보유 자산 없으면 시드 기반으로 선택
       const rng = createRng(state.seed + company.id.charCodeAt(company.id.length - 1) * 1000)
       targetSector = rng.pick(ALL_SECTORS)
+    } else {
+      targetSector = ALL_SECTORS.reduce((best, s) =>
+        sectorCounts[s] > sectorCounts[best] ? s : best, ALL_SECTORS[0])
     }
 
-    // 타겟 섹터만 매입 (비싼 것부터)
-    const affordable = ASSETS
-      .filter(a => a.sector === targetSector && a.cost <= cash && !company.assets.some(o => o.assetId === a.id))
-      .sort((a, b) => b.cost - a.cost)
-
-    for (const asset of affordable) {
-      if (cash < asset.cost) break
-      actions.push({ type: 'buy', assetId: asset.id })
-      cash -= asset.cost
+    // 타겟 섹터 구좌 매입
+    const price = calculateCurrentPrice(targetSector, state)
+    while (cash >= price) {
+      actions.push({ type: 'buy', sector: targetSector })
+      cash -= price
     }
 
-    // 타겟 섹터 기존 자산 업그레이드
-    for (let i = 0; i < company.assets.length; i++) {
-      const owned = company.assets[i]
-      const asset = ASSETS.find(a => a.id === owned.assetId)
-      if (asset?.sector === targetSector && owned.upgradeLevel < 3) {
-        const upgradeCost = Math.floor(asset.cost * 0.3 * (owned.upgradeLevel + 1))
-        if (cash >= upgradeCost) {
-          actions.push({ type: 'upgrade', ownedIndex: i, assetId: owned.assetId })
-          cash -= upgradeCost
-        }
+    // 타겟 섹터 강화
+    const level = company.sectorUpgrades?.[targetSector] ?? 0
+    if (level < SECTOR_MAX_UPGRADE_LEVEL && sectorCounts[targetSector] > 0) {
+      const profile = findSector(targetSector)
+      const upgradeCost = Math.floor(profile.baseCost * SECTOR_UPGRADE_COST_RATIO * (level + 1))
+      if (cash >= upgradeCost) {
+        actions.push({ type: 'sectorUpgrade', sector: targetSector })
+        cash -= upgradeCost
       }
     }
 
@@ -188,9 +188,8 @@ export const opportunistStrategy: CompetitorStrategy = {
     // cold 섹터 자산 매각 (역순으로 처리해 인덱스 안정성 확보)
     for (let i = company.assets.length - 1; i >= 0; i--) {
       const owned = company.assets[i]
-      const asset = ASSETS.find(a => a.id === owned.assetId)
-      if (asset && state.sectorStates[asset.sector].trend === 'cold') {
-        actions.push({ type: 'sell', ownedIndex: i, assetId: owned.assetId })
+      if (state.sectorStates[owned.assetId].trend === 'cold') {
+        actions.push({ type: 'sell', ownedIndex: i })
         cash += Math.floor(owned.currentValue * 0.85) // 대략적 매각 대금 추정
       }
     }
@@ -201,14 +200,14 @@ export const opportunistStrategy: CompetitorStrategy = {
       ? hotSectors
       : ALL_SECTORS.filter(s => state.sectorStates[s].trend === 'neutral')
 
-    const affordable = ASSETS
-      .filter(a => targetSectors.includes(a.sector) && a.cost <= cash && !company.assets.some(o => o.assetId === a.id))
-      .sort((a, b) => b.cost - a.cost)
+    const affordable = getAffordableSectors(state, cash)
+      .filter(s => targetSectors.includes(s.sector))
+      .sort((a, b) => b.price - a.price)
 
-    for (const asset of affordable) {
-      if (cash < asset.cost) break
-      actions.push({ type: 'buy', assetId: asset.id })
-      cash -= asset.cost
+    for (const { sector, price } of affordable) {
+      if (cash < price) break
+      actions.push({ type: 'buy', sector })
+      cash -= price
     }
 
     if (actions.length === 0) actions.push({ type: 'endTurn' })
