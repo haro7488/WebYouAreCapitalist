@@ -3,18 +3,7 @@ import { findSector, calculateResearchSuccessRate, RND_SECTOR, SECTOR_MAX_UPGRAD
 import type { Sector } from '@game/index'
 import { Card, Button, Badge } from '@components/common'
 import { GlossaryText } from '@components/glossary'
-
-// 섹터 한국어 라벨
-const SECTOR_LABEL: Record<Sector, string> = {
-  food: '외식',
-  tech: '기술',
-  realEstate: '부동산',
-  logistics: '물류',
-  energy: '에너지',
-  information: '정보',
-  finance: '금융',
-  rnd: '연구개발',
-}
+import { SECTOR_NAMES } from '@/constants/sectors'
 
 // 연구 가능 섹터 순서 (R&D 자체도 강화 가능)
 const RESEARCH_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
@@ -70,8 +59,8 @@ export function ResearchLab({ selectedSector, onSectorSelect }: ResearchLabProps
         }`}>
           <span className="font-medium">
             {lastResult.success
-              ? `✅ ${SECTOR_LABEL[lastResult.sector]} Lv.${lastResult.newLevel} 강화 성공!`
-              : `❌ ${SECTOR_LABEL[lastResult.sector]} 강화 실패 — 다음 시도 확률 상승`
+              ? `✅ ${SECTOR_NAMES[lastResult.sector]} Lv.${lastResult.newLevel} 강화 성공!`
+              : `❌ ${SECTOR_NAMES[lastResult.sector]} 강화 실패 — 다음 시도 확률 상승`
             }
           </span>
         </div>
@@ -105,7 +94,7 @@ export function ResearchLab({ selectedSector, onSectorSelect }: ResearchLabProps
               {/* 헤더 */}
               <div className="px-3 py-2 flex items-center gap-2 bg-slate-800/60">
                 <span className="text-sm font-semibold text-slate-200">
-                  {profile.icon} <GlossaryText>{SECTOR_LABEL[sector]}</GlossaryText>
+                  {profile.icon} <GlossaryText>{SECTOR_NAMES[sector]}</GlossaryText>
                 </span>
                 <span className="text-xs text-amber-400 font-medium">
                   Lv.{currentLevel}/{SECTOR_MAX_UPGRADE_LEVEL}

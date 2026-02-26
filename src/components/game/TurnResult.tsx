@@ -5,6 +5,7 @@ import { MarketIndicator } from './MarketIndicator'
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react'
 import { getCompanyRank, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
 import type { TurnAction } from '@game/index'
+import { SECTOR_NAMES } from '@/constants/sectors'
 
 /** 턴 결과 요약 카드 */
 export function TurnResult() {
@@ -93,18 +94,6 @@ export function TurnResult() {
 
       {/* 경쟁사 주요 행동 */}
       {(() => {
-        // 섹터 한국어 라벨 매핑
-        const SECTOR_NAMES: Record<string, string> = {
-          food: '식품',
-          tech: '기술',
-          realEstate: '부동산',
-          logistics: '물류',
-          finance: '금융',
-          energy: '에너지',
-          information: '정보',
-          rnd: '연구개발',
-        }
-
         const competitors = gameState.companies.slice(1)
 
         // buy/sell/sectorUpgrade 액션을 수집하고 아이콘·색상·메시지를 결정

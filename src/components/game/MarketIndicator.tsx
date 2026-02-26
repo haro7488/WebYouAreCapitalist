@@ -5,23 +5,13 @@ import { Badge } from '@components/common'
 import { useGameStore } from '@stores/gameStore'
 import { getCompanyTraitEffects } from '@game/logic/traitEngine'
 import { previewNextTrends } from '@game/market'
+import { SECTOR_NAMES } from '@/constants/sectors'
 
 // 시장 상태별 아이콘 및 라벨 매핑
 const MARKET_CONFIG: Record<MarketCondition, { icon: typeof TrendingUp; label: string }> = {
   boom: { icon: TrendingUp, label: '호황' },
   stable: { icon: Minus, label: '보합' },
   recession: { icon: TrendingDown, label: '불황' },
-}
-
-const SECTOR_LABELS: Record<Sector, string> = {
-  food: '외식',
-  tech: '기술',
-  realEstate: '부동산',
-  logistics: '물류',
-  energy: '에너지',
-  finance: '금융',
-  information: '정보',
-  rnd: '연구개발',
 }
 
 const TREND_NEXT_LABEL: Record<string, string> = {
@@ -76,7 +66,7 @@ export function MarketIndicator({ condition }: MarketIndicatorProps) {
         <div className="text-[10px] space-y-0.5 text-right">
           {changingNextTurn.map(({ sector, nextTrend }) => (
             <div key={sector} className="flex items-center justify-end gap-1">
-              <span className="text-slate-500"><GlossaryText>{SECTOR_LABELS[sector]}</GlossaryText></span>
+              <span className="text-slate-500"><GlossaryText>{SECTOR_NAMES[sector]}</GlossaryText></span>
               <span className={TREND_NEXT_COLOR[nextTrend] ?? 'text-slate-400'}>
                 {TREND_NEXT_LABEL[nextTrend] ?? nextTrend}
               </span>

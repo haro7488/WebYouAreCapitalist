@@ -3,10 +3,6 @@ import { calculateCompanyNetWorth, calculateDominance } from '../economy'
 
 /**
  * 목표 달성 여부 확인
- * @param state 현재 게임 상태
- * @param company 확인할 기업
- * @param goalId 목표 ID
- * @returns 목표 달성 여부
  */
 export function checkGoalCompletion(state: GameState, company: Company, goalId: string): boolean {
   if (!state.selectedGoal || state.selectedGoal.id !== goalId) {
@@ -18,8 +14,7 @@ export function checkGoalCompletion(state: GameState, company: Company, goalId: 
 
   switch (goal.type) {
     case 'domination': {
-      // 섹터 지배자 목표
-      if (condition.minDominatedSectors !== undefined) {
+      if ('minDominatedSectors' in condition) {
         const dominance = calculateDominance(company.assets)
         const dominatedCount = Object.values(dominance).filter((d) => d.level === 'dominant').length
         return dominatedCount >= condition.minDominatedSectors
@@ -28,8 +23,7 @@ export function checkGoalCompletion(state: GameState, company: Company, goalId: 
     }
 
     case 'asset': {
-      // 순자산 목표
-      if (condition.minNetWorth !== undefined) {
+      if ('minNetWorth' in condition) {
         const netWorth = calculateCompanyNetWorth(company)
         return netWorth >= condition.minNetWorth
       }
@@ -37,15 +31,11 @@ export function checkGoalCompletion(state: GameState, company: Company, goalId: 
     }
 
     case 'influence': {
-      // 영향력 목표
-      if (condition.minInfluence !== undefined) {
+      if ('minInfluence' in condition) {
         return company.influence >= condition.minInfluence
       }
       return false
     }
-
-    default:
-      return false
   }
 }
 
@@ -56,11 +46,4 @@ export function checkPlayerGoalCompletion(state: GameState): boolean {
   if (!state.selectedGoal) return false
   const player = state.companies[0]
   return checkGoalCompletion(state, player, state.selectedGoal.id)
-}
-
-/**
- * 목표 보너스 금액 반환
- */
-export function calculateGoalBonus(goal: { bonus: number }): number {
-  return goal.bonus
 }

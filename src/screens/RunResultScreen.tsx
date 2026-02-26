@@ -5,18 +5,7 @@ import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { findSector } from '@game/index'
 import type { Sector } from '@game/index'
-
-// 섹터 한국어 이름 매핑
-const SECTOR_LABELS: Record<Sector, string> = {
-  food: '식품',
-  tech: '기술',
-  realEstate: '부동산',
-  logistics: '물류',
-  energy: '에너지',
-  information: '정보',
-  finance: '금융',
-  rnd: '연구개발',
-}
+import { SECTOR_NAMES } from '@/constants/sectors'
 
 // 런 결과 화면
 export function RunResultScreen() {
@@ -85,7 +74,7 @@ export function RunResultScreen() {
           {dominatedSectors.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {dominatedSectors.map((sector) => (
-                <Badge key={sector} variant="boom" label={SECTOR_LABELS[sector]} />
+                <Badge key={sector} variant="boom" label={SECTOR_NAMES[sector]} />
               ))}
             </div>
           )}
@@ -113,7 +102,7 @@ export function RunResultScreen() {
                       </span>
                       {entry.dominatedSectors.length > 0 && (
                         <span className="text-xs shrink-0">
-                          {entry.dominatedSectors.map((s) => SECTOR_LABELS[s]).join(', ')}
+                          {entry.dominatedSectors.map((s) => SECTOR_NAMES[s]).join(', ')}
                         </span>
                       )}
                     </div>
@@ -164,7 +153,7 @@ export function RunResultScreen() {
             {Object.entries(assetsBySector).map(([sector, assets]) => (
               <div key={sector} className="mb-3 last:mb-0">
                 <div className="text-sm font-medium text-slate-400 mb-1">
-                  {SECTOR_LABELS[sector as Sector]}
+                  {SECTOR_NAMES[sector as Sector]}
                 </div>
                 {assets.map((asset) => (
                   <StatRow

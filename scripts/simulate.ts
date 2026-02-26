@@ -7,21 +7,21 @@ import { startNewRun } from '../src/game/run'
 import { createInitialMeta } from '../src/game/meta'
 import { submitAction, submitEventChoice, submitGovernmentChoice, processGovernmentPhase, resolvePhase, advanceTurn } from '../src/game/engine'
 import { calculateCompanyNetWorth, calculateCompanyTotalIncome, calculateCompanyNetIncome } from '../src/game/economy'
-import { ASSETS, DEFAULT_GAME_CONFIG } from '../src/game/constants'
-import type { GameState, Asset } from '../src/game/types'
+import { SECTORS, DEFAULT_GAME_CONFIG } from '../src/game/constants'
+import type { GameState, SectorProfile } from '../src/game/types'
 
 // === 전략 정의 ===
 
 type Strategy = {
   name: string
-  pickAsset: (state: GameState, affordable: Asset[]) => Asset | null
+  pickSectorProfile: (state: GameState, affordable: SectorProfile[]) => SectorProfile | null
   shouldUpgrade: (state: GameState) => boolean
 }
 
 const strategies: Strategy[] = [
   {
     name: 'T1 러시 (싼 거 많이)',
-    pickAsset: (_state, affordable) => {
+    pickSectorProfile: (_state, affordable) => {
       const t1 = affordable.filter(a => a.tier === 1).sort((a, b) => a.cost - b.cost)
       return t1[0] ?? null
     },
@@ -29,7 +29,7 @@ const strategies: Strategy[] = [
   },
   {
     name: 'T2 집중 (중간 자산)',
-    pickAsset: (state, affordable) => {
+    pickSectorProfile: (state, affordable) => {
       const player = state.companies[0]
       const t2 = affordable.filter(a => a.tier === 2).sort((a, b) => a.cost - b.cost)
       const t1 = affordable.filter(a => a.tier === 1).sort((a, b) => a.cost - b.cost)
@@ -41,10 +41,10 @@ const strategies: Strategy[] = [
   },
   {
     name: '분산 투자 (섹터별 1개씩)',
-    pickAsset: (state, affordable) => {
+    pickSectorProfile: (state, affordable) => {
       const player = state.companies[0]
       const ownedSectors = new Set(player.assets.map(a => {
-        const asset = ASSETS.find(x => x.id === a.assetId)
+        const asset = SECTORS.find(x => x.id === a.assetId)
         return asset?.sector
       }))
       // 아직 없는 섹터의 자산 우선
@@ -56,7 +56,7 @@ const strategies: Strategy[] = [
   },
   {
     name: 'T3 저축 (모아서 큰 거)',
-    pickAsset: (state, affordable) => {
+    pickSectorProfile: (state, affordable) => {
       const player = state.companies[0]
       const t3 = affordable.filter(a => a.tier === 3).sort((a, b) => a.cost - b.cost)
       if (t3.length > 0 && player.cash >= t3[0].cost) return t3[0]
@@ -71,7 +71,7 @@ const strategies: Strategy[] = [
   },
   {
     name: '업그레이드 집중 (소수 자산 강화)',
-    pickAsset: (state, affordable) => {
+    pickSectorProfile: (state, affordable) => {
       const player = state.companies[0]
       if (player.assets.length >= 2) return null // 2개 이후 매입 중단
       const t2 = affordable.filter(a => a.tier === 2).sort((a, b) => b.baseIncome - a.baseIncome)
@@ -125,7 +125,7 @@ function simulate(strategy: Strategy): { turnLog: TurnLog[], finalState: GameSta
         const upgradeable = state.companies[0].assets.filter(a => a.upgradeLevel < 3)
         if (upgradeable.length > 0) {
           const target = upgradeable[0]
-          const asset = ASSETS.find(a => a.id === target.assetId)
+          const asset = SECTORS.find(a => a.id === target.assetId)
           if (asset) {
             const cost = Math.floor(asset.cost * 0.3 * (target.upgradeLevel + 1))
             if (simCash >= cost) {
@@ -141,8 +141,8 @@ function simulate(strategy: Strategy): { turnLog: TurnLog[], finalState: GameSta
 
       // 매입
       if (!acted) {
-        const affordable = ASSETS.filter(a => !ownedIds.has(a.id) && simCash >= a.cost)
-        const pick = strategy.pickAsset(state, affordable)
+        const affordable = SECTORS.filter(a => !ownedIds.has(a.id) && simCash >= a.cost)
+        const pick = strategy.pickSectorProfile(state, affordable)
         if (pick) {
           actions.push({ type: 'buy', assetId: pick.id })
           ownedIds.add(pick.id)

@@ -10,6 +10,7 @@ import {
   RANK_FIRST_INFLUENCE_BONUS,
   BANKRUPTCY_INTEREST_RATE,
   RESEARCH_POINT_COST,
+  ALL_SECTORS,
 } from './constants'
 import { createRng, clamp } from './utils'
 import {
@@ -36,7 +37,7 @@ import { rollForEvents } from './events'
 import { getAIActions, getAIEventChoice } from './competitor/ai'
 import { applyInflation } from './logic/inflation'
 import { getCompanyTraitEffects, getCompanySectorTraitEffects } from './logic/traitEngine'
-import { checkGoalCompletion, calculateGoalBonus } from './logic/goalEngine'
+import { checkGoalCompletion } from './logic/goalEngine'
 import { GOVERNMENT_EVENTS } from './schema/governmentEvents.schema'
 import { checkEventConditions } from './logic/eventConditions'
 
@@ -263,7 +264,7 @@ function applyResearch(
       }
       break
     case 'sector': {
-      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd'] as Sector[])
+      const targetSector = sector ?? rng.pick(ALL_SECTORS)
       const sectorState = state.sectorStates[targetSector]
       const actualTrend = sectorState.turnsRemaining <= 2
         ? rng.pick(['hot', 'neutral', 'cold'] as const)
@@ -332,7 +333,7 @@ function applyResearch(
       break
     }
     case 'share': {
-      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd'] as Sector[])
+      const targetSector = sector ?? rng.pick(ALL_SECTORS)
       const actualShares = calculateSectorShares(state.companies, targetSector)
 
       const shares = isAccurate
@@ -718,7 +719,7 @@ function resolveEconomy(state: GameState): GameState {
     const isGoalCompleted = checkGoalCompletion(state, player, state.selectedGoal.id)
 
     if (isGoalCompleted && !player.goalCompleted) {
-      const bonus = calculateGoalBonus(state.selectedGoal)
+      const bonus = state.selectedGoal.bonus
       updatedCompanies = updatedCompanies.map((company, i) => {
         if (i === playerIndex) {
           return {

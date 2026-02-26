@@ -1,5 +1,6 @@
 import type { SectorProfile, SectorTrend } from '@game/index'
 import { Button, Card, Badge, MoneyDisplay } from '@components/common'
+import { TREND_BADGE } from '@/constants/trends'
 import { GlossaryText } from '@components/glossary'
 import { formatMoney, getPurchaseCostBreakdown, calculateCurrentPrice } from '@game/index'
 import { useGameStore } from '@stores/gameStore'
@@ -25,13 +26,6 @@ const INCOME_TYPE_LABEL: Record<string, string> = {
   inverse: '역시장',
   leveraged: '레버리지',
   special: '특수',
-}
-
-// 섹터 트렌드 → Badge 매핑
-const TREND_BADGE: Record<SectorTrend, { variant: 'boom' | 'stable' | 'recession'; text: string }> = {
-  hot: { variant: 'boom', text: '과열' },
-  neutral: { variant: 'stable', text: '보통' },
-  cold: { variant: 'recession', text: '침체' },
 }
 
 interface AssetCardProps {

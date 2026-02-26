@@ -1,12 +1,10 @@
 import type { CompetitorStrategy } from './types'
 import type { GameState, Company, TurnAction, Sector, GameEvent } from '../types'
-import { SECTORS, SECTOR_MAX_UPGRADE_LEVEL } from '../constants'
+import { SECTORS, ALL_SECTORS, SECTOR_MAX_UPGRADE_LEVEL } from '../constants'
 import { calculateCurrentPrice } from '../breakdown'
 import { createRng } from '../utils'
 
 // === 공용 헬퍼 ===
-
-const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 /** 현재 가격 기준 구매 가능한 섹터 목록 (가격 포함) */
 function getAffordableSectors(state: GameState, cash: number): { sector: Sector; price: number }[] {

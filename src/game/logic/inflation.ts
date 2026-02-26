@@ -12,13 +12,3 @@ export function applyInflation(state: GameState): GameState {
     cumulativeInflation: newCumulativeInflation,
   }
 }
-
-/** 인플레이션 반영 비용 */
-export function getInflatedCost(baseCost: number, cumulativeInflation: number): number {
-  return baseCost * cumulativeInflation
-}
-
-/** 인플레이션 반영 소득 */
-export function getInflatedIncome(baseIncome: number, cumulativeInflation: number): number {
-  return baseIncome * cumulativeInflation
-}

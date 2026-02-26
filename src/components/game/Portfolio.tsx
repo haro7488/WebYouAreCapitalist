@@ -4,24 +4,8 @@ import type { Sector, SectorTrend, DominanceLevel, MoneyBreakdown } from '@game/
 import { Card, MoneyDisplay, Badge, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 
-// 섹터 한국어 라벨
-const SECTOR_LABEL: Record<Sector, string> = {
-  food: '외식',
-  tech: '기술',
-  realEstate: '부동산',
-  logistics: '물류',
-  energy: '에너지',
-  information: '정보',
-  finance: '금융',
-  rnd: '연구개발',
-}
-
-// 섹터 트렌드 → Badge 매핑
-const TREND_LABEL: Record<SectorTrend, { variant: 'boom' | 'stable' | 'recession'; text: string }> = {
-  hot: { variant: 'boom', text: '과열' },
-  neutral: { variant: 'stable', text: '보통' },
-  cold: { variant: 'recession', text: '침체' },
-}
+import { SECTOR_NAMES } from '@/constants/sectors'
+import { TREND_BADGE } from '@/constants/trends'
 
 // 트렌드 방향 표시
 const TREND_ARROW: Record<SectorTrend, { symbol: string; color: string }> = {
@@ -115,7 +99,7 @@ export function Portfolio({ onResearchNavigate }: PortfolioProps) {
               <MoneyDisplay amount={totalCost} size="sm" getBreakdown={() => ({
                 title: '총 매입 비용',
                 items: ownedAssets.map((a) => ({
-                  label: `${SECTOR_LABEL[a.assetId as Sector]} (턴${a.purchaseTurn})`,
+                  label: `${SECTOR_NAMES[a.assetId as Sector]} (턴${a.purchaseTurn})`,
                   value: a.purchasePrice,
                   type: 'add' as const,
                 })),
@@ -151,12 +135,12 @@ export function Portfolio({ onResearchNavigate }: PortfolioProps) {
                   {/* 섹터 그룹 헤더 */}
                   <div className="px-3 py-2 flex flex-wrap items-center gap-2 bg-slate-800/60">
                     <span className="text-sm font-semibold text-slate-200">
-                      {profile?.icon} <GlossaryText>{SECTOR_LABEL[sector]}</GlossaryText>
+                      {profile?.icon} <GlossaryText>{SECTOR_NAMES[sector]}</GlossaryText>
                     </span>
                     <span className="text-xs text-slate-500">{items.length}구좌</span>
                     <Badge
-                      variant={TREND_LABEL[trend].variant}
-                      label={<GlossaryText>{TREND_LABEL[trend].text}</GlossaryText>}
+                      variant={TREND_BADGE[trend].variant}
+                      label={<GlossaryText>{TREND_BADGE[trend].text}</GlossaryText>}
                     />
                     {sectorUpgradeLevel > 0 && (
                       <span className="text-xs text-amber-400 font-medium">

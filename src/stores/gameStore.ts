@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { GameState, GameConfig, Company, TurnAction, RunResult } from '@game/types'
+import type { GameState, GameConfig, TurnAction, RunResult, Goal } from '@game/types'
 import {
   startNewRun,
   endRun,
@@ -50,17 +50,12 @@ interface GameStoreActions {
   /** Result Phase: 다음 턴으로 진행 */
   advanceTurn: () => void
   /** 목표 선택 */
-  selectGoal: (goal: any) => void
+  selectGoal: (goal: Goal) => void
   /** 스토어 초기화 */
   reset: () => void
 }
 
 export type GameStore = GameStoreState & GameStoreActions
-
-/** 내 기업(companies[0]) 반환 헬퍼 */
-export function getMyCompany(state: GameState): Company {
-  return state.companies[0]
-}
 
 // === 초기 상태 ===
 
@@ -149,7 +144,7 @@ export const useGameStore = create<GameStore>()(
         }
       },
 
-      selectGoal: (goal: any) => {
+      selectGoal: (goal: Goal) => {
         const { gameState } = get()
         if (!gameState) return
         set({ gameState: { ...gameState, selectedGoal: goal } })

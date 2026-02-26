@@ -51,9 +51,6 @@ export interface SectorProfile {
   marketMultiplier: Record<MarketCondition, number>
 }
 
-// 하위 호환 별칭 — 기존 코드에서 Asset으로 참조하는 곳 마이그레이션 전까지 유지
-export type Asset = SectorProfile
-
 // === 보유 구좌 ===
 export interface OwnedAsset {
   assetId: Sector // 섹터 ID
@@ -266,12 +263,19 @@ export interface GovernmentEvent {
 }
 
 // === 목표 ===
+export type GoalType = 'domination' | 'asset' | 'influence'
+
+export type GoalCondition =
+  | { minDominatedSectors: number }
+  | { minNetWorth: number }
+  | { minInfluence: number }
+
 export interface Goal {
   id: string
   name: string
   description: string
-  type: string // 'domination' | 'asset' | 'collection' | 'influence' | 'survival' | 'trait'
-  condition: Record<string, any>
+  type: GoalType
+  condition: GoalCondition
   bonus: number // 달성 시 순자산에 가산
 }
 

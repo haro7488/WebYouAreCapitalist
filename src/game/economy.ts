@@ -2,6 +2,7 @@ import type { GameState, Company, EventEffect, Sector, DominanceInfo, DominanceL
 import { RND_SECTOR } from './types'
 import {
   SECTORS,
+  ALL_SECTORS,
   SECTOR_TREND_MULTIPLIER,
   DOMINANCE_THRESHOLDS,
   SECTOR_UPGRADE_INCOME_MULTIPLIER,
@@ -23,8 +24,6 @@ import { getCompanyTraitEffects, getCompanySectorTraitEffects } from './logic/tr
 export function findSector(sectorId: Sector): SectorProfile | undefined {
   return SECTORS.find((s) => s.id === sectorId)
 }
-
-const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 // === 편의 함수 ===
 
@@ -297,11 +296,6 @@ export function calculateCompanyNetIncome(
   }
 }
 
-/** 하위 호환: GameState 기반 턴 수익 계산 (companies[0]) */
-export function calculateNetIncome(state: GameState): { revenue: number; expenses: number; net: number } {
-  return calculateCompanyNetIncome(getPlayerCompany(state), state)
-}
-
 /**
  * 개별 구좌의 턴 소득 계산 (소득유형별 분기)
  *
@@ -360,11 +354,6 @@ export function calculateAssetIncome(
     : 1 + (rawDominanceBonus - 1) * dominanceBonusMultiplier
 
   return baseCalc * upgradeMult * dominanceMult * sectorTraitMultiplier
-}
-
-/** 모든 보유 구좌의 턴당 소득 합산 (하위 호환) */
-export function calculateTotalAssetIncome(state: GameState): number {
-  return calculateCompanyTotalIncome(getPlayerCompany(state), state)
 }
 
 // === 시장 풀 비례 축소 ===

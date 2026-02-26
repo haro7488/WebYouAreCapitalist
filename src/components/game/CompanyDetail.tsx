@@ -5,6 +5,7 @@ import { useGameStore } from '@stores/gameStore'
 import { findSector, getNetWorthBreakdown, INFORMATION_SECTOR } from '@game/index'
 import type { Company, Sector, ResearchResult } from '@game/types'
 import { TRAIT_REGISTRY, type Trait } from '@game/traits'
+import { SECTOR_NAMES_WITH_ICON } from '@/constants/sectors'
 
 // 전략 정보 매핑
 const STRATEGY_INFO: Record<string, { name: string; hint: string }> = {
@@ -20,18 +21,6 @@ const STRATEGY_DISPLAY_NAMES: Record<string, string> = {
   aggressive: '공격 투자형',
   domination: '섹터 지배형',
   opportunist: '기회주의형',
-}
-
-// 섹터 한국어 이름
-const SECTOR_NAMES: Record<Sector, string> = {
-  food: '🍔 식품',
-  tech: '💻 테크',
-  realEstate: '🏢 부동산',
-  logistics: '🚛 물류',
-  energy: '⚡ 에너지',
-  information: '🔍 정보',
-  finance: '💰 금융',
-  rnd: '🔬 연구개발',
 }
 
 // (업그레이드는 섹터 레벨로 이동, 개별 자산 레벨 없음)
@@ -122,7 +111,7 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
               <div className="space-y-1">
                 {company.dominatedSectors.map(sector => (
                   <div key={sector} className="flex justify-between items-center py-1">
-                    <span className="text-slate-300">{SECTOR_NAMES[sector]}</span>
+                    <span className="text-slate-300">{SECTOR_NAMES_WITH_ICON[sector]}</span>
                     <Badge variant="boom" label={<GlossaryText>지배</GlossaryText>} />
                   </div>
                 ))}
@@ -181,7 +170,7 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
                                 {profile?.name ?? owned.assetId}
                               </p>
                               <p className="text-xs text-slate-500">
-                                {profile ? SECTOR_NAMES[owned.assetId as Sector] : ''}
+                                {profile ? SECTOR_NAMES_WITH_ICON[owned.assetId as Sector] : ''}
                               </p>
                             </div>
                             <MoneyDisplay amount={owned.currentValue} size="sm" />

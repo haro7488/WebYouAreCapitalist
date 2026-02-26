@@ -4,21 +4,10 @@ import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, ResearchLab, Leaderboard, GoalSelectionModal, TraitRevealModal, MarketHistory } from '@components/game'
-import { findTrait, calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown, getCashBreakdown, getAssetValueBreakdown, getNetIncomeBreakdown } from '@game/index'
-import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
-import GOALS_DATA from '@game/data/goals.json'
-
-// 섹터 한국어 이름
-const SECTOR_NAMES: Record<Sector, string> = {
-  food: '외식',
-  tech: '기술',
-  realEstate: '부동산',
-  logistics: '물류',
-  energy: '에너지',
-  information: '정보',
-  finance: '금융',
-  rnd: '연구개발',
-}
+import { findTrait, calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown, getCashBreakdown, getAssetValueBreakdown, getNetIncomeBreakdown, GOALS } from '@game/index'
+import type { Sector, DominanceLevel } from '@game/index'
+import { TREND_LABELS, TREND_COLORS } from '@/constants/trends'
+import { SECTOR_NAMES } from '@/constants/sectors'
 
 // 지배력 레벨 한국어 표시
 const DOMINANCE_LABELS: Record<DominanceLevel, string> = {
@@ -32,18 +21,6 @@ const DOMINANCE_COLORS: Record<DominanceLevel, string> = {
   entrant: 'text-slate-400',
   competitor: 'text-amber-400',
   dominant: 'text-money-400',
-}
-
-// 섹터 트렌드
-const TREND_LABELS: Record<SectorTrend, string> = {
-  hot: '🔥 과열',
-  neutral: '➖ 보통',
-  cold: '❄️ 침체',
-}
-const TREND_COLORS: Record<SectorTrend, string> = {
-  hot: 'text-red-400',
-  neutral: 'text-slate-400',
-  cold: 'text-blue-400',
 }
 
 // 시장 상태
@@ -335,7 +312,7 @@ export function GameScreen() {
       {/* 목표 선택 모달 */}
       {showGoalSelection && (
         <GoalSelectionModal
-          goals={GOALS_DATA}
+          goals={GOALS}
           onSelect={selectGoal}
         />
       )}

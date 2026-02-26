@@ -1,16 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
   SECTORS,
+  ALL_SECTORS,
   startNewRun,
   processFullTurn,
   advanceTurn,
   createInitialMeta,
   calculateNetWorth,
 } from '@game/index'
-import type { Sector } from '@game/index'
-
-// 게임에서 정의된 모든 섹터
-const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 describe('섹터 밸런스', () => {
   it('모든 8개 섹터 프로필이 정의됨', () => {

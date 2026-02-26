@@ -4,34 +4,10 @@ import { GlossaryText } from '@components/glossary'
 import { TrendingUp, BarChart3, AlertCircle, AlertTriangle, ClipboardList, Landmark } from 'lucide-react'
 import { useGameStore } from '@stores/gameStore'
 import { INFORMATION_SECTOR } from '@game/index'
-import type { ResearchResult, Sector, SectorTrend } from '@game/index'
+import type { ResearchResult, Sector } from '@game/index'
 import type { ResearchRecord } from '@game/types'
-
-// 섹터 한국어 이름
-const SECTOR_NAMES: Record<Sector, string> = {
-  food: '외식',
-  tech: '기술',
-  realEstate: '부동산',
-  logistics: '물류',
-  energy: '에너지',
-  information: '정보',
-  finance: '금융',
-  rnd: '연구개발',
-}
-
-// 섹터 트렌드 → Badge variant 매핑
-const TREND_BADGE_VARIANT: Record<SectorTrend, 'boom' | 'stable' | 'recession'> = {
-  hot: 'boom',
-  neutral: 'stable',
-  cold: 'recession',
-}
-
-// 섹터 트렌드 한국어 표시
-const TREND_LABELS: Record<SectorTrend, string> = {
-  hot: '과열',
-  neutral: '보통',
-  cold: '침체',
-}
+import { SECTOR_NAMES } from '@/constants/sectors'
+import { TREND_BADGE_VARIANT, TREND_LABELS } from '@/constants/trends'
 
 interface ResearchPanelProps {
   onResearch: (target: 'market' | 'sector' | 'event' | 'government', sector?: Sector) => void

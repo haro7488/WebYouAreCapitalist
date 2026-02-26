@@ -4,31 +4,15 @@ import { GlossaryText } from '@components/glossary'
 import { calculateDominance, findSector, findTrait } from '@game/index'
 import { getCompanyTraitEffects } from '@game/logic/traitEngine'
 import type { EventEffect } from '@game/types'
-
-// 섹터 한국어 매핑
-const SECTOR_LABEL: Record<string, string> = {
-  food: '외식',
-  tech: '기술',
-  realEstate: '부동산',
-  logistics: '물류',
-  energy: '에너지',
-  information: '정보',
-  finance: '금융',
-  rnd: '연구개발',
-}
+import type { Sector } from '@game/index'
+import { SECTOR_NAMES } from '@/constants/sectors'
+import { TREND_LABELS } from '@/constants/trends'
 
 // 시장 상태 한국어 매핑
 const MARKET_LABEL: Record<string, string> = {
   boom: '호황',
   stable: '보합',
   recession: '불황',
-}
-
-// 트렌드 한국어 매핑
-const TREND_LABEL: Record<string, string> = {
-  hot: '과열',
-  neutral: '보통',
-  cold: '침체',
 }
 
 /** 이벤트 선택지 효과 미리보기 */
@@ -116,8 +100,8 @@ function EffectPreview({ effect }: { effect: EventEffect }) {
   }
 
   if (effect.sectorShift) {
-    const sectorLabel = SECTOR_LABEL[effect.sectorShift.sector] ?? effect.sectorShift.sector
-    const trendLabel = TREND_LABEL[effect.sectorShift.trend] ?? effect.sectorShift.trend
+    const sectorLabel = SECTOR_NAMES[effect.sectorShift.sector] ?? effect.sectorShift.sector
+    const trendLabel = TREND_LABELS[effect.sectorShift.trend] ?? effect.sectorShift.trend
     items.push(
       <span key="sectorShift" className="text-slate-300">
         📊 {sectorLabel}→{trendLabel}
@@ -208,7 +192,7 @@ export function EventCard() {
                       <GlossaryText>{choice.text}</GlossaryText>
                     </span>
                     {isDominanceChoice && (
-                      <Badge variant="info" label={<GlossaryText>{`${SECTOR_LABEL[dominanceSector!]} 지배`}</GlossaryText>} />
+                      <Badge variant="info" label={<GlossaryText>{`${SECTOR_NAMES[dominanceSector! as Sector]} 지배`}</GlossaryText>} />
                     )}
                     {isLocked && (
                       <span className="text-xs text-slate-500 ml-auto">우유부단: 선택 불가</span>

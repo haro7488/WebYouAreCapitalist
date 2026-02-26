@@ -1,4 +1,4 @@
-import type { GameConfig, MetaUpgrade } from './types'
+import type { GameConfig, MetaUpgrade, Sector } from './types'
 import {
   STARTING_MONEY,
   INITIAL_MARKET_POOL,
@@ -58,8 +58,9 @@ export const DEFAULT_COMPANY_NAME = '내 기업'
 
 // === 섹터 프로필 데이터 → data/sectors.json + schema/sectors.schema.ts ===
 export { SECTORS } from './schema/sectors.schema'
-// 하위 호환 별칭 (마이그레이션 완료 후 제거)
-export { SECTORS as ASSETS } from './schema/sectors.schema'
+
+// === 전체 섹터 ID 배열 (단일 정의) ===
+export const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 // === 메타 업그레이드 (함수 포함 → JSON 불가, TS 유지) ===
 export const META_UPGRADES: MetaUpgrade[] = [

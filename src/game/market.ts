@@ -2,6 +2,7 @@ import type { MarketState, MarketCondition, Sector, SectorState, SectorTrend, Ga
 import type { Rng } from './utils'
 import { createRng } from './utils'
 import {
+  ALL_SECTORS,
   MARKET_CHANGE_MIN_TURNS,
   MARKET_CHANGE_MAX_TURNS,
   MARKET_TRANSITION,
@@ -12,7 +13,6 @@ import {
 
 const CONDITIONS: MarketCondition[] = ['boom', 'stable', 'recession']
 const TRENDS: SectorTrend[] = ['hot', 'neutral', 'cold']
-const SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 /** 가중치 기반 랜덤 선택 */
 function weightedPick<T extends string>(
@@ -61,7 +61,7 @@ export function updateMarket(market: MarketState, rng: Rng): MarketState {
 /** 초기 섹터 트렌드 상태 생성 */
 export function createInitialSectorStates(rng: Rng): Record<Sector, SectorState> {
   const states = {} as Record<Sector, SectorState>
-  for (const sector of SECTORS) {
+  for (const sector of ALL_SECTORS) {
     states[sector] = {
       trend: rng.pick(TRENDS),
       turnsRemaining: rng.int(SECTOR_TREND_MIN_TURNS, SECTOR_TREND_MAX_TURNS + 1),
@@ -78,7 +78,7 @@ export function updateSectorTrends(
 ): Record<Sector, SectorState> {
   const updated = {} as Record<Sector, SectorState>
 
-  for (const sector of SECTORS) {
+  for (const sector of ALL_SECTORS) {
     const current = sectorStates[sector]
     const remaining = current.turnsRemaining - 1
 
@@ -124,7 +124,7 @@ export function previewNextTrends(state: GameState): Record<Sector, SectorTrend>
   const nextStates = updateSectorTrends(state.sectorStates, state.market.condition, previewRng)
 
   const result = {} as Record<Sector, SectorTrend>
-  for (const sector of SECTORS) {
+  for (const sector of ALL_SECTORS) {
     result[sector] = nextStates[sector].trend
   }
   return result

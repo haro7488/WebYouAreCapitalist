@@ -62,12 +62,6 @@ export function rollForEvents(state: GameState, rng: Rng): GameEvent[] {
   return result
 }
 
-/** 하위 호환: 단일 이벤트 반환 (사용처가 있으면 유지) */
-export function rollForEvent(state: GameState, rng: Rng): GameEvent | null {
-  const events = rollForEvents(state, rng)
-  return events.length > 0 ? events[0] : null
-}
-
 /** ID로 이벤트 레지스트리에서 이벤트 조회 */
 export function findEventById(id: string): GameEvent | null {
   return EVENT_REGISTRY.find((e) => e.id === id) ?? null

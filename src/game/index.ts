@@ -13,7 +13,6 @@ export type {
   DominanceInfo,
   RiskLevel,
   SectorProfile,
-  Asset,
   OwnedAsset,
   ResearchResult,
   EventEffect,
@@ -26,6 +25,8 @@ export type {
   RunResult,
   GovernmentEvent,
   Goal,
+  GoalType,
+  GoalCondition,
   EventConditions,
   MoneyBreakdown,
   BreakdownItem,
@@ -36,7 +37,7 @@ export { INFORMATION_SECTOR, RND_SECTOR } from './types'
 export {
   DEFAULT_GAME_CONFIG,
   SECTORS,
-  ASSETS,
+  ALL_SECTORS,
   META_UPGRADES,
   SECTOR_MARKET_MULTIPLIER,
   SECTOR_TREND_MULTIPLIER,
@@ -93,6 +94,7 @@ export { startNewRun, endRun } from './run'
 export { getMetaEffects, purchaseUpgrade, createInitialMeta } from './meta'
 
 // Goal
+export { GOALS } from './schema/goals.schema'
 export { checkPlayerGoalCompletion } from './logic/goalEngine'
 
 // Glossary
