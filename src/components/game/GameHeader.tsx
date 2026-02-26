@@ -1,11 +1,12 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { MarketIndicator } from './MarketIndicator'
 import { TraitBar } from './TraitDisplay'
 import { Home, HelpCircle, Target, CheckCircle } from 'lucide-react'
 import { TRAIT_REGISTRY, type Trait } from '@game/traits'
-import { calculateCompanyNetWorth, calculateCompanyTotalIncome } from '@game/economy'
+import { calculateCompanyNetWorth, calculateCompanyTotalIncome, getInfluenceTier } from '@game/economy'
+import { INFLUENCE_TIERS } from '@game/constants'
 import { getNetWorthBreakdown, getRevenueBreakdown } from '@game/breakdown'
 import { checkPlayerGoalCompletion } from '@game/logic/goalEngine'
 import { formatMoney } from '@game/utils'
@@ -53,6 +54,29 @@ export function GameHeader({ onHome }: GameHeaderProps) {
   // 인플레이션 팝업 상태
   const [inflationBreakdown, setInflationBreakdown] = useState<MoneyBreakdown | null>(null)
   const inflationRef = useRef<HTMLSpanElement>(null)
+
+  // 목표 툴팁 상태
+  const [showGoalTooltip, setShowGoalTooltip] = useState(false)
+  const goalRef = useRef<HTMLDivElement>(null)
+
+  // 영향력 툴팁 상태
+  const [showInfluenceTooltip, setShowInfluenceTooltip] = useState(false)
+  const influenceRef = useRef<HTMLDivElement>(null)
+
+  // 목표·영향력 툴팁 바깥 클릭 닫기
+  useEffect(() => {
+    if (!showGoalTooltip && !showInfluenceTooltip) return
+    function handleClick(e: MouseEvent) {
+      if (showGoalTooltip && goalRef.current && !goalRef.current.contains(e.target as Node)) {
+        setShowGoalTooltip(false)
+      }
+      if (showInfluenceTooltip && influenceRef.current && !influenceRef.current.contains(e.target as Node)) {
+        setShowInfluenceTooltip(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showGoalTooltip, showInfluenceTooltip])
 
   const handleInflationClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -110,9 +134,63 @@ export function GameHeader({ onHome }: GameHeaderProps) {
               💵 {formatMoney(cash)}
             </span>
           )}
-          <span className="text-purple-400" title="영향력">
-            ⭐ {influence}
-          </span>
+          {/* 영향력 — 클릭 시 티어 상세 툴팁 */}
+          {(() => {
+            const tier = getInfluenceTier(influence)
+            const tierIdx = INFLUENCE_TIERS.findIndex(t => t.minInfluence === tier.minInfluence)
+            const nextTier = tierIdx < INFLUENCE_TIERS.length - 1 ? INFLUENCE_TIERS[tierIdx + 1] : null
+            return (
+              <div ref={influenceRef} className="relative">
+                <span
+                  className="text-purple-400 cursor-pointer border-b border-dashed border-purple-400/30 inline-flex items-center gap-1"
+                  onClick={() => setShowInfluenceTooltip(v => !v)}
+                >
+                  ⭐ {influence}
+                  <span className="hidden sm:inline text-[10px] text-purple-300">{tier.title}</span>
+                </span>
+                {showInfluenceTooltip && (
+                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-56 rounded-lg border border-slate-600 bg-slate-800 shadow-xl p-3">
+                    <div className="absolute left-1/2 top-[-6px] -translate-x-1/2 w-3 h-3 rotate-45 bg-slate-800 border-l border-t border-slate-600" />
+                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">영향력</div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-purple-300">{tier.title}</span>
+                      <span className="text-sm text-slate-200">⭐ {influence}</span>
+                    </div>
+                    <div className="space-y-1 text-xs border-t border-slate-700 pt-2">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">매입 할인</span>
+                        <span className={tier.purchaseDiscount > 0 ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
+                          {tier.purchaseDiscount > 0 ? `-${(tier.purchaseDiscount * 100).toFixed(0)}%` : '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">이벤트 보너스</span>
+                        <span className={tier.eventBonus > 0 ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
+                          {tier.eventBonus > 0 ? `+${(tier.eventBonus * 100).toFixed(0)}%` : '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">무료 조사</span>
+                        <span className={tier.freeResearch ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
+                          {tier.freeResearch ? '✓' : '-'}
+                        </span>
+                      </div>
+                    </div>
+                    {nextTier && (
+                      <div className="flex justify-between items-center text-xs mt-2 pt-2 border-t border-slate-700">
+                        <span className="text-slate-500">다음: {nextTier.title}</span>
+                        <span className="text-amber-400 font-medium">{nextTier.minInfluence - influence}↑</span>
+                      </div>
+                    )}
+                    <div className="text-[10px] text-slate-600 mt-2 pt-2 border-t border-slate-700 space-y-0.5">
+                      <div>매입 +3 · 1위 +2/턴</div>
+                      <div>자연감소 -1/턴</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
           {/* 순자산: 모바일에서 숨김 */}
           <span className="hidden sm:inline-flex items-center gap-0.5" title="순자산">
             💰 <MoneyDisplay amount={netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(player, gameState)} />
@@ -145,21 +223,47 @@ export function GameHeader({ onHome }: GameHeaderProps) {
           <TraitBar traits={activeTraits} />
         </div>
 
-        {/* 목표 — 모바일에서 텍스트·패딩 축소 */}
+        {/* 목표 — 클릭 시 상세 툴팁 */}
         {gameState.selectedGoal && (
-          <div className="flex items-center gap-2 px-2 sm:px-3 py-0.5 sm:py-1 bg-slate-800/50 rounded border border-slate-600">
-            {goalCompleted ? (
-              <CheckCircle size={14} className="text-emerald-400" />
-            ) : (
-              <Target size={14} className="text-amber-400" />
-            )}
-            <span className={`text-xs sm:text-sm font-medium ${goalCompleted ? 'text-emerald-400' : 'text-slate-300'}`}>
-              {gameState.selectedGoal.name}
-            </span>
-            {goalCompleted && (
-              <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">
-                달성!
+          <div className="relative">
+            <div
+              ref={goalRef}
+              className="flex items-center gap-2 px-2 sm:px-3 py-0.5 sm:py-1 bg-slate-800/50 rounded border border-slate-600 cursor-pointer hover:bg-slate-700/50 transition-colors"
+              onClick={() => setShowGoalTooltip(v => !v)}
+            >
+              {goalCompleted ? (
+                <CheckCircle size={14} className="text-emerald-400" />
+              ) : (
+                <Target size={14} className="text-amber-400" />
+              )}
+              <span className={`text-xs sm:text-sm font-medium ${goalCompleted ? 'text-emerald-400' : 'text-slate-300'}`}>
+                {gameState.selectedGoal.name}
               </span>
+              {goalCompleted && (
+                <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">
+                  달성!
+                </span>
+              )}
+            </div>
+            {showGoalTooltip && (
+              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-64 rounded-lg border border-slate-600 bg-slate-800 shadow-xl p-3">
+                <div className="absolute left-1/2 top-[-6px] -translate-x-1/2 w-3 h-3 rotate-45 bg-slate-800 border-l border-t border-slate-600" />
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">목표</div>
+                <div className={`text-sm font-semibold mb-1 ${goalCompleted ? 'text-emerald-400' : 'text-slate-200'}`}>
+                  {gameState.selectedGoal.name}
+                </div>
+                <p className="text-xs text-slate-400 mb-2">{gameState.selectedGoal.description}</p>
+                <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-700">
+                  <span className="text-slate-500">달성 보너스</span>
+                  <span className="text-money-400 font-medium">{formatMoney(gameState.selectedGoal.bonus)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs mt-1">
+                  <span className="text-slate-500">상태</span>
+                  <span className={goalCompleted ? 'text-emerald-400 font-medium' : 'text-amber-400'}>
+                    {goalCompleted ? '달성 완료!' : '진행 중'}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         )}
