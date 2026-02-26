@@ -114,7 +114,7 @@ export const aggressiveStrategy: CompetitorStrategy = {
       if (bestSector) {
         const level = company.sectorUpgrades?.[bestSector] ?? 0
         if (level < SECTOR_MAX_UPGRADE_LEVEL) {
-          const profile = findSector(bestSector)
+          const profile = findSector(bestSector)!
           const cost = Math.floor(profile.baseCost * SECTOR_UPGRADE_COST_RATIO * (level + 1))
           if (cash >= cost) {
             actions.push({ type: 'sectorUpgrade', sector: bestSector })
@@ -161,7 +161,7 @@ export const dominationStrategy: CompetitorStrategy = {
     // 타겟 섹터 강화
     const level = company.sectorUpgrades?.[targetSector] ?? 0
     if (level < SECTOR_MAX_UPGRADE_LEVEL && sectorCounts[targetSector] > 0) {
-      const profile = findSector(targetSector)
+      const profile = findSector(targetSector)!
       const upgradeCost = Math.floor(profile.baseCost * SECTOR_UPGRADE_COST_RATIO * (level + 1))
       if (cash >= upgradeCost) {
         actions.push({ type: 'sectorUpgrade', sector: targetSector })

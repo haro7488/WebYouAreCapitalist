@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  ASSETS,
+  SECTORS,
   startNewRun,
   processFullTurn,
   advanceTurn,
@@ -12,37 +12,25 @@ import type { Sector } from '@game/index'
 // 게임에서 정의된 모든 섹터
 const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information']
 
-describe('자산 밸런스', () => {
-  it('모든 7개 섹터에 최소 1개 이상 자산이 존재', () => {
+describe('섹터 밸런스', () => {
+  it('모든 7개 섹터 프로필이 정의됨', () => {
+    expect(SECTORS.length).toBe(7)
     for (const sector of ALL_SECTORS) {
-      const sectorAssets = ASSETS.filter((a) => a.sector === sector)
-      expect(sectorAssets.length, `섹터 ${sector}에 자산이 없음`).toBeGreaterThanOrEqual(1)
+      const profile = SECTORS.find((s) => s.id === sector)
+      expect(profile, `섹터 ${sector} 프로필이 없음`).toBeDefined()
     }
   })
 
-  it('모든 자산의 ROI(baseIncome/cost)가 0.03 ~ 0.20 범위', () => {
-    for (const asset of ASSETS) {
-      const roi = asset.baseIncome / asset.cost
-      expect(roi, `${asset.id}(${asset.name}) ROI=${roi.toFixed(3)} 범위 초과`).toBeGreaterThanOrEqual(0.03)
-      expect(roi, `${asset.id}(${asset.name}) ROI=${roi.toFixed(3)} 범위 초과`).toBeLessThanOrEqual(0.20)
+  it('모든 섹터의 baseCost가 유효한 양수', () => {
+    for (const sector of SECTORS) {
+      expect(sector.baseCost, `${sector.id} baseCost`).toBeGreaterThan(0)
     }
   })
 
-  it('모든 자산의 cost, baseIncome, appreciation이 유효한 양수', () => {
-    for (const asset of ASSETS) {
-      expect(asset.cost, `${asset.id} cost`).toBeGreaterThan(0)
-      expect(asset.baseIncome, `${asset.id} baseIncome`).toBeGreaterThanOrEqual(0)
-      expect(asset.appreciation, `${asset.id} appreciation`).toBeGreaterThanOrEqual(0)
-    }
-  })
-
-  it('각 섹터별 T1/T2/T3 tier 자산이 최소 1개씩 존재', () => {
-    // 모든 섹터에 3개 tier가 있어야 한다는 강한 조건이 아니라
-    // 전체적으로 각 tier가 존재하는지 확인
-    const tiers = [1, 2, 3] as const
-    for (const tier of tiers) {
-      const tierAssets = ASSETS.filter((a) => a.tier === tier)
-      expect(tierAssets.length, `tier ${tier} 자산이 없음`).toBeGreaterThan(0)
+  it('소득형 섹터는 baseIncome 또는 yieldRate가 양수', () => {
+    for (const sector of SECTORS) {
+      const hasIncome = sector.baseIncome > 0 || sector.yieldRate > 0
+      expect(hasIncome, `${sector.id}에 소득원이 없음`).toBe(true)
     }
   })
 })
@@ -56,7 +44,6 @@ describe('게임 궤적: 기본 진행', () => {
   })
 
   it('자산을 구매하면 순자산이 유지되거나 증가', () => {
-    // 충분한 현금으로 시작 (저렴한 자산 구매 가능)
     const state = startNewRun(createInitialMeta(), {
       competitorCount: 0,
       startingMoney: 5000,
@@ -66,17 +53,15 @@ describe('게임 궤적: 기본 진행', () => {
     const initialNetWorth = calculateNetWorth(state)
     expect(initialNetWorth).toBeGreaterThan(0)
 
-    // food-cart (가장 저렴한 T1 자산, $100) 구매 후 턴 진행
+    // food 섹터 구좌 매입 후 턴 진행
     const afterBuy = processFullTurn(state, [
-      { type: 'buy', assetId: 'food-cart' },
+      { type: 'buy', sector: 'food' },
       { type: 'endTurn' },
     ])
 
     const afterTurnState = afterBuy.phase === 'result' ? advanceTurn(afterBuy) : afterBuy
     const afterNetWorth = calculateNetWorth(afterTurnState)
 
-    // 자산 매입 후 소득 발생으로 순자산이 초기값 근방이어야 함
-    // (매입 직후에는 asset value ≈ cost이므로 netWorth는 거의 유지)
     expect(afterNetWorth).toBeGreaterThan(0)
     expect(Number.isFinite(afterNetWorth)).toBe(true)
   })
@@ -89,9 +74,9 @@ describe('게임 궤적: 기본 진행', () => {
       maxTurns: 10,
     })
 
-    // 첫 턴: 자산 구매
+    // 첫 턴: 섹터 구좌 매입
     const afterBuy = processFullTurn(state, [
-      { type: 'buy', assetId: 'food-cart' },
+      { type: 'buy', sector: 'food' },
       { type: 'endTurn' },
     ])
     if (afterBuy.phase === 'result') {
@@ -114,7 +99,7 @@ describe('게임 궤적: 기본 진행', () => {
 
     const finalNetWorth = calculateNetWorth(state)
 
-    // 자산 소득으로 순자산이 유지/상승해야 함 (시장 상황에 따라 동일할 수 있음)
+    // 자산 소득으로 순자산이 유지/상승해야 함
     expect(finalNetWorth).toBeGreaterThanOrEqual(netWorthAfterBuy)
   })
 })

@@ -1,7 +1,6 @@
 // 금액 내역 분해 함수 — 기존 계산 로직을 미러링하되 중간값을 BreakdownItem[]으로 반환
 import type { GameState, Company, OwnedAsset, Sector, MoneyBreakdown, BreakdownItem } from './types'
 import {
-  SECTORS,
   SECTOR_TREND_MULTIPLIER,
   SECTOR_UPGRADE_INCOME_MULTIPLIER,
   SELL_BASE_RATIO,
@@ -53,7 +52,6 @@ export function getPurchaseCostBreakdown(
   const traitEffects = getCompanyTraitEffects(company)
   const sectorTraitEffects = getCompanySectorTraitEffects(company)
   const sectorDiscount = sectorTraitEffects.purchaseDiscounts[sector] ?? 0
-  const metaDiscount = state.config ? 0 : 0 // 메타 할인은 config에서 처리
   const totalDiscount = influenceTier.purchaseDiscount + nextDiscount + traitEffects.purchaseDiscount + sectorDiscount
   const cost = Math.floor(basePrice * demandPremium * (1 - totalDiscount))
 

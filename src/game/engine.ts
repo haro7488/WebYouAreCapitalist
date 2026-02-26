@@ -1,10 +1,8 @@
 import type { GameState, Company, TurnAction, EventChoice, EventEffect, GameEvent, GovernmentEvent, OwnedAsset, Sector, ResearchResult, MarketCondition } from './types'
 import { INFORMATION_SECTOR } from './types'
 import {
-  SECTORS,
   SECTOR_TREND_MULTIPLIER,
   SECTOR_UPGRADE_COST_RATIO,
-  SECTOR_UPGRADE_INCOME_MULTIPLIER,
   SECTOR_MAX_UPGRADE_LEVEL,
   SELL_BASE_RATIO,
   SELL_MARKET_RATIO,

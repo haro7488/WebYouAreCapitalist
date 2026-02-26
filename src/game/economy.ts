@@ -184,26 +184,6 @@ export function calculateSectorShares(
 
 // === 소득 계산 ===
 
-/** 섹터의 총 자산 가치 합산 (모든 기업) */
-function calculateSectorAssetValue(companies: Company[], sector: Sector): number {
-  let total = 0
-  for (const company of companies) {
-    for (const owned of company.assets) {
-      if (owned.assetId === sector) total += owned.currentValue
-    }
-  }
-  return total
-}
-
-/** 특정 기업의 섹터 내 자산 가치 합산 */
-function calculateCompanySectorValue(company: Company, sector: Sector): number {
-  let total = 0
-  for (const owned of company.assets) {
-    if (owned.assetId === sector) total += owned.currentValue
-  }
-  return total
-}
-
 /** 특정 기업의 섹터별 소득 계산 */
 export function calculateCompanySectorIncome(
   company: Company,

@@ -3,8 +3,8 @@ import { Card, StatRow, MoneyDisplay, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { MarketIndicator } from './MarketIndicator'
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from 'lucide-react'
-import { findSector, getCompanyRank, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
-import type { Sector, TurnAction } from '@game/index'
+import { getCompanyRank, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
+import type { TurnAction } from '@game/index'
 
 /** 턴 결과 요약 카드 */
 export function TurnResult() {
@@ -111,7 +111,6 @@ export function TurnResult() {
             )
             .map((a) => {
               if (a.type === 'buy') {
-                const profile = findSector(a.sector)
                 return {
                   icon: '📈',
                   colorClass: 'text-green-400',
