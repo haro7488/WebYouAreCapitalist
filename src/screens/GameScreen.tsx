@@ -4,28 +4,12 @@ import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, ResearchLab, Leaderboard, GoalSelectionModal, TraitRevealModal, MarketHistory } from '@components/game'
-import { findTrait, calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown, getCashBreakdown, getAssetValueBreakdown, getNetIncomeBreakdown, GOALS } from '@game/index'
-import type { Sector, DominanceLevel } from '@game/index'
+import { findTrait, calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown, getCashBreakdown, getAssetValueBreakdown, getNetIncomeBreakdown, GOALS, ALL_SECTORS } from '@game/index'
+import type { Sector } from '@game/index'
 import { TREND_LABELS, TREND_COLORS } from '@/constants/trends'
 import { SECTOR_NAMES } from '@/constants/sectors'
-
-// 지배력 레벨 한국어 표시
-const DOMINANCE_LABELS: Record<DominanceLevel, string> = {
-  entrant: '진입',
-  competitor: '경쟁자',
-  dominant: '지배',
-}
-
-// 지배력 레벨별 색상
-const DOMINANCE_COLORS: Record<DominanceLevel, string> = {
-  entrant: 'text-slate-400',
-  competitor: 'text-amber-400',
-  dominant: 'text-money-400',
-}
-
-// 시장 상태
-const MARKET_LABELS = { boom: '📈 호황', stable: '➖ 보합', recession: '📉 불황' }
-const MARKET_COLORS = { boom: 'text-emerald-400', stable: 'text-slate-300', recession: 'text-red-400' }
+import { DOMINANCE_LABELS, DOMINANCE_COLORS } from '@/constants/dominance'
+import { MARKET_LABELS_WITH_ICON, MARKET_COLORS } from '@/constants/market'
 
 type PlanningView = 'summary' | 'market' | 'portfolio' | 'research' | 'lab'
 
@@ -133,7 +117,7 @@ export function GameScreen() {
                   }>
                     <StatRow
                       label={<GlossaryText>경기</GlossaryText>}
-                      value={<span className={MARKET_COLORS[gameState.market.condition]}><GlossaryText>{MARKET_LABELS[gameState.market.condition]}</GlossaryText></span>}
+                      value={<span className={MARKET_COLORS[gameState.market.condition]}><GlossaryText>{MARKET_LABELS_WITH_ICON[gameState.market.condition]}</GlossaryText></span>}
                     />
                     <StatRow label={<GlossaryText>남은 턴</GlossaryText>} value={`${gameState.market.turnsRemaining}턴`} />
                     <StatRow label={<GlossaryText>변동성</GlossaryText>} value={`${Math.round(gameState.market.volatility * 100)}%`} />
@@ -182,7 +166,7 @@ export function GameScreen() {
 
                   {/* 섹터 트렌드 + 지배력 통합 */}
                   <Card header={<GlossaryText>섹터 현황</GlossaryText>}>
-                    {(Object.keys(SECTOR_NAMES) as Sector[]).map((sector) => {
+                    {ALL_SECTORS.map((sector) => {
                       const info = dominanceMap[sector]
                       const isActive = info.count > 0
                       const sectorState = gameState.sectorStates[sector]

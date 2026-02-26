@@ -7,13 +7,7 @@ import type { EventEffect } from '@game/types'
 import type { Sector } from '@game/index'
 import { SECTOR_NAMES } from '@/constants/sectors'
 import { TREND_LABELS } from '@/constants/trends'
-
-// 시장 상태 한국어 매핑
-const MARKET_LABEL: Record<string, string> = {
-  boom: '호황',
-  stable: '보합',
-  recession: '불황',
-}
+import { MARKET_LABELS } from '@/constants/market'
 
 /** 이벤트 선택지 효과 미리보기 */
 function EffectPreview({ effect }: { effect: EventEffect }) {
@@ -91,7 +85,7 @@ function EffectPreview({ effect }: { effect: EventEffect }) {
   }
 
   if (effect.marketShift) {
-    const label = MARKET_LABEL[effect.marketShift] ?? effect.marketShift
+    const label = MARKET_LABELS[effect.marketShift] ?? effect.marketShift
     items.push(
       <span key="marketShift" className="text-slate-300">
         🌐 시장→{label}

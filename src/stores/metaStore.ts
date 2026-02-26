@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { MetaState } from '@game/types'
+import type { MetaState, MetaUpgradeId } from '@game/types'
 import {
   createInitialMeta,
   purchaseUpgrade as enginePurchaseUpgrade,
@@ -15,7 +15,7 @@ interface MetaStoreState {
 
 interface MetaStoreActions {
   /** 메타 업그레이드 구매. 성공 시 true */
-  purchaseUpgrade: (upgradeId: string) => boolean
+  purchaseUpgrade: (upgradeId: MetaUpgradeId) => boolean
   /** 런 결과 반영 (gameStore에서 호출) */
   applyRunResult: (updatedMeta: MetaState) => void
   /** 전체 초기화 */
@@ -31,7 +31,7 @@ export const useMetaStore = create<MetaStore>()(
     (set, get) => ({
       metaState: createInitialMeta(),
 
-      purchaseUpgrade: (upgradeId: string): boolean => {
+      purchaseUpgrade: (upgradeId: MetaUpgradeId): boolean => {
         const result = enginePurchaseUpgrade(get().metaState, upgradeId)
         if (result === null) return false
         set({ metaState: result })

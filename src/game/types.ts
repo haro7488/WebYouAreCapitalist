@@ -1,6 +1,9 @@
 // === 턴 페이즈 ===
 export type TurnPhase = 'planning' | 'government' | 'event' | 'resolution' | 'result'
 
+// === AI 전략 ===
+export type StrategyId = 'conservative' | 'aggressive' | 'domination' | 'opportunist'
+
 // === 시장 ===
 export type MarketCondition = 'boom' | 'stable' | 'recession'
 
@@ -73,7 +76,7 @@ export type ResearchResult =
   | { type: 'sector'; sector: Sector; nextTrend: SectorTrend }
   | { type: 'event'; hint: string }
   | { type: 'competitor'; companyId: string; companyName: string; assets: OwnedAsset[] }
-  | { type: 'strategy'; companyId: string; companyName: string; strategyId: string }
+  | { type: 'strategy'; companyId: string; companyName: string; strategyId: StrategyId }
   | { type: 'share'; sector: Sector; shares: { companyId: string; companyName: string; share: number }[] }
   | { type: 'government'; currentInflation: number; inflationTrend: 'rising' | 'stable' | 'falling'; likelyPolicy: { title: string; description: string } | null; affectedSectors: Sector[] }
 
@@ -221,7 +224,7 @@ export interface GameState {
   selectedGoal: Goal | null
 
   // AI 경쟁사 전략 매핑 (companyId → strategyId)
-  aiStrategies: Record<string, string>
+  aiStrategies: Record<string, StrategyId>
 
   // 턴별 순위 기록 (각 원소 = 기업별 순위 배열)
   rankingHistory: number[][]
@@ -279,6 +282,9 @@ export interface Goal {
   bonus: number // 달성 시 순자산에 가산
 }
 
+// === 메타 업그레이드 ===
+export type MetaUpgradeId = 'seed-capital' | 'time-management' | 'investment-eye' | 'negotiation' | 'crisis-sense' | 'connections'
+
 // === 메타 진행 ===
 export interface MetaEffect {
   startingMoneyBonus: number
@@ -290,7 +296,7 @@ export interface MetaEffect {
 }
 
 export interface MetaUpgrade {
-  id: string
+  id: MetaUpgradeId
   name: string
   description: string
   cost: number // 메타 화폐 비용
@@ -302,7 +308,7 @@ export interface MetaState {
   currency: number // 메타 화폐
   totalRunsPlayed: number
   bestScore: number
-  upgrades: Record<string, number> // upgradeId -> level
+  upgrades: Partial<Record<MetaUpgradeId, number>> // upgradeId -> level
 }
 
 // === 게임 설정 (테스트 파라미터) ===

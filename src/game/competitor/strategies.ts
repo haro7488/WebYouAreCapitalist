@@ -1,5 +1,5 @@
 import type { CompetitorStrategy } from './types'
-import type { GameState, Company, TurnAction, Sector, GameEvent } from '../types'
+import type { GameState, Company, TurnAction, Sector, GameEvent, StrategyId } from '../types'
 import { SECTORS, ALL_SECTORS, SECTOR_MAX_UPGRADE_LEVEL } from '../constants'
 import { calculateCurrentPrice } from '../breakdown'
 import { createRng } from '../utils'
@@ -213,7 +213,7 @@ export const opportunistStrategy: CompetitorStrategy = {
 
 // === 전략 레지스트리 ===
 
-export const STRATEGIES: Record<string, CompetitorStrategy> = {
+export const STRATEGIES: Record<StrategyId, CompetitorStrategy> = {
   conservative: conservativeStrategy,
   aggressive: aggressiveStrategy,
   domination: dominationStrategy,
@@ -221,6 +221,6 @@ export const STRATEGIES: Record<string, CompetitorStrategy> = {
 }
 
 /** ID로 전략 조회 (없으면 보수형 폴백) */
-export function getStrategyById(id: string): CompetitorStrategy {
+export function getStrategyById(id: StrategyId): CompetitorStrategy {
   return STRATEGIES[id] ?? conservativeStrategy
 }

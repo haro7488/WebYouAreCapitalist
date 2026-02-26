@@ -1,18 +1,7 @@
 import type { GameState, MarketCondition } from '@game/types'
 import { GlossaryText } from '@components/glossary'
 import { MiniLineChart } from '@components/common'
-
-// 경기 색상
-const CONDITION_COLORS: Record<MarketCondition, string> = {
-  boom: '#34d399',    // emerald
-  stable: '#94a3b8',  // slate
-  recession: '#f87171', // red
-}
-const CONDITION_LABELS: Record<MarketCondition, string> = {
-  boom: '호황',
-  stable: '보합',
-  recession: '불황',
-}
+import { MARKET_HEX_COLORS, MARKET_LABELS } from '@/constants/market'
 
 /** 경기 타임라인 (턴별 색상 블록) */
 function ConditionTimeline({ history, currentTurn }: { history: MarketCondition[]; currentTurn: number }) {
@@ -24,8 +13,8 @@ function ConditionTimeline({ history, currentTurn }: { history: MarketCondition[
         <div
           key={i}
           className="flex-1 h-5 rounded-sm relative group"
-          style={{ backgroundColor: CONDITION_COLORS[cond], minWidth: 6 }}
-          title={`턴 ${i + 1}: ${CONDITION_LABELS[cond]}`}
+          style={{ backgroundColor: MARKET_HEX_COLORS[cond], minWidth: 6 }}
+          title={`턴 ${i + 1}: ${MARKET_LABELS[cond]}`}
         >
           {/* 호버 시 턴 번호 */}
           <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
@@ -59,15 +48,15 @@ export function MarketHistory({ gameState }: MarketHistoryProps) {
           <span className="text-xs text-slate-400 font-medium"><GlossaryText>경기 변동</GlossaryText></span>
           <div className="flex items-center gap-2 text-[10px]">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: CONDITION_COLORS.boom }} />
+              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: MARKET_HEX_COLORS.boom }} />
               <GlossaryText>호황</GlossaryText>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: CONDITION_COLORS.stable }} />
+              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: MARKET_HEX_COLORS.stable }} />
               <GlossaryText>보합</GlossaryText>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: CONDITION_COLORS.recession }} />
+              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: MARKET_HEX_COLORS.recession }} />
               <GlossaryText>불황</GlossaryText>
             </span>
           </div>

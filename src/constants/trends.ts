@@ -27,3 +27,16 @@ export const TREND_COLORS: Record<SectorTrend, string> = {
   neutral: 'text-slate-400',
   cold: 'text-blue-400',
 }
+
+/** 다음 턴 트렌드 변화 표시 (MarketIndicator용) */
+export const TREND_NEXT_LABEL: Record<SectorTrend, string> = {
+  hot: '📈 상승',
+  neutral: '➡️ 보합',
+  cold: '📉 하락',
+}
+
+export const TREND_NEXT_COLOR: Record<SectorTrend, string> = {
+  hot: 'text-orange-400',
+  neutral: 'text-slate-400',
+  cold: 'text-blue-400',
+}

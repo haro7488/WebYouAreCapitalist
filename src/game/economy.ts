@@ -77,7 +77,7 @@ export function calculateDominance(assets: OwnedAsset[]): Record<Sector, Dominan
   }
 
   const result = {} as Record<Sector, DominanceInfo>
-  for (const sector of Object.keys(counts) as Sector[]) {
+  for (const sector of ALL_SECTORS) {
     const count = counts[sector]
     if (count >= DOMINANCE_THRESHOLDS.dominant.count) {
       result[sector] = { level: 'dominant', count, share: 0, incomeBonus: DOMINANCE_THRESHOLDS.dominant.incomeBonus }

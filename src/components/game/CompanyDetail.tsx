@@ -3,25 +3,10 @@ import { GlossaryText } from '@components/glossary'
 import { TraitBar } from './TraitDisplay'
 import { useGameStore } from '@stores/gameStore'
 import { findSector, getNetWorthBreakdown, INFORMATION_SECTOR } from '@game/index'
-import type { Company, Sector, ResearchResult } from '@game/types'
+import type { Company, Sector, ResearchResult, StrategyId } from '@game/types'
 import { TRAIT_REGISTRY, type Trait } from '@game/traits'
 import { SECTOR_NAMES_WITH_ICON } from '@/constants/sectors'
-
-// 전략 정보 매핑
-const STRATEGY_INFO: Record<string, { name: string; hint: string }> = {
-  conservative: { name: '보수형', hint: '안정적인 분산 투자 행보' },
-  aggressive: { name: '공격형', hint: '공격적인 고수익 추구 행보' },
-  domination: { name: '지배형', hint: '특정 섹터 집중 투자 행보' },
-  opportunist: { name: '기회형', hint: '트렌드 추종 매매 행보' },
-}
-
-// 조사로 드러나는 전략 표시명
-const STRATEGY_DISPLAY_NAMES: Record<string, string> = {
-  conservative: '안정 추구형',
-  aggressive: '공격 투자형',
-  domination: '섹터 지배형',
-  opportunist: '기회주의형',
-}
+import { STRATEGY_DISPLAY, STRATEGY_RESEARCH_NAMES } from '@/constants/strategy'
 
 // (업그레이드는 섹터 레벨로 이동, 개별 자산 레벨 없음)
 
@@ -29,13 +14,13 @@ interface CompanyDetailProps {
   company: Company
   isPlayer: boolean
   rank: number
-  strategyId: string | null
+  strategyId: StrategyId | null
   onClose: () => void
 }
 
 /** 기업 상세 정보 모달 */
 export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: CompanyDetailProps) {
-  const strategyInfo = strategyId ? STRATEGY_INFO[strategyId] : null
+  const strategyInfo = strategyId ? STRATEGY_DISPLAY[strategyId] : null
 
   // company.traits가 있으면 TRAIT_REGISTRY에서 Trait 객체 조회
   const activeTraits: Trait[] = (company.traits ?? [])
@@ -135,7 +120,7 @@ export function CompanyDetail({ company, isPlayer, rank, strategyId, onClose }: 
               {strategyResult ? (
                 <div className="space-y-1">
                   <p className="text-sm text-amber-300 font-medium">
-                    {STRATEGY_DISPLAY_NAMES[strategyResult.strategyId] ?? strategyResult.strategyId}
+                    {STRATEGY_RESEARCH_NAMES[strategyResult.strategyId] ?? strategyResult.strategyId}
                   </p>
                   {strategyInfo && (
                     <p className="text-xs text-slate-400">{strategyInfo.hint}</p>

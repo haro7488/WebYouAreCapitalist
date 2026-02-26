@@ -1,24 +1,18 @@
 import { useGameStore } from '@stores/gameStore'
 import { findSector, calculateDominance, formatMoney, getAssetIncomeBreakdown, getSellPriceBreakdown, getAssetValueBreakdown, SECTOR_MAX_UPGRADE_LEVEL } from '@game/index'
-import type { Sector, SectorTrend, DominanceLevel, MoneyBreakdown } from '@game/index'
+import type { Sector, SectorTrend, MoneyBreakdown } from '@game/index'
 import { Card, MoneyDisplay, Badge, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 
 import { SECTOR_NAMES } from '@/constants/sectors'
 import { TREND_BADGE } from '@/constants/trends'
+import { DOMINANCE_DISPLAY } from '@/constants/dominance'
 
 // 트렌드 방향 표시
 const TREND_ARROW: Record<SectorTrend, { symbol: string; color: string }> = {
   hot: { symbol: '↑', color: 'text-red-400' },
   neutral: { symbol: '→', color: 'text-slate-400' },
   cold: { symbol: '↓', color: 'text-blue-400' },
-}
-
-// 지배력 표시
-const DOMINANCE_LABEL: Record<DominanceLevel, { text: string; color: string }> = {
-  entrant: { text: '진입', color: 'text-slate-500' },
-  competitor: { text: '경쟁자', color: 'text-amber-400' },
-  dominant: { text: '지배', color: 'text-money-400' },
 }
 
 /** 섹터 그룹 합산 소득 breakdown 생성 */
@@ -148,8 +142,8 @@ export function Portfolio({ onResearchNavigate }: PortfolioProps) {
                       </span>
                     )}
                     {dominanceMap[sector]?.level !== 'entrant' && (
-                      <span className={`text-xs font-medium ${DOMINANCE_LABEL[dominanceMap[sector].level].color}`}>
-                        <GlossaryText>{DOMINANCE_LABEL[dominanceMap[sector].level].text}</GlossaryText>
+                      <span className={`text-xs font-medium ${DOMINANCE_DISPLAY[dominanceMap[sector].level].color}`}>
+                        <GlossaryText>{DOMINANCE_DISPLAY[dominanceMap[sector].level].text}</GlossaryText>
                       </span>
                     )}
                     {/* 우측: 소득 합계 + 강화 */}

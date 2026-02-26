@@ -3,7 +3,7 @@ import { Card, Badge } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { TrendingUp, BarChart3, AlertCircle, AlertTriangle, ClipboardList, Landmark } from 'lucide-react'
 import { useGameStore } from '@stores/gameStore'
-import { INFORMATION_SECTOR } from '@game/index'
+import { INFORMATION_SECTOR, ALL_SECTORS } from '@game/index'
 import type { ResearchResult, Sector } from '@game/index'
 import type { ResearchRecord } from '@game/types'
 import { SECTOR_NAMES } from '@/constants/sectors'
@@ -336,7 +336,7 @@ export function ResearchPanel({ onResearch }: ResearchPanelProps) {
         <div className="bg-slate-800 border border-amber-500/30 rounded-lg p-3 space-y-2">
           <p className="text-xs text-amber-400 font-medium mb-2">분석할 섹터 선택</p>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {(Object.keys(SECTOR_NAMES) as Sector[]).map((sector) => (
+            {ALL_SECTORS.map((sector) => (
               <button
                 key={sector}
                 className="py-2 px-1 rounded-md bg-slate-700 hover:bg-amber-500/20 hover:border-amber-500/50 border border-slate-600 transition-colors text-center text-xs text-slate-200 font-medium"

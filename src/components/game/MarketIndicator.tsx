@@ -1,4 +1,5 @@
-import type { MarketCondition, Sector } from '@game/index'
+import { ALL_SECTORS } from '@game/index'
+import type { MarketCondition, Sector, SectorTrend } from '@game/index'
 import { GlossaryText } from '@components/glossary'
 import { TrendingUp, Minus, TrendingDown } from 'lucide-react'
 import { Badge } from '@components/common'
@@ -6,24 +7,14 @@ import { useGameStore } from '@stores/gameStore'
 import { getCompanyTraitEffects } from '@game/logic/traitEngine'
 import { previewNextTrends } from '@game/market'
 import { SECTOR_NAMES } from '@/constants/sectors'
+import { MARKET_LABELS } from '@/constants/market'
+import { TREND_NEXT_LABEL, TREND_NEXT_COLOR } from '@/constants/trends'
 
-// 시장 상태별 아이콘 및 라벨 매핑
-const MARKET_CONFIG: Record<MarketCondition, { icon: typeof TrendingUp; label: string }> = {
-  boom: { icon: TrendingUp, label: '호황' },
-  stable: { icon: Minus, label: '보합' },
-  recession: { icon: TrendingDown, label: '불황' },
-}
-
-const TREND_NEXT_LABEL: Record<string, string> = {
-  hot: '📈 상승',
-  neutral: '➡️ 보합',
-  cold: '📉 하락',
-}
-
-const TREND_NEXT_COLOR: Record<string, string> = {
-  hot: 'text-orange-400',
-  neutral: 'text-slate-400',
-  cold: 'text-blue-400',
+// 시장 상태별 아이콘 매핑
+const MARKET_ICON: Record<MarketCondition, typeof TrendingUp> = {
+  boom: TrendingUp,
+  stable: Minus,
+  recession: TrendingDown,
 }
 
 interface MarketIndicatorProps {
@@ -33,18 +24,19 @@ interface MarketIndicatorProps {
 /** 현재 시장 상태를 아이콘 + 배지로 표시.
  *  trendForesight 특성 보유 시 다음 턴 섹터 트렌드 변화 힌트도 표시. */
 export function MarketIndicator({ condition }: MarketIndicatorProps) {
-  const { icon: Icon, label } = MARKET_CONFIG[condition]
+  const Icon = MARKET_ICON[condition]
+  const label = MARKET_LABELS[condition]
   const gameState = useGameStore((s) => s.gameState)
 
   // trendForesight 효과 확인
-  let changingNextTurn: Array<{ sector: Sector; nextTrend: string }> = []
+  let changingNextTurn: Array<{ sector: Sector; nextTrend: SectorTrend }> = []
   if (gameState) {
     const company = gameState.companies[0]
     const effects = getCompanyTraitEffects(company)
     if (effects.trendForesight > 0) {
       const nextTrends = previewNextTrends(gameState)
       // 현재 트렌드와 달라지는 섹터만 표시
-      for (const sector of Object.keys(nextTrends) as Sector[]) {
+      for (const sector of ALL_SECTORS) {
         const currentTrend = gameState.sectorStates[sector].trend
         const nextTrend = nextTrends[sector]
         if (nextTrend !== currentTrend) {

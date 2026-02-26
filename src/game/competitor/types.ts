@@ -1,4 +1,4 @@
-import type { GameState, Company, TurnAction, GameEvent } from '../types'
+import type { GameState, Company, TurnAction, GameEvent, StrategyId } from '../types'
 
 // === AI 경쟁사 전략 인터페이스 ===
 
@@ -14,5 +14,5 @@ export interface CompetitorStrategy {
 export interface CompetitorConfig {
   id: string
   name: string
-  strategyId: string
+  strategyId: StrategyId
 }

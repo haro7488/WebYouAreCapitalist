@@ -6,28 +6,10 @@ import { CompanyDetail } from './CompanyDetail'
 import { RankingChart } from './RankingChart'
 import { HistoryChart } from './HistoryChart'
 import { calculateCompanyTotalIncome, getNetWorthBreakdown, getRevenueBreakdown } from '@game/index'
-import type { Company, Sector } from '@game/types'
+import type { Company } from '@game/types'
 import { formatMoney } from '@game/index'
-
-// 전략 아이콘 매핑
-const STRATEGY_ICONS: Record<string, string> = {
-  conservative: '🏦',
-  aggressive: '🚀',
-  domination: '🎯',
-  opportunist: '🎲',
-}
-
-// 섹터 아이콘 매핑
-const SECTOR_ICONS: Record<Sector, string> = {
-  food: '🍔',
-  tech: '💻',
-  realEstate: '🏢',
-  logistics: '🚛',
-  energy: '⚡',
-  information: '🔍',
-  finance: '💰',
-  rnd: '🔬',
-}
+import { SECTOR_ICONS } from '@/constants/sectors'
+import { STRATEGY_DISPLAY } from '@/constants/strategy'
 
 // 순위 변동 표시
 function RankChange({ prev, current }: { prev: number; current: number }) {
@@ -107,7 +89,7 @@ export function Leaderboard() {
             const rank = idx + 1
             const prevRank = getRankTrend(company, rank)
             const strategyId = aiStrategies[company.id]
-            const strategyIcon = strategyId ? STRATEGY_ICONS[strategyId] : null
+            const strategyIcon = strategyId ? STRATEGY_DISPLAY[strategyId]?.icon : null
             const expectedIncome = calculateCompanyTotalIncome(company, gameState)
 
             return (

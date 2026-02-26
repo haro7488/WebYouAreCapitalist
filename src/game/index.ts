@@ -30,6 +30,8 @@ export type {
   EventConditions,
   MoneyBreakdown,
   BreakdownItem,
+  StrategyId,
+  MetaUpgradeId,
 } from './types'
 export { INFORMATION_SECTOR, RND_SECTOR } from './types'
 
@@ -38,6 +40,7 @@ export {
   DEFAULT_GAME_CONFIG,
   SECTORS,
   ALL_SECTORS,
+  ALL_MARKET_CONDITIONS,
   META_UPGRADES,
   SECTOR_MARKET_MULTIPLIER,
   SECTOR_TREND_MULTIPLIER,

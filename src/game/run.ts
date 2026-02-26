@@ -1,4 +1,4 @@
-import type { GameState, GameConfig, Company, MetaState, RunResult, RunResultRanking, Sector, DominanceInfo } from './types'
+import type { GameState, GameConfig, Company, MetaState, RunResult, RunResultRanking, Sector, DominanceInfo, StrategyId } from './types'
 import {
   STARTING_INFLUENCE,
   META_CURRENCY_RATE,
@@ -6,6 +6,7 @@ import {
   DEFAULT_COMPANY_NAME,
   DEFAULT_GAME_CONFIG,
   SECTOR_TREND_MULTIPLIER,
+  ALL_SECTORS,
 } from './constants'
 import { createRng, generateRunId, generateSeed } from './utils'
 import type { Rng } from './utils'
@@ -83,8 +84,8 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
 
   // 경쟁사 생성
   const competitorNames = assignCompanyNames(cfg.competitorCount, rng.random)
-  const strategyKeys = Object.keys(STRATEGIES)
-  const aiStrategies: Record<string, string> = {}
+  const strategyKeys = Object.keys(STRATEGIES) as StrategyId[]
+  const aiStrategies: Record<string, StrategyId> = {}
   const competitors: Company[] = competitorNames.map((name, i) => {
     const id = `competitor-${i}`
     aiStrategies[id] = rng.pick(strategyKeys)
@@ -127,7 +128,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
 
   // 초기 섹터별 매입가
   const initialSectorPrices: Partial<Record<Sector, number[]>> = {}
-  for (const sectorId of Object.keys(initialSectorStates) as Sector[]) {
+  for (const sectorId of ALL_SECTORS) {
     const profile = findSector(sectorId)
     if (!profile) continue
     const marketMult = profile.marketMultiplier[initialMarket.condition]

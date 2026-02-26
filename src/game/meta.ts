@@ -1,4 +1,4 @@
-import type { MetaState, MetaEffect } from './types'
+import type { MetaState, MetaEffect, MetaUpgradeId } from './types'
 import { META_UPGRADES } from './constants'
 
 /** MetaEffect 기본값 */
@@ -32,7 +32,7 @@ export function getMetaEffects(meta: MetaState): MetaEffect {
 }
 
 /** 메타 업그레이드 구매 */
-export function purchaseUpgrade(meta: MetaState, upgradeId: string): MetaState | null {
+export function purchaseUpgrade(meta: MetaState, upgradeId: MetaUpgradeId): MetaState | null {
   const upgrade = META_UPGRADES.find((u) => u.id === upgradeId)
   if (!upgrade) return null
 

@@ -11,7 +11,7 @@ export function processGovernmentPhase(state: GameState): GameState {
   const rng = createRng(state.rngState)
 
   const player = state.companies[0]
-  const eligible = (GOVERNMENT_EVENTS as GovernmentEvent[]).filter((e: GovernmentEvent) =>
+  const eligible = GOVERNMENT_EVENTS.filter((e) =>
     !e.conditions || checkEventConditions(e.conditions, state, player),
   )
 

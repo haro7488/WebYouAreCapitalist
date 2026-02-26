@@ -5,6 +5,7 @@ import {
   INFLUENCE_DECAY_PER_TURN,
   RANK_FIRST_INFLUENCE_BONUS,
   BANKRUPTCY_INTEREST_RATE,
+  ALL_SECTORS,
 } from '../constants'
 import { createRng, clamp } from '../utils'
 import {
@@ -216,7 +217,7 @@ export function advanceTurn(state: GameState): GameState {
 
   // 섹터별 매입가 히스토리
   const newSectorPriceHistory: Partial<Record<Sector, number[]>> = { ...checked.sectorPriceHistory }
-  for (const sectorId of Object.keys(checked.sectorStates) as Sector[]) {
+  for (const sectorId of ALL_SECTORS) {
     const profile = findSector(sectorId)
     if (!profile) continue
     const marketMult = profile.marketMultiplier[checked.market.condition]

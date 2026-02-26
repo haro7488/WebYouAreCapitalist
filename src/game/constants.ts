@@ -1,4 +1,4 @@
-import type { GameConfig, MetaUpgrade, Sector } from './types'
+import type { GameConfig, MarketCondition, MetaUpgrade, Sector } from './types'
 import {
   STARTING_MONEY,
   INITIAL_MARKET_POOL,
@@ -61,6 +61,9 @@ export { SECTORS } from './schema/sectors.schema'
 
 // === 전체 섹터 ID 배열 (단일 정의) ===
 export const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
+
+// === 전체 시장 상태 배열 (단일 정의) ===
+export const ALL_MARKET_CONDITIONS: MarketCondition[] = ['boom', 'stable', 'recession']
 
 // === 메타 업그레이드 (함수 포함 → JSON 불가, TS 유지) ===
 export const META_UPGRADES: MetaUpgrade[] = [

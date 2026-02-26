@@ -1,6 +1,6 @@
-import type { GameState, Company, Sector, ResearchResult, MarketCondition, GovernmentEvent } from '../types'
+import type { GameState, Company, Sector, ResearchResult, StrategyId } from '../types'
 import { INFORMATION_SECTOR } from '../types'
-import { ALL_SECTORS } from '../constants'
+import { ALL_SECTORS, ALL_MARKET_CONDITIONS } from '../constants'
 import { createRng } from '../utils'
 import {
   getPlayerCompany,
@@ -55,8 +55,8 @@ export function applyResearch(
         type: 'market',
         turnsToChange: state.market.turnsRemaining,
         likelyNext: isAccurate
-          ? rng.pick(['boom', 'stable', 'recession'] as MarketCondition[])
-          : rng.pick(['boom', 'stable', 'recession'] as MarketCondition[]),
+          ? rng.pick(ALL_MARKET_CONDITIONS)
+          : rng.pick(ALL_MARKET_CONDITIONS),
       }
       break
     case 'sector': {
@@ -117,14 +117,13 @@ export function applyResearch(
         ? state.companies.find((c) => c.id === targetCompanyId)
         : rng.pick(aiCompanies2)
       if (!targetCompany2) return state
-      const strategyId = state.aiStrategies[targetCompany2.id] ?? 'unknown'
-
-      const strategies = ['growth', 'conservative', 'volatile', 'sector-focused', 'balanced']
+      const strategyId = state.aiStrategies[targetCompany2.id] ?? 'conservative' as StrategyId
+      const allStrategies: StrategyId[] = ['conservative', 'aggressive', 'domination', 'opportunist']
       result = {
         type: 'strategy',
         companyId: targetCompany2.id,
         companyName: targetCompany2.name,
-        strategyId: isAccurate ? strategyId : rng.pick(strategies),
+        strategyId: isAccurate ? strategyId : rng.pick(allStrategies),
       }
       break
     }
@@ -147,7 +146,7 @@ export function applyResearch(
       break
     }
     case 'government': {
-      const govEligible = (GOVERNMENT_EVENTS as GovernmentEvent[]).filter((e) =>
+      const govEligible = GOVERNMENT_EVENTS.filter((e) =>
         !e.conditions || checkEventConditions(e.conditions, state, player),
       )
 
