@@ -1,4 +1,4 @@
-import { Target, TrendingUp, Crown } from 'lucide-react'
+import { Target, TrendingUp, Crown, type LucideIcon } from 'lucide-react'
 import type { Goal } from '@game/types'
 import { GlossaryText } from '@components/glossary'
 
@@ -8,7 +8,7 @@ interface GoalSelectionModalProps {
 }
 
 // 목표 타입별 아이콘
-const GOAL_ICONS: Record<string, any> = {
+const GOAL_ICONS: Record<string, LucideIcon> = {
   domination: Target,
   asset: TrendingUp,
   influence: Crown,

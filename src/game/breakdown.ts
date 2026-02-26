@@ -12,6 +12,7 @@ import {
   getInfluenceTier,
   calculateGlobalDominance,
   calculateCompanyTotalIncome,
+  calculateCompanyNetIncome,
   mergeEffects,
 } from './economy'
 import { getCompanyTraitEffects, getCompanySectorTraitEffects } from './logic/traitEngine'
@@ -316,5 +317,60 @@ export function getNetWorthBreakdown(
     final,
     history: company.netWorthHistory,
     maxValue: allNwMax * 1.2,
+  }
+}
+
+/** 현금 breakdown (히스토리 포함) */
+export function getCashBreakdown(company: Company): MoneyBreakdown {
+  const cashHist = company.cashHistory ?? []
+  return {
+    title: '현금',
+    items: [{ label: '보유 현금', value: company.cash, type: 'base' }],
+    final: company.cash,
+    history: cashHist.length > 0 ? cashHist : undefined,
+    maxValue: cashHist.length > 0 ? Math.max(...cashHist, company.cash) * 1.2 : undefined,
+  }
+}
+
+/** 자산 가치 breakdown (순자산 - 현금 히스토리 기반) */
+export function getAssetValueBreakdown(
+  company: Company,
+  ownedAssets: OwnedAsset[],
+): MoneyBreakdown {
+  const totalValue = ownedAssets.reduce((sum, a) => sum + a.currentValue, 0)
+  const nwHist = company.netWorthHistory ?? []
+  const cashHist = company.cashHistory ?? []
+  const assetHist = nwHist.map((nw, i) => Math.max(0, nw - (cashHist[i] ?? 0)))
+  return {
+    title: '자산 가치',
+    items: ownedAssets.map((a, i) => ({
+      label: `구좌 ${i + 1}`,
+      value: a.currentValue,
+      type: 'add' as const,
+    })),
+    final: totalValue,
+    history: assetHist.length > 0 ? assetHist : undefined,
+    maxValue: assetHist.length > 0 ? Math.max(...assetHist, totalValue) * 1.2 : undefined,
+  }
+}
+
+/** 순수익 breakdown (수익 - 지출 히스토리 기반) */
+export function getNetIncomeBreakdown(
+  company: Company,
+  state: GameState,
+): MoneyBreakdown {
+  const income = calculateCompanyNetIncome(company, state)
+  const revHist = company.revenueHistory ?? []
+  const expHist = company.expenseHistory ?? []
+  const netHist = revHist.map((r, i) => r - (expHist[i] ?? 0))
+  return {
+    title: '순수익',
+    items: [
+      { label: '자산 수익', value: income.revenue, type: 'base' },
+      { label: '지출', value: -income.expenses, type: 'add' },
+    ],
+    final: income.net,
+    history: netHist.length > 0 ? netHist : undefined,
+    maxValue: netHist.length > 0 ? Math.max(...netHist.map(Math.abs), Math.abs(income.net)) * 1.2 : undefined,
   }
 }

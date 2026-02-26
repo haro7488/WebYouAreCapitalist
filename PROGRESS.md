@@ -18,8 +18,8 @@
 - [x] GDD 문서 전면 재작성 (docs/GDD.md) — 자본가 컨셉
 - [x] Zustand 스토어 (useGameStore, useMetaStore, useUIStore)
 - [x] UI 컴포넌트 (common/, game/)
-  - common/ 7개: Button, Card, Badge, ProgressBar, MoneyDisplay, StatRow, Modal
-  - game/ 18개: MarketIndicator, GameHeader, AssetCard, AssetMarket, OwnedAssetRow, Portfolio, EventCard, TurnResult, ActionBar, Leaderboard, CompanyDetail, ResearchPanel, GoalSelectionModal, DevPanel, HelpModal, RankingChart, TraitDisplay, GovernmentCard
+  - common/ 6개: Button, Card, Badge, MoneyDisplay, StatRow, Modal
+  - game/ 17개: MarketIndicator, GameHeader, AssetCard, AssetMarket, Portfolio, EventCard, TurnResult, ActionBar, Leaderboard, CompanyDetail, ResearchPanel, GoalSelectionModal, DevPanel, HelpModal, RankingChart, TraitDisplay, GovernmentCard
 
 - [x] 화면 구현 (MainMenu, Game, RunResult, MetaShop)
   - MainMenuScreen: 타이틀 + 통계 카드 + 새 게임/메타 상점 버튼
@@ -49,11 +49,20 @@
   - HelpModal 모바일 단일 컬럼 토글
   - GoalSelectionModal 스크롤 대응
 
+- [x] 영향력 티어 칭호 표시 + 클릭 툴팁 (GameHeader)
+- [x] 목표 클릭 툴팁 (GameHeader)
+- [x] 영향력 eventBonus 엔진 구현 (이벤트 보상 증폭)
+- [x] 영향력 freeResearch 엔진 구현 (무료 조사 +1회)
+- [x] MiniLineChart 통합 (MoneyDisplay 히스토리 차트)
+- [x] breakdown 함수 추출 (getCashBreakdown, getAssetValueBreakdown, getNetIncomeBreakdown)
+- [x] 코드 정리: 미사용 파일 삭제, barrel export 정리, 중복 함수 제거, IIFE 제거, import 통일, any 타입 제거
+
 ### 진행 중
 (없음)
 
 ### 대기
-(없음)
+- [ ] 파산 게임오버 구현
+- [ ] 목표 타입 확장 (collection, survival, trait)
 
 ---
 
@@ -120,3 +129,5 @@
 | 2026-02-23 | Proto-1~5 구현: Company 통합, 시장 풀, AI 4전략, 상호작용, 정보 비대칭, 현황판 UI |
 | 2026-02-25 | 미완료 항목 전체 처리: 에너지 자산, 정부 조사, 경쟁사 알림, 순위 차트, 조사 연동, 특성 UI, 반응형 레이아웃, HelpModal 모바일, 테스트 인프라, 코드 정리 |
 | 2026-02-25 | GDD 코드 동기화 + 밸런스 튜닝 (금융 recession 완화, 에너지 차별화, 영향력 점수 가중치 50) |
+| 2026-02-25 | UI 정보 강화: MiniLineChart, 금액 분해 툴팁, 턴별 히스토리 차트 |
+| 2026-02-26 | 영향력 칭호+목표 클릭 툴팁, eventBonus/freeResearch 엔진 구현, 코드 정리/리팩토링 |

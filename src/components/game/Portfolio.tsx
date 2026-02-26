@@ -1,6 +1,5 @@
 import { useGameStore } from '@stores/gameStore'
-import { findSector, calculateDominance, formatMoney, getAssetIncomeBreakdown, getSellPriceBreakdown } from '@game/index'
-import { SECTOR_MAX_UPGRADE_LEVEL } from '@game/index'
+import { findSector, calculateDominance, formatMoney, getAssetIncomeBreakdown, getSellPriceBreakdown, getAssetValueBreakdown, SECTOR_MAX_UPGRADE_LEVEL } from '@game/index'
 import type { Sector, SectorTrend, DominanceLevel, MoneyBreakdown } from '@game/index'
 import { Card, MoneyDisplay, Badge, Button } from '@components/common'
 import { GlossaryText } from '@components/glossary'
@@ -125,23 +124,7 @@ export function Portfolio({ onResearchNavigate }: PortfolioProps) {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400"><GlossaryText>총 자산 가치</GlossaryText></span>
-              <MoneyDisplay amount={totalValue} size="sm" getBreakdown={() => {
-                // 자산 가치 히스토리 = 순자산 - 현금
-                const nwHist = player.netWorthHistory ?? []
-                const cashHist = player.cashHistory ?? []
-                const assetHist = nwHist.map((nw, i) => Math.max(0, nw - (cashHist[i] ?? 0)))
-                return {
-                  title: '총 자산 가치',
-                  items: ownedAssets.map((a) => ({
-                    label: `${SECTOR_LABEL[a.assetId as Sector]}`,
-                    value: a.currentValue,
-                    type: 'add' as const,
-                  })),
-                  final: totalValue,
-                  history: assetHist.length > 0 ? assetHist : undefined,
-                  maxValue: assetHist.length > 0 ? Math.max(...assetHist, totalValue) * 1.2 : undefined,
-                }
-              }} />
+              <MoneyDisplay amount={totalValue} size="sm" getBreakdown={() => getAssetValueBreakdown(player, ownedAssets)} />
             </div>
             <div className="flex items-center justify-between border-t border-slate-700 pt-1">
               <span className="text-xs text-slate-400"><GlossaryText>평가 손익</GlossaryText></span>

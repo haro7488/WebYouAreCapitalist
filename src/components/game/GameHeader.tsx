@@ -4,13 +4,9 @@ import { useUIStore } from '@stores/uiStore'
 import { MarketIndicator } from './MarketIndicator'
 import { TraitBar } from './TraitDisplay'
 import { Home, HelpCircle, Target, CheckCircle } from 'lucide-react'
-import { TRAIT_REGISTRY, type Trait } from '@game/traits'
-import { calculateCompanyNetWorth, calculateCompanyTotalIncome, getInfluenceTier } from '@game/economy'
-import { INFLUENCE_TIERS } from '@game/constants'
-import { getNetWorthBreakdown, getRevenueBreakdown } from '@game/breakdown'
-import { checkPlayerGoalCompletion } from '@game/logic/goalEngine'
-import { formatMoney } from '@game/utils'
-import type { MoneyBreakdown } from '@game/types'
+import { TRAIT_REGISTRY, type Trait } from '@game/index'
+import { calculateCompanyNetWorth, calculateCompanyTotalIncome, getInfluenceTier, INFLUENCE_TIERS, getNetWorthBreakdown, getRevenueBreakdown, checkPlayerGoalCompletion, formatMoney } from '@game/index'
+import type { MoneyBreakdown } from '@game/index'
 import { MoneyDisplay, BreakdownPopover } from '@components/common'
 
 interface GameHeaderProps {
@@ -92,6 +88,11 @@ export function GameHeader({ onHome }: GameHeaderProps) {
   const netWorth = calculateCompanyNetWorth(player)
   const expectedIncome = calculateCompanyTotalIncome(player, gameState)
 
+  // 영향력 티어
+  const influenceTier = getInfluenceTier(influence)
+  const influenceTierIdx = INFLUENCE_TIERS.findIndex(t => t.minInfluence === influenceTier.minInfluence)
+  const nextInfluenceTier = influenceTierIdx < INFLUENCE_TIERS.length - 1 ? INFLUENCE_TIERS[influenceTierIdx + 1] : null
+
   const activeTraits = player.traits
     .map(id => TRAIT_REGISTRY.find(t => t.id === id))
     .filter((t): t is Trait => t != null)
@@ -135,62 +136,55 @@ export function GameHeader({ onHome }: GameHeaderProps) {
             </span>
           )}
           {/* 영향력 — 클릭 시 티어 상세 툴팁 */}
-          {(() => {
-            const tier = getInfluenceTier(influence)
-            const tierIdx = INFLUENCE_TIERS.findIndex(t => t.minInfluence === tier.minInfluence)
-            const nextTier = tierIdx < INFLUENCE_TIERS.length - 1 ? INFLUENCE_TIERS[tierIdx + 1] : null
-            return (
-              <div ref={influenceRef} className="relative">
-                <span
-                  className="text-purple-400 cursor-pointer border-b border-dashed border-purple-400/30 inline-flex items-center gap-1"
-                  onClick={() => setShowInfluenceTooltip(v => !v)}
-                >
-                  ⭐ {influence}
-                  <span className="hidden sm:inline text-[10px] text-purple-300">{tier.title}</span>
-                </span>
-                {showInfluenceTooltip && (
-                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-56 rounded-lg border border-slate-600 bg-slate-800 shadow-xl p-3">
-                    <div className="absolute left-1/2 top-[-6px] -translate-x-1/2 w-3 h-3 rotate-45 bg-slate-800 border-l border-t border-slate-600" />
-                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">영향력</div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-purple-300">{tier.title}</span>
-                      <span className="text-sm text-slate-200">⭐ {influence}</span>
-                    </div>
-                    <div className="space-y-1 text-xs border-t border-slate-700 pt-2">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">매입 할인</span>
-                        <span className={tier.purchaseDiscount > 0 ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
-                          {tier.purchaseDiscount > 0 ? `-${(tier.purchaseDiscount * 100).toFixed(0)}%` : '-'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">이벤트 보너스</span>
-                        <span className={tier.eventBonus > 0 ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
-                          {tier.eventBonus > 0 ? `+${(tier.eventBonus * 100).toFixed(0)}%` : '-'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">무료 조사</span>
-                        <span className={tier.freeResearch ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
-                          {tier.freeResearch ? '✓' : '-'}
-                        </span>
-                      </div>
-                    </div>
-                    {nextTier && (
-                      <div className="flex justify-between items-center text-xs mt-2 pt-2 border-t border-slate-700">
-                        <span className="text-slate-500">다음: {nextTier.title}</span>
-                        <span className="text-amber-400 font-medium">{nextTier.minInfluence - influence}↑</span>
-                      </div>
-                    )}
-                    <div className="text-[10px] text-slate-600 mt-2 pt-2 border-t border-slate-700 space-y-0.5">
-                      <div>매입 +3 · 1위 +2/턴</div>
-                      <div>자연감소 -1/턴</div>
-                    </div>
+          <div ref={influenceRef} className="relative">
+            <span
+              className="text-purple-400 cursor-pointer border-b border-dashed border-purple-400/30 inline-flex items-center gap-1"
+              onClick={() => setShowInfluenceTooltip(v => !v)}
+            >
+              ⭐ {influence}
+              <span className="hidden sm:inline text-[10px] text-purple-300">{influenceTier.title}</span>
+            </span>
+            {showInfluenceTooltip && (
+              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-56 rounded-lg border border-slate-600 bg-slate-800 shadow-xl p-3">
+                <div className="absolute left-1/2 top-[-6px] -translate-x-1/2 w-3 h-3 rotate-45 bg-slate-800 border-l border-t border-slate-600" />
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">영향력</div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-purple-300">{influenceTier.title}</span>
+                  <span className="text-sm text-slate-200">⭐ {influence}</span>
+                </div>
+                <div className="space-y-1 text-xs border-t border-slate-700 pt-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">매입 할인</span>
+                    <span className={influenceTier.purchaseDiscount > 0 ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
+                      {influenceTier.purchaseDiscount > 0 ? `-${(influenceTier.purchaseDiscount * 100).toFixed(0)}%` : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">이벤트 보너스</span>
+                    <span className={influenceTier.eventBonus > 0 ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
+                      {influenceTier.eventBonus > 0 ? `+${(influenceTier.eventBonus * 100).toFixed(0)}%` : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">무료 조사</span>
+                    <span className={influenceTier.freeResearch ? 'text-emerald-400 font-medium' : 'text-slate-500'}>
+                      {influenceTier.freeResearch ? '✓' : '-'}
+                    </span>
+                  </div>
+                </div>
+                {nextInfluenceTier && (
+                  <div className="flex justify-between items-center text-xs mt-2 pt-2 border-t border-slate-700">
+                    <span className="text-slate-500">다음: {nextInfluenceTier.title}</span>
+                    <span className="text-amber-400 font-medium">{nextInfluenceTier.minInfluence - influence}↑</span>
                   </div>
                 )}
+                <div className="text-[10px] text-slate-600 mt-2 pt-2 border-t border-slate-700 space-y-0.5">
+                  <div>매입 +3 · 1위 +2/턴</div>
+                  <div>자연감소 -1/턴</div>
+                </div>
               </div>
-            )
-          })()}
+            )}
+          </div>
           {/* 순자산: 모바일에서 숨김 */}
           <span className="hidden sm:inline-flex items-center gap-0.5" title="순자산">
             💰 <MoneyDisplay amount={netWorth} size="sm" getBreakdown={() => getNetWorthBreakdown(player, gameState)} />

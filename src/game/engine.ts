@@ -9,10 +9,6 @@ import {
   INFLUENCE_PER_PURCHASE,
   RANK_FIRST_INFLUENCE_BONUS,
   BANKRUPTCY_INTEREST_RATE,
-  RESEARCH_BASE_SUCCESS_RATE,
-  RESEARCH_LEVEL_PENALTY,
-  RESEARCH_PITY_INCREMENT,
-  RESEARCH_RND_LEVEL_BONUS,
   RESEARCH_POINT_COST,
 } from './constants'
 import { createRng, clamp } from './utils'
@@ -28,6 +24,7 @@ import {
   getCompanyRank,
   calculateSectorShares,
   getInfluenceTier,
+  calculateResearchSuccessRate,
   getPlayerCompany,
   updateCompany,
   calculateCompanyNetWorth,
@@ -159,18 +156,6 @@ function applySellFor(state: GameState, companyIndex: number, ownedIndex: number
 }
 
 /** 연구 성공 확률 계산 */
-function calculateResearchSuccessRate(company: Company, sector: Sector): number {
-  const currentLevel = company.sectorUpgrades[sector] ?? 0
-  const pity = company.researchPity[sector] ?? 0
-  const rndLevel = company.sectorUpgrades[RND_SECTOR] ?? 0
-
-  const base = RESEARCH_BASE_SUCCESS_RATE - currentLevel * RESEARCH_LEVEL_PENALTY
-  const pityBonus = pity * RESEARCH_PITY_INCREMENT
-  const rndBonus = rndLevel * RESEARCH_RND_LEVEL_BONUS
-
-  return Math.min(1, Math.max(0.05, base + pityBonus + rndBonus))
-}
-
 /** 특정 기업의 섹터 강화 (연구포인트 + 확률 기반) */
 function applySectorUpgradeFor(state: GameState, companyIndex: number, sector: Sector): GameState {
   const company = state.companies[companyIndex]
@@ -249,8 +234,12 @@ function applyResearch(
   // 이번 턴에 이미 사용한 조사 횟수 체크
   const researchesUsed = player.actionsThisTurn.filter((a) => a.type === 'research').length
 
+  // 영향력 티어 freeResearch: 무료 조사 +1회
+  const tier = getInfluenceTier(player.influence)
+  const effectiveMax = tier.freeResearch ? maxResearches + 1 : maxResearches
+
   // 조사 횟수 초과 시 불가
-  if (researchesUsed >= maxResearches) return state
+  if (researchesUsed >= effectiveMax) return state
 
   const rng = createRng(state.rngState)
 
@@ -579,9 +568,16 @@ function applyEventChoice(state: GameState, choice: EventChoice): GameState {
   const effect = choice.effect
   const player = getPlayerCompany(state)
 
+  // 영향력 티어 eventBonus: 양수 보상 증폭
+  const moneyReward = effect.money ?? 0
+  const influenceTier = getInfluenceTier(player.influence)
+  const boostedMoney = moneyReward > 0
+    ? Math.floor(moneyReward * (1 + influenceTier.eventBonus))
+    : moneyReward
+
   let updatedPlayer: Company = {
     ...player,
-    cash: player.cash + (effect.money ?? 0),
+    cash: player.cash + boostedMoney,
     influence: clamp(player.influence + (effect.influence ?? 0), 0, 100),
     activeEffects: [...player.activeEffects, effect],
   }
@@ -611,14 +607,13 @@ function applyEventChoice(state: GameState, choice: EventChoice): GameState {
     currentEvent: null,
   }
 
-  // 이벤트 효과에 의한 화폐 이동
-  const moneyEffect = effect.money ?? 0
+  // 이벤트 효과에 의한 화폐 이동 (eventBonus 적용된 금액 사용)
   const freeAssetValue = effect.freeAsset
     ? getCurrentSectorPrice(effect.freeAsset, state)
     : 0
   newState = {
     ...newState,
-    marketPool: newState.marketPool - moneyEffect - freeAssetValue,
+    marketPool: newState.marketPool - boostedMoney - freeAssetValue,
   }
 
   // 시장 강제 전환

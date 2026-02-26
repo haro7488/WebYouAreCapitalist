@@ -4,8 +4,7 @@ import { useUIStore } from '@stores/uiStore'
 import { Card, StatRow, MoneyDisplay } from '@components/common'
 import { GlossaryText } from '@components/glossary'
 import { GameHeader, AssetMarket, Portfolio, EventCard, GovernmentCard, TurnResult, ActionBar, ResearchPanel, ResearchLab, Leaderboard, GoalSelectionModal, TraitRevealModal, MarketHistory } from '@components/game'
-import { findTrait } from '@game/traits'
-import { calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown } from '@game/index'
+import { findTrait, calculateDominance, calculateCompanyNetIncome, SECTOR_MARKET_MULTIPLIER, getRevenueBreakdown, getExpenseBreakdown, getNetWorthBreakdown, getCashBreakdown, getAssetValueBreakdown, getNetIncomeBreakdown } from '@game/index'
 import type { Sector, SectorTrend, DominanceLevel } from '@game/index'
 import GOALS_DATA from '@game/data/goals.json'
 
@@ -191,57 +190,16 @@ export function GameScreen() {
                       <Card header={<GlossaryText>수익 구조</GlossaryText>}>
                         <StatRow label={<GlossaryText>총 수익</GlossaryText>} value={<MoneyDisplay amount={income.revenue} size="sm" showSign getBreakdown={() => getRevenueBreakdown(player, gameState)} />} />
                         <StatRow label={<GlossaryText>기본 지출</GlossaryText>} value={<MoneyDisplay amount={-income.expenses} size="sm" showSign getBreakdown={() => getExpenseBreakdown(player, gameState)} />} />
-                        <StatRow label={<GlossaryText>순수익</GlossaryText>} value={
-                          <MoneyDisplay amount={income.net} size="sm" showSign getBreakdown={() => {
-                            const revHist = player.revenueHistory ?? []
-                            const expHist = player.expenseHistory ?? []
-                            const netHist = revHist.map((r, i) => r - (expHist[i] ?? 0))
-                            return {
-                              title: '순수익',
-                              items: [
-                                { label: '자산 수익', value: income.revenue, type: 'base' },
-                                { label: '지출', value: -income.expenses, type: 'add' },
-                              ],
-                              final: income.net,
-                              history: netHist.length > 0 ? netHist : undefined,
-                              maxValue: netHist.length > 0 ? Math.max(...netHist.map(Math.abs), Math.abs(income.net)) * 1.2 : undefined,
-                            }
-                          }} />
-                        } />
+                        <StatRow label={<GlossaryText>순수익</GlossaryText>} value={<MoneyDisplay amount={income.net} size="sm" showSign getBreakdown={() => getNetIncomeBreakdown(player, gameState)} />} />
                       </Card>
                     )
                   })()}
 
                   {/* 자산 현황 */}
                   <Card header={<GlossaryText>자산 현황</GlossaryText>}>
-                    <StatRow label={<GlossaryText>현금</GlossaryText>} value={<MoneyDisplay amount={money} getBreakdown={() => {
-                      const cashHist = player.cashHistory ?? []
-                      return {
-                        title: '현금',
-                        items: [{ label: '보유 현금', value: money, type: 'base' }],
-                        final: money,
-                        history: cashHist.length > 0 ? cashHist : undefined,
-                        maxValue: cashHist.length > 0 ? Math.max(...cashHist, money) * 1.2 : undefined,
-                      }
-                    }} />} />
+                    <StatRow label={<GlossaryText>현금</GlossaryText>} value={<MoneyDisplay amount={money} getBreakdown={() => getCashBreakdown(player)} />} />
                     <StatRow label={<GlossaryText>보유 자산</GlossaryText>} value={`${ownedAssets.length}개`} />
-                    <StatRow label={<GlossaryText>자산 가치</GlossaryText>} value={<MoneyDisplay amount={totalAssetValue} getBreakdown={() => {
-                      // 자산 가치 히스토리 = 순자산 히스토리 - 현금 히스토리
-                      const nwHist = player.netWorthHistory ?? []
-                      const cashHist = player.cashHistory ?? []
-                      const assetHist = nwHist.map((nw, i) => Math.max(0, nw - (cashHist[i] ?? 0)))
-                      return {
-                        title: '자산 가치',
-                        items: ownedAssets.map((a, i) => ({
-                          label: `구좌 ${i + 1}`,
-                          value: a.currentValue,
-                          type: 'add' as const,
-                        })),
-                        final: totalAssetValue,
-                        history: assetHist.length > 0 ? assetHist : undefined,
-                        maxValue: assetHist.length > 0 ? Math.max(...assetHist, totalAssetValue) * 1.2 : undefined,
-                      }
-                    }} />} />
+                    <StatRow label={<GlossaryText>자산 가치</GlossaryText>} value={<MoneyDisplay amount={totalAssetValue} getBreakdown={() => getAssetValueBreakdown(player, ownedAssets)} />} />
                     <StatRow label={<GlossaryText>순자산</GlossaryText>} value={<MoneyDisplay amount={money + totalAssetValue} getBreakdown={() => getNetWorthBreakdown(player, gameState)} />} />
                   </Card>
 
