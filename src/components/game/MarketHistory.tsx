@@ -1,5 +1,6 @@
 import type { GameState, MarketCondition } from '@game/types'
 import { GlossaryText } from '@components/glossary'
+import { MiniLineChart } from '@components/common'
 
 // 경기 색상
 const CONDITION_COLORS: Record<MarketCondition, string> = {
@@ -11,53 +12,6 @@ const CONDITION_LABELS: Record<MarketCondition, string> = {
   boom: '호황',
   stable: '보합',
   recession: '불황',
-}
-
-/** 미니 라인차트 SVG */
-function MiniLineChart({ data, color, formatY }: { data: number[]; color: string; formatY?: (v: number) => string }) {
-  if (data.length < 1) return null
-
-  const W = 260
-  const H = 48
-  const PAD = 4
-  const LABEL_W = 28
-
-  const min = Math.min(...data)
-  const max = Math.max(...data)
-  const range = max - min || 1
-
-  const fmt = formatY ?? ((v: number) => v.toFixed(2))
-
-  if (data.length === 1) {
-    const cx = LABEL_W + (W - LABEL_W) / 2
-    const cy = H / 2
-    return (
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 48 }}>
-        <circle cx={cx} cy={cy} r="3" fill={color} />
-        <text x={2} y={cy + 3} fill="#64748b" fontSize={7}>{fmt(data[0])}</text>
-      </svg>
-    )
-  }
-
-  const xScale = (i: number) => LABEL_W + (i / (data.length - 1)) * (W - LABEL_W - PAD)
-  const yScale = (v: number) => PAD + (1 - (v - min) / range) * (H - PAD * 2)
-
-  const points = data.map((v, i) => `${xScale(i).toFixed(1)},${yScale(v).toFixed(1)}`).join(' ')
-  const lastIdx = data.length - 1
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 48 }}>
-      {/* 그리드 */}
-      {[min, (min + max) / 2, max].map((val, i) => (
-        <g key={i}>
-          <line x1={LABEL_W} y1={yScale(val)} x2={W - PAD} y2={yScale(val)} stroke="#334155" strokeWidth={0.5} />
-          <text x={LABEL_W - 2} y={yScale(val) + 3} fill="#64748b" fontSize={7} textAnchor="end">{fmt(val)}</text>
-        </g>
-      ))}
-      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={xScale(lastIdx)} cy={yScale(data[lastIdx])} r="3" fill={color} />
-    </svg>
-  )
 }
 
 /** 경기 타임라인 (턴별 색상 블록) */
@@ -121,13 +75,14 @@ export function MarketHistory({ gameState }: MarketHistoryProps) {
         <ConditionTimeline history={marketConditionHistory ?? []} currentTurn={turn} />
       </div>
 
-      {/* 인플레이션 추이 */}
+      {/* 누적 인플레이션 추이 */}
       <div>
         <span className="text-xs text-slate-400 font-medium"><GlossaryText>누적 인플레이션</GlossaryText></span>
         <MiniLineChart
           data={inflationHistory ?? []}
           color="#fb923c"
           formatY={(v) => `x${v.toFixed(2)}`}
+          showAreaFill
         />
       </div>
 
@@ -138,6 +93,7 @@ export function MarketHistory({ gameState }: MarketHistoryProps) {
           data={volatilityHistory ?? []}
           color="#60a5fa"
           formatY={(v) => `${(v * 100).toFixed(0)}%`}
+          showAreaFill
         />
       </div>
     </div>

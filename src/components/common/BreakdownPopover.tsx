@@ -109,6 +109,7 @@ export function BreakdownPopover({ breakdown, anchorEl, onClose, formatFinal }: 
                 maxValue={breakdown.maxValue}
                 items={breakdown.items}
                 final={breakdown.final}
+                formatY={breakdown.formatY}
               />
             </div>
             <div className="border-b border-slate-700 mb-2" />

@@ -1,95 +1,12 @@
 import type { BreakdownItem } from '@game/types'
+import { MiniLineChart } from './MiniLineChart'
 
 export interface BreakdownChartProps {
   history?: number[]
   maxValue?: number
   items: BreakdownItem[]
   final: number
-}
-
-function getTrend(history: number[]): 'up' | 'down' | 'flat' {
-  if (history.length < 2) return 'flat'
-  const first = history[0]
-  const last = history[history.length - 1]
-  if (last > first) return 'up'
-  if (last < first) return 'down'
-  return 'flat'
-}
-
-function LineChart({ history, maxValue }: { history: number[]; maxValue: number }) {
-  const W = 260
-  const H = 48
-  const PAD = 4
-
-  const trend = getTrend(history)
-  const strokeColor =
-    trend === 'up' ? '#34d399' : trend === 'down' ? '#f87171' : '#94a3b8'
-
-  const max = maxValue > 0 ? maxValue : Math.max(...history, 1)
-  const min = Math.min(...history, 0)
-  const range = max - min || 1
-
-  // 데이터 1개: 점만 표시
-  if (history.length === 1) {
-    const cx = W / 2
-    const cy = H - PAD - ((history[0] - min) / range) * (H - PAD * 2)
-    return (
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 48 }} preserveAspectRatio="none">
-        {[0.25, 0.5, 0.75].map((pct) => {
-          const y = H - PAD - pct * (H - PAD * 2)
-          return <line key={pct} x1={PAD} y1={y} x2={W - PAD} y2={y} stroke="#334155" strokeWidth="0.5" />
-        })}
-        <circle cx={cx} cy={cy} r="3" fill={strokeColor} />
-      </svg>
-    )
-  }
-
-  const points = history.map((v, i) => {
-    const x = PAD + (i / (history.length - 1)) * (W - PAD * 2)
-    const y = H - PAD - ((v - min) / range) * (H - PAD * 2)
-    return `${x},${y}`
-  })
-
-  const lastX = PAD + ((history.length - 1) / (history.length - 1)) * (W - PAD * 2)
-  const lastV = history[history.length - 1]
-  const lastY = H - PAD - ((lastV - min) / range) * (H - PAD * 2)
-
-  return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      className="w-full"
-      style={{ height: 48 }}
-      preserveAspectRatio="none"
-    >
-      {/* 그리드 라인 25%, 50%, 75% */}
-      {[0.25, 0.5, 0.75].map((pct) => {
-        const y = H - PAD - pct * (H - PAD * 2)
-        return (
-          <line
-            key={pct}
-            x1={PAD}
-            y1={y}
-            x2={W - PAD}
-            y2={y}
-            stroke="#334155"
-            strokeWidth="0.5"
-          />
-        )
-      })}
-
-      <polyline
-        points={points.join(' ')}
-        fill="none"
-        stroke={strokeColor}
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-
-      {/* 마지막 점 */}
-      <circle cx={lastX} cy={lastY} r="3" fill={strokeColor} />
-    </svg>
-  )
+  formatY?: (v: number) => string
 }
 
 function StackBar({ items, final, maxValue }: { items: BreakdownItem[]; final: number; maxValue?: number }) {
@@ -140,7 +57,7 @@ function StackBar({ items, final, maxValue }: { items: BreakdownItem[]; final: n
   )
 }
 
-export function BreakdownChart({ history, maxValue, items, final }: BreakdownChartProps) {
+export function BreakdownChart({ history, maxValue, items, final, formatY }: BreakdownChartProps) {
   const hasLine = (history?.length ?? 0) >= 1
   const hasStack = items.length > 1
 
@@ -149,7 +66,13 @@ export function BreakdownChart({ history, maxValue, items, final }: BreakdownCha
   return (
     <div className="space-y-1">
       {hasLine && (
-        <LineChart history={history!} maxValue={maxValue ?? 0} />
+        <MiniLineChart
+          data={history!}
+          color="#94a3b8"
+          trendColor
+          showAreaFill
+          formatY={formatY}
+        />
       )}
       {hasStack && (
         <StackBar items={items} final={final} maxValue={maxValue} />
