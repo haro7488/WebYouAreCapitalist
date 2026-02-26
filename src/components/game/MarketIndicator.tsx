@@ -21,6 +21,7 @@ const SECTOR_LABELS: Record<Sector, string> = {
   energy: '에너지',
   finance: '금융',
   information: '정보',
+  rnd: '연구개발',
 }
 
 const TREND_NEXT_LABEL: Record<string, string> = {

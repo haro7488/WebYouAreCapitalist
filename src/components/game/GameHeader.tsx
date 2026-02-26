@@ -1,3 +1,4 @@
+import { useState, useRef, useCallback } from 'react'
 import { useGameStore } from '@stores/gameStore'
 import { useUIStore } from '@stores/uiStore'
 import { MarketIndicator } from './MarketIndicator'
@@ -8,15 +9,41 @@ import { calculateCompanyNetWorth, calculateCompanyTotalIncome } from '@game/eco
 import { getNetWorthBreakdown, getRevenueBreakdown } from '@game/breakdown'
 import { checkPlayerGoalCompletion } from '@game/logic/goalEngine'
 import { formatMoney } from '@game/utils'
-import { MoneyDisplay } from '@components/common'
+import type { MoneyBreakdown } from '@game/types'
+import { MoneyDisplay, BreakdownPopover } from '@components/common'
 
 interface GameHeaderProps {
   onHome?: () => void
 }
 
+/** 인플레이션 breakdown 생성 */
+function getInflationBreakdown(gameState: NonNullable<ReturnType<typeof useGameStore.getState>['gameState']>): MoneyBreakdown {
+  const items = [
+    { label: '현재 인플레이션율', value: gameState.inflation, type: 'base' as const },
+    { label: '누적 인플레이션 배율', value: gameState.cumulativeInflation, type: 'multiply' as const },
+  ]
+  return {
+    title: '인플레이션',
+    items,
+    final: gameState.cumulativeInflation,
+    history: gameState.inflationHistory,
+    maxValue: Math.max(...(gameState.inflationHistory ?? []), gameState.cumulativeInflation) * 1.2,
+  }
+}
+
 export function GameHeader({ onHome }: GameHeaderProps) {
   const gameState = useGameStore((s) => s.gameState)
   const openHelp = useUIStore((s) => s.openHelp)
+
+  // 인플레이션 팝업 상태
+  const [inflationBreakdown, setInflationBreakdown] = useState<MoneyBreakdown | null>(null)
+  const inflationRef = useRef<HTMLSpanElement>(null)
+
+  const handleInflationClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!gameState) return
+    setInflationBreakdown(prev => prev ? null : getInflationBreakdown(gameState))
+  }, [gameState])
 
   if (!gameState) return null
 
@@ -80,10 +107,12 @@ export function GameHeader({ onHome }: GameHeaderProps) {
             📈 <MoneyDisplay amount={Math.floor(expectedIncome)} size="sm" showSign getBreakdown={() => getRevenueBreakdown(player, gameState)} />
             <span className={expectedIncome >= 0 ? 'text-emerald-400' : 'text-red-400'}>/턴</span>
           </span>
-          {/* 인플레이션: 모바일에서 숨김 */}
+          {/* 인플레이션: 모바일에서 숨김, 클릭 시 breakdown 팝업 */}
           <span
-            className={`hidden sm:inline-flex ${gameState.cumulativeInflation > 1.2 ? 'text-red-400' : 'text-orange-400'}`}
+            ref={inflationRef}
+            className={`hidden sm:inline-flex items-center gap-0.5 cursor-pointer border-b border-dashed border-current/30 ${gameState.cumulativeInflation > 1.2 ? 'text-red-400' : 'text-orange-400'}`}
             title={`누적 x${gameState.cumulativeInflation.toFixed(2)}`}
+            onClick={handleInflationClick}
           >
             🏷️ {(gameState.inflation * 100).toFixed(1)}%
           </span>
@@ -125,6 +154,15 @@ export function GameHeader({ onHome }: GameHeaderProps) {
           <MarketIndicator condition={market.condition} />
         </div>
       </div>
+      {/* 인플레이션 breakdown 팝업 */}
+      {inflationBreakdown && (
+        <BreakdownPopover
+          breakdown={inflationBreakdown}
+          anchorEl={inflationRef.current}
+          onClose={() => setInflationBreakdown(null)}
+          formatFinal={(v) => `x${v.toFixed(2)}`}
+        />
+      )}
     </header>
   )
 }

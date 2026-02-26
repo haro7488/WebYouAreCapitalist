@@ -60,6 +60,8 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     cash: startingCash,
     assets: [],
     sectorUpgrades: {},
+    researchPoints: 0,
+    researchPity: {},
     influence: STARTING_INFLUENCE + metaEffects.startingInfluence,
     debt: 0,
     revenue: 0,
@@ -90,6 +92,8 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
       cash: startingCash,
       assets: [],
       sectorUpgrades: {},
+      researchPoints: 0,
+      researchPity: {},
       influence: STARTING_INFLUENCE,
       debt: 0,
       revenue: 0,
@@ -146,6 +150,11 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     rankingHistory: [initialRanks],
 
     inflationHistory: [0.02],
+
+    marketConditionHistory: [],
+    volatilityHistory: [],
+
+    lastResearchResult: null,
 
     rngState: rng.getState(),
 

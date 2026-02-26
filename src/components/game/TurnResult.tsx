@@ -46,7 +46,14 @@ export function TurnResult() {
         <div className="border-t border-slate-700 pt-2">
           <StatRow
             label={<GlossaryText>순수익</GlossaryText>}
-            value={<MoneyDisplay amount={netIncome} size="sm" showSign />}
+            value={<MoneyDisplay amount={netIncome} size="sm" showSign getBreakdown={() => ({
+              title: '순수익',
+              items: [
+                { label: '자산 수익', value: revenue, type: 'base' },
+                { label: '지출', value: -expenses, type: 'add' },
+              ],
+              final: netIncome,
+            })} />}
           />
         </div>
         <StatRow
@@ -95,6 +102,7 @@ export function TurnResult() {
           finance: '금융',
           energy: '에너지',
           information: '정보',
+          rnd: '연구개발',
         }
 
         const competitors = gameState.companies.slice(1)

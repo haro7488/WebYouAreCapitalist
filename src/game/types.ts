@@ -11,12 +11,13 @@ export interface MarketState {
 }
 
 // === 섹터 ===
-export type Sector = 'food' | 'tech' | 'realEstate' | 'logistics' | 'energy' | 'finance' | 'information'
+export type Sector = 'food' | 'tech' | 'realEstate' | 'logistics' | 'energy' | 'finance' | 'information' | 'rnd'
 export type SectorTrend = 'hot' | 'neutral' | 'cold'
 export type IncomeType = 'stable' | 'marketLinked' | 'valueLinked' | 'inverse' | 'leveraged' | 'special'
 
-// 정보 섹터 식별자 상수 (리터럴 'information' 하드코딩 방지)
+// 섹터 식별자 상수 (리터럴 하드코딩 방지)
 export const INFORMATION_SECTOR: Sector = 'information'
+export const RND_SECTOR: Sector = 'rnd'
 
 export interface SectorState {
   trend: SectorTrend
@@ -159,8 +160,12 @@ export interface Company {
   debt: number // 파산 시 부채
   traits: string[] // 보유 특성 id 목록
 
-  // 섹터 강화 레벨 (0 = 미강화, 최대 3)
+  // 섹터 강화 레벨 (0 = 미강화, 최대 10)
   sectorUpgrades: Partial<Record<Sector, number>>
+
+  // 연구 시스템
+  researchPoints: number // 보유 연구포인트 (R&D 구좌 1개당 1포인트/턴)
+  researchPity: Partial<Record<Sector, number>> // 섹터별 실패 횟수 (천장 확률 시스템)
 
   // 턴별 계산 결과
   revenue: number // 이번 턴 수익
@@ -225,6 +230,13 @@ export interface GameState {
 
   // 인플레이션 히스토리
   inflationHistory: number[]
+
+  // 시장 상태 히스토리 (경기·변동성)
+  marketConditionHistory: MarketCondition[]
+  volatilityHistory: number[]
+
+  // 연구 결과 피드백 (UI 표시용, 다음 액션 시 초기화)
+  lastResearchResult: { sector: Sector; success: boolean; newLevel: number } | null
 
   // RNG 상태
   rngState: number

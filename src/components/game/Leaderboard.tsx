@@ -5,7 +5,7 @@ import { GlossaryText } from '@components/glossary'
 import { CompanyDetail } from './CompanyDetail'
 import { RankingChart } from './RankingChart'
 import { HistoryChart } from './HistoryChart'
-import { calculateCompanyTotalIncome, getNetWorthBreakdown } from '@game/index'
+import { calculateCompanyTotalIncome, getNetWorthBreakdown, getRevenueBreakdown } from '@game/index'
 import type { Company, Sector } from '@game/types'
 import { formatMoney } from '@game/index'
 
@@ -26,6 +26,7 @@ const SECTOR_ICONS: Record<Sector, string> = {
   energy: '⚡',
   information: '🔍',
   finance: '💰',
+  rnd: '🔬',
 }
 
 // 순위 변동 표시
@@ -148,7 +149,9 @@ export function Leaderboard() {
                 {/* 예상 수익 */}
                 <div className="ml-12 mt-0.5">
                   <span className="text-xs text-slate-500">
-                    <GlossaryText>예상 수익</GlossaryText>: <span className={expectedIncome >= 0 ? 'text-money-400' : 'text-danger-400'}>+{formatMoney(Math.floor(expectedIncome))}/턴</span>
+                    <GlossaryText>예상 수익</GlossaryText>:{' '}
+                    <MoneyDisplay amount={Math.floor(expectedIncome)} size="sm" showSign getBreakdown={() => getRevenueBreakdown(company, gameState)} />
+                    /턴
                   </span>
                 </div>
               </button>

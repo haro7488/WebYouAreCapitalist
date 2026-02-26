@@ -12,7 +12,7 @@ import {
 
 const CONDITIONS: MarketCondition[] = ['boom', 'stable', 'recession']
 const TRENDS: SectorTrend[] = ['hot', 'neutral', 'cold']
-const SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information']
+const SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 /** 가중치 기반 랜덤 선택 */
 function weightedPick<T extends string>(

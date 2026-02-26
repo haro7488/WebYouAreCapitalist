@@ -1,13 +1,12 @@
 import type { CompetitorStrategy } from './types'
 import type { GameState, Company, TurnAction, Sector, GameEvent } from '../types'
-import { SECTORS, SECTOR_UPGRADE_COST_RATIO, SECTOR_MAX_UPGRADE_LEVEL } from '../constants'
-import { findSector } from '../economy'
+import { SECTORS, SECTOR_MAX_UPGRADE_LEVEL } from '../constants'
 import { calculateCurrentPrice } from '../breakdown'
 import { createRng } from '../utils'
 
 // === 공용 헬퍼 ===
 
-const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information']
+const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 /** 현재 가격 기준 구매 가능한 섹터 목록 (가격 포함) */
 function getAffordableSectors(state: GameState, cash: number): { sector: Sector; price: number }[] {
@@ -113,12 +112,8 @@ export const aggressiveStrategy: CompetitorStrategy = {
 
       if (bestSector) {
         const level = company.sectorUpgrades?.[bestSector] ?? 0
-        if (level < SECTOR_MAX_UPGRADE_LEVEL) {
-          const profile = findSector(bestSector)!
-          const cost = Math.floor(profile.baseCost * SECTOR_UPGRADE_COST_RATIO * (level + 1))
-          if (cash >= cost) {
-            actions.push({ type: 'sectorUpgrade', sector: bestSector })
-          }
+        if (level < SECTOR_MAX_UPGRADE_LEVEL && (company.researchPoints ?? 0) >= 1) {
+          actions.push({ type: 'sectorUpgrade', sector: bestSector })
         }
       }
     }
@@ -160,13 +155,8 @@ export const dominationStrategy: CompetitorStrategy = {
 
     // 타겟 섹터 강화
     const level = company.sectorUpgrades?.[targetSector] ?? 0
-    if (level < SECTOR_MAX_UPGRADE_LEVEL && sectorCounts[targetSector] > 0) {
-      const profile = findSector(targetSector)!
-      const upgradeCost = Math.floor(profile.baseCost * SECTOR_UPGRADE_COST_RATIO * (level + 1))
-      if (cash >= upgradeCost) {
-        actions.push({ type: 'sectorUpgrade', sector: targetSector })
-        cash -= upgradeCost
-      }
+    if (level < SECTOR_MAX_UPGRADE_LEVEL && sectorCounts[targetSector] > 0 && (company.researchPoints ?? 0) >= 1) {
+      actions.push({ type: 'sectorUpgrade', sector: targetSector })
     }
 
     if (actions.length === 0) actions.push({ type: 'endTurn' })

@@ -31,6 +31,7 @@ const SECTOR_NAMES: Record<Sector, string> = {
   energy: '⚡ 에너지',
   information: '🔍 정보',
   finance: '💰 금융',
+  rnd: '🔬 연구개발',
 }
 
 // (업그레이드는 섹터 레벨로 이동, 개별 자산 레벨 없음)

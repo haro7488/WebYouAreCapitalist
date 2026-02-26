@@ -1,4 +1,5 @@
 import type { GameState, Company, EventEffect, Sector, DominanceInfo, DominanceLevel, OwnedAsset, SectorProfile } from './types'
+import { RND_SECTOR } from './types'
 import {
   SECTORS,
   SECTOR_TREND_MULTIPLIER,
@@ -10,6 +11,11 @@ import {
   SCORE_DOMINANCE_BONUS,
   INFLUENCE_TIERS,
   SECTOR_DEMAND_PREMIUM,
+  RESEARCH_BASE_SUCCESS_RATE,
+  RESEARCH_LEVEL_PENALTY,
+  RESEARCH_PITY_INCREMENT,
+  RESEARCH_RND_LEVEL_BONUS,
+  SECTOR_MAX_UPGRADE_LEVEL,
 } from './constants'
 import { getCompanyTraitEffects, getCompanySectorTraitEffects } from './logic/traitEngine'
 
@@ -18,7 +24,7 @@ export function findSector(sectorId: Sector): SectorProfile | undefined {
   return SECTORS.find((s) => s.id === sectorId)
 }
 
-const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information']
+const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 // === 편의 함수 ===
 
@@ -64,7 +70,7 @@ export function calculateSectorDemandPremium(
 /** 로컬 지배력: 섹터별 보유 구좌 수 기반 (share 미포함 — UI 표시용) */
 export function calculateDominance(assets: OwnedAsset[]): Record<Sector, DominanceInfo> {
   const counts: Record<Sector, number> = {
-    food: 0, tech: 0, realEstate: 0, logistics: 0, energy: 0, finance: 0, information: 0,
+    food: 0, tech: 0, realEstate: 0, logistics: 0, energy: 0, finance: 0, information: 0, rnd: 0,
   }
 
   for (const owned of assets) {
@@ -430,6 +436,21 @@ export function calculateScore(state: GameState): number {
   const dominanceBonus = dominatedCount * SCORE_DOMINANCE_BONUS
 
   return Math.floor(netWorthScore + influenceScore + turnBonus + dominanceBonus)
+}
+
+/** 연구 성공 확률 계산 (UI 표시용) */
+export function calculateResearchSuccessRate(company: Company, sector: Sector): number {
+  const currentLevel = company.sectorUpgrades[sector] ?? 0
+  if (currentLevel >= SECTOR_MAX_UPGRADE_LEVEL) return 0
+
+  const pity = company.researchPity[sector] ?? 0
+  const rndLevel = company.sectorUpgrades[RND_SECTOR] ?? 0
+
+  const base = RESEARCH_BASE_SUCCESS_RATE - currentLevel * RESEARCH_LEVEL_PENALTY
+  const pityBonus = pity * RESEARCH_PITY_INCREMENT
+  const rndBonus = rndLevel * RESEARCH_RND_LEVEL_BONUS
+
+  return Math.min(1, Math.max(0.05, base + pityBonus + rndBonus))
 }
 
 /** 현재 영향력에 해당하는 영향력 티어 반환 */

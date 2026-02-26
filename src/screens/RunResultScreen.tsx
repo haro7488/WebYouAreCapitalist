@@ -15,6 +15,7 @@ const SECTOR_LABELS: Record<Sector, string> = {
   energy: '에너지',
   information: '정보',
   finance: '금융',
+  rnd: '연구개발',
 }
 
 // 런 결과 화면

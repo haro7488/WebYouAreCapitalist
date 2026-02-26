@@ -1,8 +1,7 @@
 import type { GameState, Company, TurnAction, EventChoice, EventEffect, GameEvent, GovernmentEvent, OwnedAsset, Sector, ResearchResult, MarketCondition } from './types'
-import { INFORMATION_SECTOR } from './types'
+import { INFORMATION_SECTOR, RND_SECTOR } from './types'
 import {
   SECTOR_TREND_MULTIPLIER,
-  SECTOR_UPGRADE_COST_RATIO,
   SECTOR_MAX_UPGRADE_LEVEL,
   SELL_BASE_RATIO,
   SELL_MARKET_RATIO,
@@ -10,6 +9,11 @@ import {
   INFLUENCE_PER_PURCHASE,
   RANK_FIRST_INFLUENCE_BONUS,
   BANKRUPTCY_INTEREST_RATE,
+  RESEARCH_BASE_SUCCESS_RATE,
+  RESEARCH_LEVEL_PENALTY,
+  RESEARCH_PITY_INCREMENT,
+  RESEARCH_RND_LEVEL_BONUS,
+  RESEARCH_POINT_COST,
 } from './constants'
 import { createRng, clamp } from './utils'
 import {
@@ -154,7 +158,20 @@ function applySellFor(state: GameState, companyIndex: number, ownedIndex: number
   }
 }
 
-/** 특정 기업의 섹터 강화 */
+/** 연구 성공 확률 계산 */
+function calculateResearchSuccessRate(company: Company, sector: Sector): number {
+  const currentLevel = company.sectorUpgrades[sector] ?? 0
+  const pity = company.researchPity[sector] ?? 0
+  const rndLevel = company.sectorUpgrades[RND_SECTOR] ?? 0
+
+  const base = RESEARCH_BASE_SUCCESS_RATE - currentLevel * RESEARCH_LEVEL_PENALTY
+  const pityBonus = pity * RESEARCH_PITY_INCREMENT
+  const rndBonus = rndLevel * RESEARCH_RND_LEVEL_BONUS
+
+  return Math.min(1, Math.max(0.05, base + pityBonus + rndBonus))
+}
+
+/** 특정 기업의 섹터 강화 (연구포인트 + 확률 기반) */
 function applySectorUpgradeFor(state: GameState, companyIndex: number, sector: Sector): GameState {
   const company = state.companies[companyIndex]
   if (!company) return state
@@ -169,20 +186,33 @@ function applySectorUpgradeFor(state: GameState, companyIndex: number, sector: S
   const hasUnitsInSector = company.assets.some((a) => a.assetId === sector)
   if (!hasUnitsInSector) return state
 
-  const traitEffects = getCompanyTraitEffects(company)
-  const upgradeCost = Math.floor(profile.baseCost * SECTOR_UPGRADE_COST_RATIO * (currentLevel + 1) * traitEffects.upgradeCostMultiplier)
-  if (company.cash < upgradeCost) return state
+  // 연구포인트 확인
+  if (company.researchPoints < RESEARCH_POINT_COST) return state
+
+  // RNG로 성공 여부 결정
+  const rng = createRng(state.rngState)
+  const successRate = calculateResearchSuccessRate(company, sector)
+  const roll = rng.random()
+  const success = roll < successRate
 
   const updated: Company = {
     ...company,
-    cash: company.cash - upgradeCost,
-    sectorUpgrades: { ...company.sectorUpgrades, [sector]: currentLevel + 1 },
+    researchPoints: company.researchPoints - RESEARCH_POINT_COST,
+    sectorUpgrades: success
+      ? { ...company.sectorUpgrades, [sector]: currentLevel + 1 }
+      : company.sectorUpgrades,
+    researchPity: success
+      ? { ...company.researchPity, [sector]: 0 }
+      : { ...company.researchPity, [sector]: (company.researchPity[sector] ?? 0) + 1 },
     actionsThisTurn: [...company.actionsThisTurn, { type: 'sectorUpgrade', sector }],
   }
 
   return {
     ...withCompany(state, companyIndex, updated),
-    marketPool: state.marketPool + upgradeCost,
+    lastResearchResult: companyIndex === 0
+      ? { sector, success, newLevel: success ? currentLevel + 1 : currentLevel }
+      : state.lastResearchResult,
+    rngState: rng.getState(),
   }
 }
 
@@ -244,7 +274,7 @@ function applyResearch(
       }
       break
     case 'sector': {
-      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information'] as Sector[])
+      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd'] as Sector[])
       const sectorState = state.sectorStates[targetSector]
       const actualTrend = sectorState.turnsRemaining <= 2
         ? rng.pick(['hot', 'neutral', 'cold'] as const)
@@ -313,7 +343,7 @@ function applyResearch(
       break
     }
     case 'share': {
-      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information'] as Sector[])
+      const targetSector = sector ?? rng.pick(['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd'] as Sector[])
       const actualShares = calculateSectorShares(state.companies, targetSector)
 
       const shares = isAccurate
@@ -409,15 +439,20 @@ function applyResearch(
 
 /** 액션 적용 → 새 상태 반환 */
 function applyAction(state: GameState, action: TurnAction): GameState {
+  // sectorUpgrade 외 액션 시 연구 결과 피드백 초기화
+  const cleared = action.type !== 'sectorUpgrade'
+    ? { ...state, lastResearchResult: null }
+    : state
+
   switch (action.type) {
     case 'buy':
-      return applyBuy(state, action.sector)
+      return applyBuy(cleared, action.sector)
     case 'sell':
-      return applySell(state, action.ownedIndex)
+      return applySell(cleared, action.ownedIndex)
     case 'sectorUpgrade':
-      return applySectorUpgrade(state, action.sector)
+      return applySectorUpgrade(cleared, action.sector)
     case 'research':
-      return applyResearch(state, action.target, action.sector, action.targetCompanyId)
+      return applyResearch(cleared, action.target, action.sector, action.targetCompanyId)
     case 'endTurn': {
       const player = getPlayerCompany(state)
       return withPlayer(state, {
@@ -980,12 +1015,20 @@ export function advanceTurn(state: GameState): GameState {
   // 인플레이션 히스토리
   const newInflationHistory = [...(checked.inflationHistory ?? []), checked.cumulativeInflation]
 
-  // 턴 상태 초기화
-  const resetCompanies = historiedCompanies.map((company) => ({
-    ...company,
-    actionsThisTurn: [] as TurnAction[],
-    researchResult: null,
-  }))
+  // 시장 상태 히스토리
+  const newMarketConditionHistory = [...(checked.marketConditionHistory ?? []), checked.market.condition]
+  const newVolatilityHistory = [...(checked.volatilityHistory ?? []), checked.market.volatility]
+
+  // 턴 상태 초기화 + 연구포인트 지급 (R&D 구좌 1개당 1포인트)
+  const resetCompanies = historiedCompanies.map((company) => {
+    const rndAssets = company.assets.filter((a) => a.assetId === RND_SECTOR).length
+    return {
+      ...company,
+      actionsThisTurn: [] as TurnAction[],
+      researchResult: null,
+      researchPoints: (company.researchPoints ?? 0) + rndAssets,
+    }
+  })
 
   return {
     ...checked,
@@ -994,6 +1037,8 @@ export function advanceTurn(state: GameState): GameState {
     companies: resetCompanies,
     rankingHistory: newRankingHistory,
     inflationHistory: newInflationHistory,
+    marketConditionHistory: newMarketConditionHistory,
+    volatilityHistory: newVolatilityHistory,
   }
 }
 

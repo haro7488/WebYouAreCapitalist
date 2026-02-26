@@ -89,5 +89,18 @@
     "description": "소득은 낮지만, 구좌 1개당 매 턴 1회 조사 능력을 제공합니다.",
     "riskLevel": "low",
     "marketMultiplier": { "boom": 1.1, "stable": 1.0, "recession": 0.9 }
+  },
+  {
+    "id": "rnd",
+    "name": "연구개발",
+    "icon": "🔬",
+    "baseCost": 800,
+    "incomeType": "special",
+    "baseIncome": 10,
+    "yieldRate": 0,
+    "theme": "기술은 투자의 어머니",
+    "description": "소득은 낮지만, 구좌 1개당 매 턴 연구포인트 1개를 제공합니다. 연구포인트로 섹터를 강화할 수 있습니다.",
+    "riskLevel": "low",
+    "marketMultiplier": { "boom": 1.1, "stable": 1.0, "recession": 0.95 }
   }
 ]

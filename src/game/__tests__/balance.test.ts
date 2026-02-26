@@ -10,11 +10,11 @@ import {
 import type { Sector } from '@game/index'
 
 // 게임에서 정의된 모든 섹터
-const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information']
+const ALL_SECTORS: Sector[] = ['food', 'tech', 'realEstate', 'logistics', 'energy', 'finance', 'information', 'rnd']
 
 describe('섹터 밸런스', () => {
-  it('모든 7개 섹터 프로필이 정의됨', () => {
-    expect(SECTORS.length).toBe(7)
+  it('모든 8개 섹터 프로필이 정의됨', () => {
+    expect(SECTORS.length).toBe(8)
     for (const sector of ALL_SECTORS) {
       const profile = SECTORS.find((s) => s.id === sector)
       expect(profile, `섹터 ${sector} 프로필이 없음`).toBeDefined()

@@ -30,7 +30,7 @@ export type {
   MoneyBreakdown,
   BreakdownItem,
 } from './types'
-export { INFORMATION_SECTOR } from './types'
+export { INFORMATION_SECTOR, RND_SECTOR } from './types'
 
 // Constants
 export {
@@ -56,6 +56,11 @@ export {
   SECTOR_MAX_UPGRADE_LEVEL,
   SELL_BASE_RATIO,
   SELL_MARKET_RATIO,
+  RESEARCH_BASE_SUCCESS_RATE,
+  RESEARCH_LEVEL_PENALTY,
+  RESEARCH_PITY_INCREMENT,
+  RESEARCH_RND_LEVEL_BONUS,
+  RESEARCH_POINT_COST,
   SCORE_NETWORTH_WEIGHT,
   SCORE_INFLUENCE_WEIGHT,
   SCORE_TURN_BONUS,
@@ -83,6 +88,7 @@ export {
   calculateDominance,
   calculateGlobalDominance,
   calculateScore,
+  calculateResearchSuccessRate,
   getInfluenceTier,
   getCompanyRank,
   mergeEffects,

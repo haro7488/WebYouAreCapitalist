@@ -16,6 +16,7 @@ const SECTOR_NAMES: Record<Sector, string> = {
   energy: '에너지',
   information: '정보',
   finance: '금융',
+  rnd: '연구개발',
 }
 
 // 섹터 트렌드 → Badge variant 매핑
@@ -27,7 +28,7 @@ const TREND_BADGE_VARIANT: Record<SectorTrend, 'boom' | 'stable' | 'recession'> 
 
 // 섹터 트렌드 한국어 표시
 const TREND_LABELS: Record<SectorTrend, string> = {
-  hot: '호황',
+  hot: '과열',
   neutral: '보통',
   cold: '침체',
 }
@@ -136,7 +137,7 @@ export function ResearchPanel({ onResearch }: ResearchPanelProps) {
             </span>
             <Badge
               variant={result.likelyNext}
-              label={result.likelyNext === 'boom' ? '호황' : result.likelyNext === 'stable' ? '안정' : '불황'}
+              label={result.likelyNext === 'boom' ? '호황' : result.likelyNext === 'stable' ? '보합' : '불황'}
             />
           </div>
         </div>
