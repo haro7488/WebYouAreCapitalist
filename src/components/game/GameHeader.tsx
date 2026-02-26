@@ -18,16 +18,31 @@ interface GameHeaderProps {
 
 /** 인플레이션 breakdown 생성 */
 function getInflationBreakdown(gameState: NonNullable<ReturnType<typeof useGameStore.getState>['gameState']>): MoneyBreakdown {
-  const items = [
-    { label: '현재 인플레이션율', value: gameState.inflation, type: 'base' as const },
-    { label: '누적 인플레이션 배율', value: gameState.cumulativeInflation, type: 'multiply' as const },
+  const rateHistory = gameState.inflationRateHistory ?? []
+  const currentRate = gameState.inflation
+  const prevRate = rateHistory.length >= 2 ? rateHistory[rateHistory.length - 2] : currentRate
+  const rateDelta = currentRate - prevRate
+
+  const items: MoneyBreakdown['items'] = [
+    { label: '현재 인플레이션율', value: currentRate, type: 'base' },
+    { label: '누적 인플레이션 배율', value: gameState.cumulativeInflation, type: 'multiply' },
   ]
+
+  if (rateDelta !== 0) {
+    items.push({
+      label: rateDelta > 0 ? '전턴 대비 상승' : '전턴 대비 하락',
+      value: rateDelta,
+      type: 'add',
+    })
+  }
+
   return {
     title: '인플레이션',
     items,
     final: gameState.cumulativeInflation,
-    history: gameState.inflationHistory,
-    maxValue: Math.max(...(gameState.inflationHistory ?? []), gameState.cumulativeInflation) * 1.2,
+    history: rateHistory,
+    maxValue: Math.max(...rateHistory, currentRate) * 1.2,
+    formatY: (v) => `${(v * 100).toFixed(1)}%`,
   }
 }
 

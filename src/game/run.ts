@@ -5,6 +5,7 @@ import {
   PLAYER_COMPANY_ID,
   DEFAULT_COMPANY_NAME,
   DEFAULT_GAME_CONFIG,
+  SECTOR_TREND_MULTIPLIER,
 } from './constants'
 import { createRng, generateRunId, generateSeed } from './utils'
 import type { Rng } from './utils'
@@ -12,7 +13,7 @@ import { assignCompanyNames } from './competitor/names'
 import { STRATEGIES } from './competitor/strategies'
 import { createInitialMarket, createInitialSectorStates } from './market'
 import { getMetaEffects } from './meta'
-import { calculateScore, calculateNetWorth, calculateDominance } from './economy'
+import { findSector, calculateScore, calculateNetWorth, calculateDominance } from './economy'
 import { TRAIT_REGISTRY } from './traits'
 
 // 섹터 친화 → 기피 충돌 매핑
@@ -77,6 +78,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     netWorthHistory: [startingCash],
     revenueHistory: [0],
     expenseHistory: [0],
+    cashHistory: [startingCash],
   }
 
   // 경쟁사 생성
@@ -109,6 +111,7 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
       netWorthHistory: [startingCash],
       revenueHistory: [0],
       expenseHistory: [0],
+      cashHistory: [startingCash],
     }
   })
 
@@ -118,6 +121,20 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
 
   // 초기 순위: 모두 동일 순자산이므로 인덱스 순서대로 1~N
   const initialRanks = allCompanies.map((_, i) => i + 1)
+
+  const initialMarket = createInitialMarket(rng)
+  const initialSectorStates = createInitialSectorStates(rng)
+
+  // 초기 섹터별 매입가
+  const initialSectorPrices: Partial<Record<Sector, number[]>> = {}
+  for (const sectorId of Object.keys(initialSectorStates) as Sector[]) {
+    const profile = findSector(sectorId)
+    if (!profile) continue
+    const marketMult = profile.marketMultiplier[initialMarket.condition]
+    const trendMult = SECTOR_TREND_MULTIPLIER[initialSectorStates[sectorId].trend]
+    const price = Math.floor(profile.baseCost * marketMult * trendMult) // 초기 인플레이션 = 1
+    initialSectorPrices[sectorId] = [price]
+  }
 
   return {
     runId: generateRunId(),
@@ -131,8 +148,8 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
     marketPool: cfg.marketPool + competitorTotalCash,
     totalMoney: cfg.marketPool + startingCash + competitorTotalCash,
 
-    market: createInitialMarket(rng),
-    sectorStates: createInitialSectorStates(rng),
+    market: initialMarket,
+    sectorStates: initialSectorStates,
 
     currentEvent: null,
     pendingEvents: [],
@@ -149,7 +166,10 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
 
     rankingHistory: [initialRanks],
 
-    inflationHistory: [0.02],
+    inflationHistory: [1],
+    inflationRateHistory: [0.02],
+
+    sectorPriceHistory: initialSectorPrices,
 
     marketConditionHistory: [],
     volatilityHistory: [],

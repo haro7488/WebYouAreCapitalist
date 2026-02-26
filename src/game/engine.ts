@@ -1006,6 +1006,7 @@ export function advanceTurn(state: GameState): GameState {
     netWorthHistory: [...(c.netWorthHistory ?? []), c.netWorth],
     revenueHistory: [...(c.revenueHistory ?? []), c.revenue],
     expenseHistory: [...(c.expenseHistory ?? []), c.expenses],
+    cashHistory: [...(c.cashHistory ?? []), c.cash],
     assets: c.assets.map(a => ({
       ...a,
       valueHistory: [...(a.valueHistory ?? []), a.currentValue],
@@ -1014,6 +1015,18 @@ export function advanceTurn(state: GameState): GameState {
 
   // 인플레이션 히스토리
   const newInflationHistory = [...(checked.inflationHistory ?? []), checked.cumulativeInflation]
+  const newInflationRateHistory = [...(checked.inflationRateHistory ?? []), checked.inflation]
+
+  // 섹터별 매입가 히스토리
+  const newSectorPriceHistory: Partial<Record<Sector, number[]>> = { ...checked.sectorPriceHistory }
+  for (const sectorId of Object.keys(checked.sectorStates) as Sector[]) {
+    const profile = findSector(sectorId)
+    if (!profile) continue
+    const marketMult = profile.marketMultiplier[checked.market.condition]
+    const trendMult = SECTOR_TREND_MULTIPLIER[checked.sectorStates[sectorId].trend]
+    const price = Math.floor(profile.baseCost * marketMult * trendMult * checked.cumulativeInflation)
+    newSectorPriceHistory[sectorId] = [...(newSectorPriceHistory[sectorId] ?? []), price]
+  }
 
   // 시장 상태 히스토리
   const newMarketConditionHistory = [...(checked.marketConditionHistory ?? []), checked.market.condition]
@@ -1037,6 +1050,8 @@ export function advanceTurn(state: GameState): GameState {
     companies: resetCompanies,
     rankingHistory: newRankingHistory,
     inflationHistory: newInflationHistory,
+    inflationRateHistory: newInflationRateHistory,
+    sectorPriceHistory: newSectorPriceHistory,
     marketConditionHistory: newMarketConditionHistory,
     volatilityHistory: newVolatilityHistory,
   }

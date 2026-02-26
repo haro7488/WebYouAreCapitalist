@@ -186,6 +186,7 @@ export interface Company {
   netWorthHistory: number[]
   revenueHistory: number[]
   expenseHistory: number[]
+  cashHistory: number[]
 }
 
 // === 핵심 게임 상태 ===
@@ -229,7 +230,11 @@ export interface GameState {
   rankingHistory: number[][]
 
   // 인플레이션 히스토리
-  inflationHistory: number[]
+  inflationHistory: number[]         // 누적 인플레이션 배율
+  inflationRateHistory: number[]     // 턴별 인플레이션율
+
+  // 섹터별 매입가 히스토리
+  sectorPriceHistory: Partial<Record<Sector, number[]>>
 
   // 시장 상태 히스토리 (경기·변동성)
   marketConditionHistory: MarketCondition[]
@@ -346,4 +351,5 @@ export interface MoneyBreakdown {
   final: number
   history?: number[] // 턴별 변동 추이
   maxValue?: number // 차트 Y축 최대값
+  formatY?: (v: number) => string // 차트 Y축 포맷
 }
