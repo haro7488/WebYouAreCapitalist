@@ -22,9 +22,11 @@ interface BreakdownPopoverProps {
   breakdown: MoneyBreakdown
   anchorEl: HTMLElement | null
   onClose: () => void
+  /** 합계 값 커스텀 포맷 (기본: formatMoney) */
+  formatFinal?: (v: number) => string
 }
 
-export function BreakdownPopover({ breakdown, anchorEl, onClose }: BreakdownPopoverProps) {
+export function BreakdownPopover({ breakdown, anchorEl, onClose, formatFinal }: BreakdownPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null)
 
   // 위치 계산 (fixed 포지셔닝 — viewport 기준 좌표 사용)
@@ -138,7 +140,7 @@ export function BreakdownPopover({ breakdown, anchorEl, onClose }: BreakdownPopo
 
         <div className="mt-2 pt-2 border-t border-slate-600 flex justify-between items-center">
           <span className="text-sm font-semibold text-slate-200">합계</span>
-          <span className="text-sm font-bold text-money-400">{formatMoney(breakdown.final)}</span>
+          <span className="text-sm font-bold text-money-400">{(formatFinal ?? formatMoney)(breakdown.final)}</span>
         </div>
       </div>
     </div>

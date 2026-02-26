@@ -14,20 +14,21 @@ const SECTOR_LABEL: Record<string, string> = {
   energy: '에너지',
   information: '정보',
   finance: '금융',
+  rnd: '연구개발',
 }
 
 // 시장 상태 한국어 매핑
 const MARKET_LABEL: Record<string, string> = {
   boom: '호황',
-  stable: '안정',
+  stable: '보합',
   recession: '불황',
 }
 
 // 트렌드 한국어 매핑
 const TREND_LABEL: Record<string, string> = {
-  hot: '상승',
-  neutral: '보합',
-  cold: '하락',
+  hot: '과열',
+  neutral: '보통',
+  cold: '침체',
 }
 
 /** 이벤트 선택지 효과 미리보기 */
