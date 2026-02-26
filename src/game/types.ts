@@ -12,8 +12,11 @@ export interface MarketState {
 
 // === 섹터 ===
 export type Sector = 'food' | 'tech' | 'realEstate' | 'logistics' | 'energy' | 'finance' | 'information'
-export type AssetTier = 1 | 2 | 3
 export type SectorTrend = 'hot' | 'neutral' | 'cold'
+export type IncomeType = 'stable' | 'marketLinked' | 'valueLinked' | 'inverse' | 'leveraged' | 'special'
+
+// 정보 섹터 식별자 상수 (리터럴 'information' 하드코딩 방지)
+export const INFORMATION_SECTOR: Sector = 'information'
 
 export interface SectorState {
   trend: SectorTrend
@@ -25,34 +28,38 @@ export type DominanceLevel = 'entrant' | 'competitor' | 'dominant'
 
 export interface DominanceInfo {
   level: DominanceLevel
-  count: number
+  count: number // 보유 구좌 수
+  share: number // 점유율 (0~1)
   incomeBonus: number // 1.0, 1.1, 1.25
 }
 
-// === 자산 ===
+// === 섹터 프로필 (투자 대상 정의) ===
 export type RiskLevel = 'low' | 'medium' | 'high'
 
-export interface Asset {
-  id: string
+export interface SectorProfile {
+  id: Sector
   name: string
+  icon: string
+  baseCost: number // 구좌 기본 가격
+  incomeType: IncomeType
+  baseIncome: number // 안정형/역행형/특수형용 고정소득
+  yieldRate: number // 시장연동/가치연동/레버리지형용 수익률 (0~1)
+  theme: string
   description: string
-  sector: Sector
-  tier: AssetTier
-  cost: number
-  baseIncome: number // 턴당 절대 수익 ($)
-  appreciation: number // 턴당 자산가치 상승률 (0.02 = 2%)
   riskLevel: RiskLevel
   marketMultiplier: Record<MarketCondition, number>
-  maxUpgradeLevel: number // 0~3
 }
 
+// 하위 호환 별칭 — 기존 코드에서 Asset으로 참조하는 곳 마이그레이션 전까지 유지
+export type Asset = SectorProfile
+
+// === 보유 구좌 ===
 export interface OwnedAsset {
-  assetId: string
+  assetId: Sector // 섹터 ID
   purchaseTurn: number
-  purchasePrice: number // 매입가
-  upgradeLevel: number // 0~3
-  currentValue: number // 현재 평가 가치 (매 턴 갱신)
-  valueHistory: number[] // 턴별 자산 가치 히스토리
+  purchasePrice: number // 매입 시 실제 지불가
+  currentValue: number // 현재 평가액 (매 턴 갱신)
+  valueHistory: number[] // 턴별 가치 히스토리
 }
 
 // === 시장 조사 ===
@@ -80,7 +87,7 @@ export interface EventEffect {
   influence?: number // 영향력 변화
   marketShift?: MarketCondition // 시장 강제 전환
   sectorShift?: { sector: Sector; trend: SectorTrend } // 섹터 트렌드 강제 전환
-  freeAsset?: string // 무료로 획득하는 자산 ID
+  freeAsset?: Sector // 무료 구좌 획득 섹터
   nextPurchaseDiscount?: number // 다음 매입 할인율 (0-1)
   traitGrant?: string // 특성 부여
   traitRemove?: string // 특성 제거
@@ -110,7 +117,7 @@ export interface EventConditions {
   dominatesSector?: Sector
   dominatesCount?: number
   rank?: number // 최소 순위 (3 = 3위 이하)
-  hasSector?: Sector // 해당 섹터 자산 보유 여부
+  hasSector?: Sector // 해당 섹터 구좌 보유 여부
   hasSectorAsset?: Sector // hasSector 동의어 — JSON 이벤트 조건용
   minInflation?: number
   // 하위 호환
@@ -136,9 +143,9 @@ export interface GameEvent {
 
 // === 턴 액션 ===
 export type TurnAction =
-  | { type: 'buy'; assetId: string }
-  | { type: 'sell'; ownedIndex: number; assetId: string }
-  | { type: 'upgrade'; ownedIndex: number; assetId: string }
+  | { type: 'buy'; sector: Sector }
+  | { type: 'sell'; ownedIndex: number }
+  | { type: 'sectorUpgrade'; sector: Sector }
   | { type: 'research'; target: 'market' | 'sector' | 'event' | 'competitor' | 'strategy' | 'share' | 'government'; sector?: Sector; targetCompanyId?: string }
   | { type: 'endTurn' }
 
@@ -147,10 +154,13 @@ export interface Company {
   id: string
   name: string
   cash: number // 보유 현금
-  assets: OwnedAsset[] // 보유 자산
+  assets: OwnedAsset[] // 보유 구좌
   influence: number // 0-100, 영향력
   debt: number // 파산 시 부채
   traits: string[] // 보유 특성 id 목록
+
+  // 섹터 강화 레벨 (0 = 미강화, 최대 3)
+  sectorUpgrades: Partial<Record<Sector, number>>
 
   // 턴별 계산 결과
   revenue: number // 이번 턴 수익
@@ -322,6 +332,6 @@ export interface MoneyBreakdown {
   title?: string
   items: BreakdownItem[]
   final: number
-  history?: number[]   // 턴별 변동 추이
-  maxValue?: number    // 차트 Y축 최대값 (티어별 최대)
+  history?: number[] // 턴별 변동 추이
+  maxValue?: number // 차트 Y축 최대값
 }

@@ -33,9 +33,9 @@ export {
   INFLUENCE_DECAY_PER_TURN,
   INFLUENCE_PER_PURCHASE,
   INFLUENCE_DOMINANCE_BONUS,
-  ASSET_UPGRADE_COST_RATIO,
-  ASSET_UPGRADE_INCOME_MULTIPLIER,
-  ASSET_MAX_UPGRADE_LEVEL,
+  SECTOR_UPGRADE_COST_RATIO,
+  SECTOR_UPGRADE_INCOME_MULTIPLIER,
+  SECTOR_MAX_UPGRADE_LEVEL,
   SELL_BASE_RATIO,
   SELL_MARKET_RATIO,
   BANKRUPTCY_INTEREST_RATE,
@@ -51,8 +51,10 @@ export {
 export const PLAYER_COMPANY_ID = 'player'
 export const DEFAULT_COMPANY_NAME = '내 기업'
 
-// === 자산 데이터 → data/assets.json + schema/assets.schema.ts ===
-export { ASSETS } from './schema/assets.schema'
+// === 섹터 프로필 데이터 → data/sectors.json + schema/sectors.schema.ts ===
+export { SECTORS } from './schema/sectors.schema'
+// 하위 호환 별칭 (마이그레이션 완료 후 제거)
+export { SECTORS as ASSETS } from './schema/sectors.schema'
 
 // === 메타 업그레이드 (함수 포함 → JSON 불가, TS 유지) ===
 export const META_UPGRADES: MetaUpgrade[] = [
@@ -68,7 +70,6 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
-
       startingInfluence: 0,
     }),
   },
@@ -84,7 +85,6 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
-
       startingInfluence: 0,
     }),
   },
@@ -100,14 +100,13 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1 + level * 0.08,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
-
       startingInfluence: 0,
     }),
   },
   {
     id: 'negotiation',
     name: '협상력',
-    description: '자산 매입 비용 할인',
+    description: '구좌 매입 비용 할인',
     cost: 7,
     maxLevel: 3,
     effect: (level) => ({
@@ -116,7 +115,6 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: level * 0.08,
       eventRerollChance: 0,
-
       startingInfluence: 0,
     }),
   },
@@ -132,7 +130,6 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: 0,
       eventRerollChance: level * 0.15,
-
       startingInfluence: 0,
     }),
   },
@@ -148,7 +145,6 @@ export const META_UPGRADES: MetaUpgrade[] = [
       incomeMultiplier: 1,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
-
       startingInfluence: level * 15,
     }),
   },

@@ -1,4 +1,4 @@
-import type { AssetTier, MarketCondition, Sector, SectorTrend } from '../types'
+import type { MarketCondition, Sector, SectorTrend } from '../types'
 import raw from '../data/balance.json'
 
 // === 단순 숫자 상수 ===
@@ -23,9 +23,10 @@ export const SECTOR_TREND_MAX_TURNS: number = raw.SECTOR_TREND_MAX_TURNS
 export const INFLUENCE_DECAY_PER_TURN: number = raw.INFLUENCE_DECAY_PER_TURN
 export const INFLUENCE_DOMINANCE_BONUS: number = raw.INFLUENCE_DOMINANCE_BONUS
 
-export const ASSET_UPGRADE_COST_RATIO: number = raw.ASSET_UPGRADE_COST_RATIO
-export const ASSET_UPGRADE_INCOME_MULTIPLIER: number = raw.ASSET_UPGRADE_INCOME_MULTIPLIER
-export const ASSET_MAX_UPGRADE_LEVEL: number = raw.ASSET_MAX_UPGRADE_LEVEL
+// 섹터 강화 상수 (기존 ASSET_UPGRADE_* → SECTOR_UPGRADE_*)
+export const SECTOR_UPGRADE_COST_RATIO: number = raw.SECTOR_UPGRADE_COST_RATIO
+export const SECTOR_UPGRADE_INCOME_MULTIPLIER: number = raw.SECTOR_UPGRADE_INCOME_MULTIPLIER
+export const SECTOR_MAX_UPGRADE_LEVEL: number = raw.SECTOR_MAX_UPGRADE_LEVEL
 
 export const SELL_BASE_RATIO: number = raw.SELL_BASE_RATIO
 export const SELL_MARKET_RATIO: number = raw.SELL_MARKET_RATIO
@@ -45,12 +46,12 @@ export const SECTOR_DEMAND_PREMIUM = raw.SECTOR_DEMAND_PREMIUM as Record<number,
 export const SECTOR_TREND_MULTIPLIER = raw.SECTOR_TREND_MULTIPLIER as Record<SectorTrend, number>
 export const SECTOR_TREND_TRANSITION = raw.SECTOR_TREND_TRANSITION as Record<SectorTrend, Record<SectorTrend, number>>
 export const DOMINANCE_THRESHOLDS = raw.DOMINANCE_THRESHOLDS as {
-  entrant: { count: number; incomeBonus: number }
-  competitor: { count: number; incomeBonus: number }
-  dominant: { count: number; incomeBonus: number }
+  entrant: { count: number; sharePercent: number; incomeBonus: number }
+  competitor: { count: number; sharePercent: number; incomeBonus: number }
+  dominant: { count: number; sharePercent: number; incomeBonus: number }
 }
 export const INFLUENCE_TIERS = raw.INFLUENCE_TIERS as {
   minInfluence: number; title: string; purchaseDiscount: number; eventBonus: number; freeResearch: boolean
 }[]
-export const INFLUENCE_PER_PURCHASE = raw.INFLUENCE_PER_PURCHASE as unknown as Record<AssetTier, number>
+export const INFLUENCE_PER_PURCHASE: number = raw.INFLUENCE_PER_PURCHASE
 export const MARKET_TRANSITION = raw.MARKET_TRANSITION as Record<MarketCondition, Record<MarketCondition, number>>

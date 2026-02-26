@@ -1,0 +1,93 @@
+[
+  {
+    "id": "food",
+    "name": "외식",
+    "icon": "🍔",
+    "baseCost": 600,
+    "incomeType": "stable",
+    "baseIncome": 60,
+    "yieldRate": 0,
+    "theme": "사람은 먹어야 한다",
+    "description": "시장 상황과 무관하게 일정한 소득을 제공합니다. 안정적인 현금흐름이 강점.",
+    "riskLevel": "low",
+    "marketMultiplier": { "boom": 1.3, "stable": 1.0, "recession": 0.8 }
+  },
+  {
+    "id": "tech",
+    "name": "기술",
+    "icon": "💻",
+    "baseCost": 1000,
+    "incomeType": "marketLinked",
+    "baseIncome": 0,
+    "yieldRate": 0.08,
+    "theme": "혁신은 거품과 함께",
+    "description": "호황 시 높은 수익을 올리지만, 불황 시 수익이 급감합니다.",
+    "riskLevel": "high",
+    "marketMultiplier": { "boom": 1.7, "stable": 0.9, "recession": 0.4 }
+  },
+  {
+    "id": "realEstate",
+    "name": "부동산",
+    "icon": "🏢",
+    "baseCost": 1200,
+    "incomeType": "valueLinked",
+    "baseIncome": 0,
+    "yieldRate": 0.06,
+    "theme": "땅은 거짓말하지 않는다",
+    "description": "보유 자산의 현재 가치에 비례하여 임대 수익이 발생합니다.",
+    "riskLevel": "low",
+    "marketMultiplier": { "boom": 1.2, "stable": 1.05, "recession": 0.9 }
+  },
+  {
+    "id": "logistics",
+    "name": "물류",
+    "icon": "🚛",
+    "baseCost": 700,
+    "incomeType": "stable",
+    "baseIncome": 55,
+    "yieldRate": 0,
+    "theme": "택배는 멈추지 않는다",
+    "description": "경기 변동에 영향이 적은 안정적인 물류 수익을 제공합니다.",
+    "riskLevel": "low",
+    "marketMultiplier": { "boom": 1.4, "stable": 1.0, "recession": 0.6 }
+  },
+  {
+    "id": "energy",
+    "name": "에너지",
+    "icon": "⚡",
+    "baseCost": 900,
+    "incomeType": "inverse",
+    "baseIncome": 70,
+    "yieldRate": 0,
+    "theme": "불황에도 전기는 필요하다",
+    "description": "불황 시 오히려 소득이 증가하는 역행적 특성. 포트폴리오 헤지 수단.",
+    "riskLevel": "medium",
+    "marketMultiplier": { "boom": 1.6, "stable": 1.0, "recession": 0.5 }
+  },
+  {
+    "id": "finance",
+    "name": "금융",
+    "icon": "💰",
+    "baseCost": 1500,
+    "incomeType": "leveraged",
+    "baseIncome": 0,
+    "yieldRate": 0.10,
+    "theme": "돈이 돈을 번다",
+    "description": "호황 시 폭발적 수익, 불황 시 큰 손실. 시장 배율이 제곱으로 적용됩니다.",
+    "riskLevel": "high",
+    "marketMultiplier": { "boom": 1.8, "stable": 0.9, "recession": 0.2 }
+  },
+  {
+    "id": "information",
+    "name": "정보",
+    "icon": "🔍",
+    "baseCost": 800,
+    "incomeType": "special",
+    "baseIncome": 15,
+    "yieldRate": 0,
+    "theme": "정보가 곧 권력",
+    "description": "소득은 낮지만, 구좌 1개당 매 턴 1회 조사 능력을 제공합니다.",
+    "riskLevel": "low",
+    "marketMultiplier": { "boom": 1.1, "stable": 1.0, "recession": 0.9 }
+  }
+]

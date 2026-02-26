@@ -155,7 +155,7 @@
     "weight": 4,
     "conditions": { "minAssets": 3, "minCash": 300 },
     "choices": [
-      { "id": "acquire", "text": "인수를 진행한다 (-$300)", "effect": { "money": -300, "freeAsset": "restaurant", "influence": 15 } },
+      { "id": "acquire", "text": "인수를 진행한다 (-$300)", "effect": { "money": -300, "freeAsset": "food", "influence": 15 } },
       { "id": "pass", "text": "이번 기회는 넘긴다", "effect": { "influence": -2 } }
     ]
   },
@@ -168,7 +168,7 @@
     "weight": 4,
     "conditions": { "minInfluence": 40, "minCash": 400 },
     "choices": [
-      { "id": "invest-ipo", "text": "IPO에 투자한다 (-$400)", "effect": { "money": -400, "freeAsset": "app-startup", "influence": 20 } },
+      { "id": "invest-ipo", "text": "IPO에 투자한다 (-$400)", "effect": { "money": -400, "freeAsset": "tech", "influence": 20 } },
       { "id": "skip-ipo", "text": "이번 IPO는 건너뛴다", "effect": { "influence": -5 } }
     ]
   },
@@ -246,7 +246,7 @@
     "weight": 6,
     "conditions": { "minCash": 250 },
     "choices": [
-      { "id": "buy", "text": "매입한다 (-$250)", "effect": { "money": -250, "freeAsset": "convenience-store", "influence": 5 } },
+      { "id": "buy", "text": "매입한다 (-$250)", "effect": { "money": -250, "freeAsset": "logistics", "influence": 5 } },
       { "id": "pass", "text": "넘긴다", "effect": { "influence": 2 } }
     ]
   },
@@ -289,7 +289,7 @@
     "weight": 5,
     "conditions": { "hasTrait": "reckless" },
     "choices": [
-      { "id": "challenge", "text": "도전한다 (-$200)", "effect": { "money": -200, "freeAsset": "saas", "influence": 8 } },
+      { "id": "challenge", "text": "도전한다 (-$200)", "effect": { "money": -200, "freeAsset": "tech", "influence": 8 } },
       { "id": "restrain", "text": "자제한다", "effect": { "traitRemove": "reckless", "influence": 5 } }
     ]
   },

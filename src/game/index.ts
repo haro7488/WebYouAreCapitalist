@@ -6,12 +6,13 @@ export type {
   MarketCondition,
   MarketState,
   Sector,
-  AssetTier,
+  IncomeType,
   SectorTrend,
   SectorState,
   DominanceLevel,
   DominanceInfo,
   RiskLevel,
+  SectorProfile,
   Asset,
   OwnedAsset,
   ResearchResult,
@@ -29,6 +30,7 @@ export type {
   MoneyBreakdown,
   BreakdownItem,
 } from './types'
+export { INFORMATION_SECTOR } from './types'
 
 // Constants
 export {
@@ -37,6 +39,7 @@ export {
   MAX_TURNS,
   BASE_EXPENSES,
   STARTING_INFLUENCE,
+  SECTORS,
   ASSETS,
   META_UPGRADES,
   MARKET_TRANSITION,
@@ -48,9 +51,9 @@ export {
   INFLUENCE_DECAY_PER_TURN,
   INFLUENCE_PER_PURCHASE,
   INFLUENCE_DOMINANCE_BONUS,
-  ASSET_UPGRADE_COST_RATIO,
-  ASSET_UPGRADE_INCOME_MULTIPLIER,
-  ASSET_MAX_UPGRADE_LEVEL,
+  SECTOR_UPGRADE_COST_RATIO,
+  SECTOR_UPGRADE_INCOME_MULTIPLIER,
+  SECTOR_MAX_UPGRADE_LEVEL,
   SELL_BASE_RATIO,
   SELL_MARKET_RATIO,
   SCORE_NETWORTH_WEIGHT,
