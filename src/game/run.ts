@@ -50,7 +50,7 @@ function assignStartingTraits(rng: Rng): string[] {
 /** 새 런 시작 */
 export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): GameState {
   const cfg: GameConfig = { ...DEFAULT_GAME_CONFIG, ...config }
-  const seed = generateSeed()
+  const seed = cfg.seed ?? generateSeed()
   const rng = createRng(seed)
   const metaEffects = getMetaEffects(meta)
 
@@ -86,13 +86,14 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
   const competitorNames = assignCompanyNames(cfg.competitorCount, rng.random)
   const strategyKeys = Object.keys(STRATEGIES) as StrategyId[]
   const aiStrategies: Record<string, StrategyId> = {}
+  const aiStartingCash = cfg.startingMoney // AI는 메타 보너스 미적용
   const competitors: Company[] = competitorNames.map((name, i) => {
     const id = `competitor-${i}`
     aiStrategies[id] = rng.pick(strategyKeys)
     return {
       id,
       name,
-      cash: startingCash,
+      cash: aiStartingCash,
       assets: [],
       sectorUpgrades: {},
       researchPoints: 0,
@@ -105,18 +106,18 @@ export function startNewRun(meta: MetaState, config?: Partial<GameConfig>): Game
       researchResult: null,
       researchHistory: [],
       activeEffects: [],
-      netWorth: startingCash,
+      netWorth: aiStartingCash,
       dominatedSectors: [],
       traits: assignStartingTraits(rng),
       goalCompleted: false,
-      netWorthHistory: [startingCash],
+      netWorthHistory: [aiStartingCash],
       revenueHistory: [0],
       expenseHistory: [0],
-      cashHistory: [startingCash],
+      cashHistory: [aiStartingCash],
     }
   })
 
-  const competitorTotalCash = startingCash * cfg.competitorCount
+  const competitorTotalCash = aiStartingCash * cfg.competitorCount
 
   const allCompanies = [playerCompany, ...competitors]
 

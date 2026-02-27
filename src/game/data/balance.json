@@ -20,7 +20,7 @@
     "tech": { "boom": 1.7, "stable": 0.9, "recession": 0.4 },
     "realEstate": { "boom": 1.2, "stable": 1.05, "recession": 0.9 },
     "logistics": { "boom": 1.4, "stable": 1.0, "recession": 0.6 },
-    "finance": { "boom": 1.8, "stable": 0.9, "recession": 0.2 },
+    "finance": { "boom": 1.6, "stable": 0.9, "recession": 0.35 },
     "energy": { "boom": 1.6, "stable": 1.0, "recession": 0.5 },
     "information": { "boom": 1.1, "stable": 1.0, "recession": 0.9 },
     "rnd": { "boom": 1.1, "stable": 1.0, "recession": 0.95 }

@@ -68,7 +68,7 @@ export function DevPanel({ onStart }: DevPanelProps) {
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">{label}</span>
               <span className="text-slate-200 font-mono">
-                {step < 1 ? config[key].toFixed(step === 0.05 ? 2 : 1) : config[key]}
+                {step < 1 ? (config[key] ?? 0).toFixed(step === 0.05 ? 2 : 1) : (config[key] ?? 0)}
               </span>
             </div>
             <input
@@ -76,7 +76,7 @@ export function DevPanel({ onStart }: DevPanelProps) {
               min={min}
               max={max}
               step={step}
-              value={config[key]}
+              value={config[key] ?? 0}
               onChange={(e) => handleChange(key, Number(e.target.value))}
               className="w-full accent-money-500 h-1.5 bg-slate-600 rounded-full appearance-none cursor-pointer"
             />

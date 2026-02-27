@@ -5,7 +5,7 @@
     "icon": "🍔",
     "baseCost": 600,
     "incomeType": "stable",
-    "baseIncome": 60,
+    "baseIncome": 50,
     "yieldRate": 0,
     "theme": "사람은 먹어야 한다",
     "description": "시장 상황과 무관하게 일정한 소득을 제공합니다. 안정적인 현금흐름이 강점.",
@@ -75,7 +75,7 @@
     "theme": "돈이 돈을 번다",
     "description": "호황 시 폭발적 수익, 불황 시 큰 손실. 시장 배율이 제곱으로 적용됩니다.",
     "riskLevel": "high",
-    "marketMultiplier": { "boom": 1.8, "stable": 0.9, "recession": 0.2 }
+    "marketMultiplier": { "boom": 1.6, "stable": 0.9, "recession": 0.35 }
   },
   {
     "id": "information",
@@ -83,7 +83,7 @@
     "icon": "🔍",
     "baseCost": 800,
     "incomeType": "special",
-    "baseIncome": 15,
+    "baseIncome": 25,
     "yieldRate": 0,
     "theme": "정보가 곧 권력",
     "description": "소득은 낮지만, 구좌 1개당 매 턴 1회 조사 능력을 제공합니다.",
@@ -96,7 +96,7 @@
     "icon": "🔬",
     "baseCost": 800,
     "incomeType": "special",
-    "baseIncome": 10,
+    "baseIncome": 20,
     "yieldRate": 0,
     "theme": "기술은 투자의 어머니",
     "description": "소득은 낮지만, 구좌 1개당 매 턴 연구포인트 1개를 제공합니다. 연구포인트로 섹터를 강화할 수 있습니다.",

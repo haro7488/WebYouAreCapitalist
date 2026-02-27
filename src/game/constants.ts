@@ -106,7 +106,7 @@ export const META_UPGRADES: MetaUpgrade[] = [
     effect: (level) => ({
       startingMoneyBonus: 0,
       extraTurns: 0,
-      incomeMultiplier: 1 + level * 0.08,
+      incomeMultiplier: 1 + level * 0.06,
       purchaseCostDiscount: 0,
       eventRerollChance: 0,
       startingInfluence: 0,
@@ -146,7 +146,7 @@ export const META_UPGRADES: MetaUpgrade[] = [
     id: 'connections',
     name: '인맥',
     description: '시작 영향력 증가',
-    cost: 8,
+    cost: 10,
     maxLevel: 3,
     effect: (level) => ({
       startingMoneyBonus: 0,

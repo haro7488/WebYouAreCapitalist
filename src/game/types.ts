@@ -320,6 +320,7 @@ export interface GameConfig {
   baseExpenses: number
   sectorFlowRate: number // 섹터 유입률 배율 (1.0 = 기본)
   eventProbability: number // 이벤트 기본 발생 확률
+  seed?: number // 결정적 시뮬레이션용 시드 (미지정 시 랜덤)
 }
 
 // === 런 결과 ===

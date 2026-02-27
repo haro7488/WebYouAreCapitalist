@@ -23,6 +23,18 @@ function countBySector(company: Company): Record<Sector, number> {
   return counts
 }
 
+/** 연구 포인트가 있으면 가장 많이 보유한 섹터 업그레이드 액션 추가 */
+function appendUpgradeAction(actions: TurnAction[], company: Company): void {
+  if ((company.researchPoints ?? 0) < 1) return
+  const sectorCounts = countBySector(company)
+  const bestSector = ALL_SECTORS
+    .filter(s => sectorCounts[s] > 0 && (company.sectorUpgrades?.[s] ?? 0) < SECTOR_MAX_UPGRADE_LEVEL)
+    .sort((a, b) => sectorCounts[b] - sectorCounts[a])[0]
+  if (bestSector) {
+    actions.push({ type: 'sectorUpgrade', sector: bestSector })
+  }
+}
+
 /** 이벤트 선택지 중 금전적으로 가장 안전한 것 선택 */
 function chooseSafestEvent(event: GameEvent): string {
   const sorted = [...event.choices].sort(
@@ -50,30 +62,39 @@ export const conservativeStrategy: CompetitorStrategy = {
   decide(state: GameState, company: Company): TurnAction[] {
     const actions: TurnAction[] = []
     let cash = company.cash
-
-    // 불황 시 현금 비축
-    if (state.market.condition === 'recession') {
-      return [{ type: 'endTurn' }]
-    }
-
-    // 미보유 섹터 우선, 가격 오름차순 매입
     const sectorCounts = countBySector(company)
-    const affordable = getAffordableSectors(state, cash)
-      .sort((a, b) => {
-        const aNew = sectorCounts[a.sector] === 0 ? 1 : 0
-        const bNew = sectorCounts[b.sector] === 0 ? 1 : 0
-        if (aNew !== bNew) return bNew - aNew
-        return a.price - b.price
-      })
 
-    for (const { sector, price } of affordable) {
-      if (cash < price) continue
-      // 보수형: 섹터당 최대 2구좌
-      if (sectorCounts[sector] >= 2) continue
-      actions.push({ type: 'buy', sector })
-      cash -= price
-      sectorCounts[sector]++
+    if (state.market.condition === 'recession') {
+      // 불황 시 안정형 섹터(food, energy, logistics) 할인 매수
+      const defensiveSectors: Sector[] = ['food', 'energy', 'logistics']
+      const affordable = getAffordableSectors(state, cash)
+        .filter(s => defensiveSectors.includes(s.sector) && sectorCounts[s.sector] < 2)
+        .sort((a, b) => a.price - b.price)
+      if (affordable.length > 0 && cash >= affordable[0].price) {
+        actions.push({ type: 'buy', sector: affordable[0].sector })
+      }
+    } else {
+      // 미보유 섹터 우선, 가격 오름차순 매입
+      const affordable = getAffordableSectors(state, cash)
+        .sort((a, b) => {
+          const aNew = sectorCounts[a.sector] === 0 ? 1 : 0
+          const bNew = sectorCounts[b.sector] === 0 ? 1 : 0
+          if (aNew !== bNew) return bNew - aNew
+          return a.price - b.price
+        })
+
+      for (const { sector, price } of affordable) {
+        if (cash < price) continue
+        // 보수형: 섹터당 최대 2구좌
+        if (sectorCounts[sector] >= 2) continue
+        actions.push({ type: 'buy', sector })
+        cash -= price
+        sectorCounts[sector]++
+      }
     }
+
+    // 연구 포인트 활용
+    appendUpgradeAction(actions, company)
 
     if (actions.length === 0) actions.push({ type: 'endTurn' })
     return actions
@@ -90,6 +111,16 @@ export const aggressiveStrategy: CompetitorStrategy = {
   decide(state: GameState, company: Company): TurnAction[] {
     const actions: TurnAction[] = []
     let cash = company.cash
+    const sectorCounts = countBySector(company)
+
+    // 턴 10+ 자산 3개+ → R&D 1구좌 확보 (연구 포인트 생성용)
+    if (state.turn >= 10 && company.assets.length >= 3 && sectorCounts['rnd'] === 0) {
+      const rndPrice = calculateCurrentPrice('rnd', state)
+      if (cash >= rndPrice) {
+        actions.push({ type: 'buy', sector: 'rnd' })
+        cash -= rndPrice
+      }
+    }
 
     // 고가 섹터 우선 매입 (비싼 것부터)
     const affordable = getAffordableSectors(state, cash)
@@ -101,20 +132,8 @@ export const aggressiveStrategy: CompetitorStrategy = {
       cash -= price
     }
 
-    // 매입 못하면 가장 많이 보유한 섹터 강화
-    if (actions.length === 0 && company.assets.length > 0) {
-      const sectorCounts = countBySector(company)
-      const bestSector = ALL_SECTORS
-        .filter(s => sectorCounts[s] > 0)
-        .sort((a, b) => sectorCounts[b] - sectorCounts[a])[0]
-
-      if (bestSector) {
-        const level = company.sectorUpgrades?.[bestSector] ?? 0
-        if (level < SECTOR_MAX_UPGRADE_LEVEL && (company.researchPoints ?? 0) >= 1) {
-          actions.push({ type: 'sectorUpgrade', sector: bestSector })
-        }
-      }
-    }
+    // 연구 포인트 활용
+    appendUpgradeAction(actions, company)
 
     if (actions.length === 0) actions.push({ type: 'endTurn' })
     return actions
@@ -144,17 +163,22 @@ export const dominationStrategy: CompetitorStrategy = {
         sectorCounts[s] > sectorCounts[best] ? s : best, ALL_SECTORS[0])
     }
 
-    // 타겟 섹터 구좌 매입
-    const price = calculateCurrentPrice(targetSector, state)
-    while (cash >= price) {
+    // 타겟 섹터 구좌 매입 (최대 5회, 매번 가격 재계산)
+    for (let bought = 0; bought < 5; bought++) {
+      const price = calculateCurrentPrice(targetSector, state)
+      if (cash < price) break
       actions.push({ type: 'buy', sector: targetSector })
       cash -= price
     }
 
-    // 타겟 섹터 강화
-    const level = company.sectorUpgrades?.[targetSector] ?? 0
-    if (level < SECTOR_MAX_UPGRADE_LEVEL && sectorCounts[targetSector] > 0 && (company.researchPoints ?? 0) >= 1) {
-      actions.push({ type: 'sectorUpgrade', sector: targetSector })
+    // 연구 포인트 활용 (타겟 섹터 우선)
+    if ((company.researchPoints ?? 0) >= 1) {
+      const level = company.sectorUpgrades?.[targetSector] ?? 0
+      if (level < SECTOR_MAX_UPGRADE_LEVEL && sectorCounts[targetSector] > 0) {
+        actions.push({ type: 'sectorUpgrade', sector: targetSector })
+      } else {
+        appendUpgradeAction(actions, company)
+      }
     }
 
     if (actions.length === 0) actions.push({ type: 'endTurn' })
@@ -197,6 +221,9 @@ export const opportunistStrategy: CompetitorStrategy = {
       actions.push({ type: 'buy', sector })
       cash -= price
     }
+
+    // 연구 포인트 활용
+    appendUpgradeAction(actions, company)
 
     if (actions.length === 0) actions.push({ type: 'endTurn' })
     return actions
